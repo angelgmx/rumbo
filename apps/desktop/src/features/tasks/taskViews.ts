@@ -22,8 +22,7 @@ export const TASK_VIEWS: TaskViewInfo[] = [
     view: "inbox",
     slug: "inbox",
     label: "Inbox",
-    description:
-      "Todo lo que capturas cae aquí. Vacíalo una vez al día: decide qué es y cuándo va.",
+    description: "Todo lo que capturas cae aquí. Vacíalo una vez al día: decide qué es y dónde va.",
     icon: InboxIcon,
   },
   {

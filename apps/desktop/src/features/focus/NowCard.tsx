@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { formatCountdown, type FocusTimer } from "./useFocusTimer";
+import { formatClock, type Countdown } from "@/hooks/useCountdown";
 
 /** "Ahora": lo que toca en este momento y el temporizador de foco. */
 export function NowCard({
@@ -18,7 +18,7 @@ export function NowCard({
   onStart,
 }: {
   blocks: NowAndNext<DayPlanItem>;
-  timer: FocusTimer;
+  timer: Countdown;
   onStart: () => void;
 }) {
   const { now, next } = blocks;
@@ -34,7 +34,7 @@ export function NowCard({
       </CardHeader>
       <CardContent className="flex items-baseline gap-3">
         <span className="font-mono text-6xl font-medium tracking-tight tabular-nums">
-          {formatCountdown(timer.secondsLeft)}
+          {formatClock(timer.secondsLeft)}
         </span>
         <span className="text-sm text-muted-foreground">bloque de foco</span>
       </CardContent>

@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
-import { formatCountdown, useFocusTimer } from "@/features/focus/useFocusTimer";
+import { formatClock, useCountdown } from "@/hooks/useCountdown";
 import { Breadcrumb } from "@/features/roadmaps/Breadcrumb";
 import { copyToIde, fileName } from "@/features/roadmaps/ExerciseDetail";
 import { LEVEL_NAME, LEVEL_STYLE } from "@/features/roadmaps/moduleStatus";
@@ -263,7 +263,8 @@ function Solution({ code }: { code: string }) {
 }
 
 function TimerCard({ minutes }: { minutes: number }) {
-  const timer = useFocusTimer();
+  // Al acabar no hace falta avisar: el reloj a cero ya lo dice.
+  const timer = useCountdown(minutes, () => {});
   const [started, setStarted] = useState(false);
   const shown = started ? timer.secondsLeft : minutes * 60;
 
@@ -278,7 +279,7 @@ function TimerCard({ minutes }: { minutes: number }) {
         Cuando quieras
       </span>
       <div className="flex items-baseline gap-3">
-        <span className="font-mono text-5xl font-semibold">{formatCountdown(shown)}</span>
+        <span className="font-mono text-5xl font-semibold">{formatClock(shown)}</span>
         <span className="text-muted-foreground">temporizador</span>
       </div>
       <Button size="lg" onClick={() => (started ? timer.toggle() : start(minutes))}>

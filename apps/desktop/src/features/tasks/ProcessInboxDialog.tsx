@@ -1,23 +1,17 @@
-import { addDays, isInView, type Task } from "@rumbo/core";
+import { addDays, isInView, type Task, type TaskChanges } from "@rumbo/core";
 import {
   ArrowRightIcon,
-  CalendarIcon,
   CheckIcon,
-  SunIcon,
-  SunriseIcon,
+  ClockIcon,
+  FileTextIcon,
   Trash2Icon,
+  type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { useRumbo } from "@/app/RumboContext";
+import { OptionSelect } from "@/components/OptionSelect";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   Empty,
   EmptyDescription,
@@ -29,10 +23,29 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
+import { cn } from "@/lib/utils";
+import { noteName } from "./taskLabels";
+
+type Kind = "task" | "someday" | "delete";
+
+const KINDS: { kind: Kind; label: string; icon: LucideIcon }[] = [
+  { kind: "task", label: "Tarea", icon: CheckIcon },
+  { kind: "someday", label: "Algún día", icon: ClockIcon },
+  { kind: "delete", label: "Borrar", icon: Trash2Icon },
+];
+
+const DURATIONS = [
+  { label: "Sin duración", value: null },
+  { label: "5 min", value: "5" },
+  { label: "15 min", value: "15" },
+  { label: "30 min", value: "30" },
+  { label: "1 h", value: "60" },
+  { label: "2 h", value: "120" },
+];
 
 /**
- * Vaciar el inbox de una en una: para cada tarea decides cuándo va, de qué área es,
- * o si ya está hecha o sobra. Así no se acumula.
+ * Vaciar el inbox de una en una: qué es, de qué área, cuándo y cuánto lleva.
+ * Guardar pasa a la siguiente; saltar la deja en el inbox para otro momento.
  */
 export function ProcessInboxDialog() {
   const rumbo = useRumbo();
@@ -41,6 +54,7 @@ export function ProcessInboxDialog() {
   const [open, setOpen] = useState(false);
   // Las saltadas se quedan en el inbox; las recordamos para no volver a enseñarlas ahora.
   const [skipped, setSkipped] = useState<string[]>([]);
+  const [total, setTotal] = useState(0);
 
   const inbox =
     useVaultQuery((r) => r.tasks.all()).data?.filter((task) =>
@@ -48,30 +62,33 @@ export function ProcessInboxDialog() {
     ) ?? [];
   const pending = inbox.filter((task) => !skipped.includes(task.text));
   const current = pending[0];
+  const position = total - pending.length + 1;
 
   function onOpenChange(next: boolean) {
     setOpen(next);
-    if (next) setSkipped([]);
+    if (!next) return;
+    setSkipped([]);
+    setTotal(inbox.length);
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger render={<Button />} disabled={inbox.length === 0}>
-        Procesar inbox
-        <ArrowRightIcon data-icon="inline-end" />
+        <ArrowRightIcon data-icon="inline-start" />
+        Procesar Inbox
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Procesar inbox</DialogTitle>
-          <DialogDescription>
-            {current
-              ? `Quedan ${pending.length}. Decide qué hacer con cada una.`
-              : "Has terminado."}
-          </DialogDescription>
-        </DialogHeader>
-        {inbox.length > 0 && (
-          <Progress value={((inbox.length - pending.length) / inbox.length) * 100} />
-        )}
+      <DialogContent className="gap-0 p-0 sm:max-w-2xl">
+        <header className="flex flex-col gap-4 px-7 pt-7">
+          <div className="flex items-baseline justify-between">
+            <DialogTitle>Procesar Inbox</DialogTitle>
+            {current && (
+              <span className="font-mono text-sm text-muted-foreground">
+                {position} de {total}
+              </span>
+            )}
+          </div>
+          <Progress value={total ? ((position - 1) / total) * 100 : 100} />
+        </header>
         {current ? (
           <TaskDecision
             key={`${current.path}:${current.line}`}
@@ -80,7 +97,7 @@ export function ProcessInboxDialog() {
             onSkip={() => setSkipped((list) => [...list, current.text])}
           />
         ) : (
-          <Empty>
+          <Empty className="py-12">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <CheckIcon />
@@ -98,76 +115,147 @@ export function ProcessInboxDialog() {
 function TaskDecision({ task, today, onSkip }: { task: Task; today: string; onSkip: () => void }) {
   const rumbo = useRumbo();
   const areas = rumbo.store.notesOfType("area").map((note) => String(note.data.name ?? note.name));
+  const [kind, setKind] = useState<Kind>("task");
+  const [changes, setChanges] = useState<TaskChanges>({});
 
-  const schedule = (date: string) => rumbo.tasks.update(task, { scheduled: date });
+  const update = (next: TaskChanges) => setChanges((old) => ({ ...old, ...next }));
+  // Para salir del inbox necesita fecha o área; si no, volvería a salir aquí.
+  const canSave =
+    kind === "delete" ||
+    (kind === "someday" ? !!changes.area : !!(changes.scheduled || changes.area));
+
+  async function save() {
+    if (kind === "delete") return rumbo.tasks.remove(task);
+    // Algún día es solo el área, aunque antes se eligiera fecha como tarea.
+    await rumbo.tasks.update(task, kind === "someday" ? { area: changes.area } : changes);
+  }
 
   return (
-    <div className="flex flex-col gap-5">
-      <p className="rounded-lg border bg-muted/50 p-4 text-lg">{task.text}</p>
-
-      <div className="flex flex-col gap-2">
-        <span className="text-sm text-muted-foreground">¿Cuándo?</span>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => schedule(today)}>
-            <SunIcon data-icon="inline-start" />
-            Hoy
-          </Button>
-          <Button variant="outline" onClick={() => schedule(addDays(today, 1))}>
-            <SunriseIcon data-icon="inline-start" />
-            Mañana
-          </Button>
-          <Field className="w-auto flex-row items-center gap-2">
-            <FieldLabel htmlFor="process-date" className="sr-only">
-              Otra fecha
-            </FieldLabel>
-            <CalendarIcon className="size-4 text-muted-foreground" />
-            <Input
-              id="process-date"
-              type="date"
-              className="w-40"
-              onChange={(event) => event.target.value && void schedule(event.target.value)}
-            />
-          </Field>
+    <div className="flex flex-col">
+      <div className="flex flex-col gap-6 px-7 py-6">
+        <div className="rounded-xl border bg-muted/30 p-5">
+          <p className="text-lg font-medium">{task.text}</p>
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <FileTextIcon className="size-3.5" />
+            Capturado en {noteName(task.path)}
+          </p>
         </div>
-      </div>
 
-      {areas.length > 0 && (
         <div className="flex flex-col gap-2">
-          <span className="text-sm text-muted-foreground">
-            O dale un área (sale de Inbox y va a Algún día)
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {areas.map((area) => (
-              <Button
-                key={area}
-                variant="secondary"
-                size="sm"
-                onClick={() => rumbo.tasks.update(task, { area })}
+          <span className="text-sm text-muted-foreground">¿Qué es?</span>
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="¿Qué es?">
+            {KINDS.map(({ kind: option, label, icon: Icon }) => (
+              <button
+                key={option}
+                type="button"
+                role="radio"
+                aria-checked={kind === option}
+                onClick={() => setKind(option)}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 rounded-lg border py-3 text-sm transition-colors duration-(--dur-fast) hover:bg-muted",
+                  kind === option && "border-primary bg-primary-soft hover:bg-primary-soft",
+                )}
               >
-                {area}
-              </Button>
+                <Icon className="size-4 text-muted-foreground" />
+                {label}
+              </button>
             ))}
           </div>
         </div>
-      )}
 
-      <div className="flex gap-2 border-t pt-4">
-        <Button variant="outline" onClick={() => rumbo.tasks.setDone(task, true)}>
-          <CheckIcon data-icon="inline-start" />
-          Ya está hecha
-        </Button>
-        <Button
-          variant="ghost"
-          className="text-destructive"
-          onClick={() => rumbo.tasks.remove(task)}
-        >
-          <Trash2Icon data-icon="inline-start" />
-          Borrar
-        </Button>
-        <Button variant="ghost" className="ml-auto" onClick={onSkip}>
+        {kind !== "delete" && (
+          <div className="grid grid-cols-2 gap-4">
+            <Field>
+              <FieldLabel>Área</FieldLabel>
+              <OptionSelect
+                options={[
+                  { label: "Sin área", value: null },
+                  ...areas.map((name) => ({ label: name, value: name })),
+                ]}
+                value={changes.area ?? null}
+                onChange={(area) => update({ area: area ?? undefined })}
+              />
+            </Field>
+            {kind === "task" && (
+              <>
+                <WhenField today={today} value={changes.scheduled} onChange={update} />
+                <Field>
+                  <FieldLabel>Duración</FieldLabel>
+                  <OptionSelect
+                    options={DURATIONS}
+                    value={changes.duration ? String(changes.duration) : null}
+                    onChange={(value) => update({ duration: value ? Number(value) : undefined })}
+                  />
+                </Field>
+              </>
+            )}
+          </div>
+        )}
+
+        <p className="text-sm text-muted-foreground">
+          Regla de los 2 minutos: si se hace en menos de 2 minutos, hazlo ahora y{" "}
+          <button
+            type="button"
+            className="text-foreground underline underline-offset-4"
+            onClick={() => rumbo.tasks.setDone(task, true)}
+          >
+            márcalo hecho
+          </button>
+          .
+        </p>
+      </div>
+
+      <footer className="flex items-center gap-4 border-t px-7 py-4">
+        <Button variant="ghost" onClick={onSkip}>
           Saltar
         </Button>
-      </div>
+        <Button className="ml-auto" onClick={() => void save()} disabled={!canSave}>
+          <ArrowRightIcon data-icon="inline-start" />
+          Guardar y siguiente
+        </Button>
+      </footer>
     </div>
+  );
+}
+
+function WhenField({
+  today,
+  value,
+  onChange,
+}: {
+  today: string;
+  value: string | undefined;
+  onChange: (changes: TaskChanges) => void;
+}) {
+  const tomorrow = addDays(today, 1);
+  const preset =
+    value === undefined ? null : value === today || value === tomorrow ? value : "other";
+
+  return (
+    <Field>
+      <FieldLabel>Cuándo</FieldLabel>
+      <div className="flex gap-2">
+        <OptionSelect
+          options={[
+            { label: "Sin fecha", value: null },
+            { label: "Hoy", value: today },
+            { label: "Mañana", value: tomorrow },
+            { label: "Otro día", value: "other" },
+          ]}
+          value={preset}
+          onChange={(next) =>
+            onChange({ scheduled: next === "other" ? addDays(today, 2) : (next ?? undefined) })
+          }
+        />
+        {preset === "other" && (
+          <Input
+            type="date"
+            aria-label="Fecha"
+            value={value}
+            onChange={(event) => onChange({ scheduled: event.target.value || undefined })}
+          />
+        )}
+      </div>
+    </Field>
   );
 }

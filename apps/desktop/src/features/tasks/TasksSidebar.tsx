@@ -1,33 +1,52 @@
 import type { SavedView } from "@rumbo/core";
-import { FilterIcon, XIcon } from "lucide-react";
+import { FilterIcon, FolderKanbanIcon, PlusIcon, XIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Kbd } from "@/components/ui/kbd";
+import { useQuickCapture } from "@/features/capture/QuickCapture";
 import { cn } from "@/lib/utils";
+import { AreaDot } from "./AreaDot";
+import type { TaskFilter } from "./taskFilters";
 import { TASK_VIEWS, type TaskViewInfo } from "./taskViews";
 
 interface TasksSidebarProps {
   current: TaskViewInfo;
   counts: Record<string, number>;
-  areas: string[];
-  area?: string;
-  onAreaChange: (area: string | undefined) => void;
+  /** [nombre, tareas pendientes] */
+  areas: [string, number][];
+  projects: [string, number][];
+  filter: TaskFilter;
+  onFilterChange: (filter: TaskFilter) => void;
   savedViews: SavedView[];
   onOpenSavedView: (view: SavedView) => void;
   onRemoveSavedView: (view: SavedView) => void;
 }
 
+/** Barra lateral de Tareas: captura, vistas, áreas, proyectos y vistas guardadas. */
 export function TasksSidebar({
   current,
   counts,
   areas,
-  area,
-  onAreaChange,
+  projects,
+  filter,
+  onFilterChange,
   savedViews,
   onOpenSavedView,
   onRemoveSavedView,
 }: TasksSidebarProps) {
+  const { open: openCapture } = useQuickCapture();
+  const toggle = (key: "area" | "project", value: string) =>
+    onFilterChange({ ...filter, [key]: filter[key] === value ? undefined : value });
+
   return (
     <aside className="flex w-60 shrink-0 flex-col gap-6 overflow-y-auto border-r p-3">
+      <Button variant="outline" className="justify-start" onClick={openCapture}>
+        <PlusIcon data-icon="inline-start" className="text-primary" />
+        Captura rápida
+        <Kbd className="ml-auto">Ctrl N</Kbd>
+      </Button>
+
       <nav className="flex flex-col gap-0.5">
         {TASK_VIEWS.map((info) => (
           <SidebarLink
@@ -43,31 +62,37 @@ export function TasksSidebar({
       </nav>
 
       {areas.length > 0 && (
-        <div className="flex flex-col gap-0.5">
-          <span className="px-3 pb-1 font-mono text-xs tracking-widest text-muted-foreground uppercase">
-            Áreas
-          </span>
-          {areas.map((name) => (
-            <button
+        <SidebarSection title="Áreas">
+          {areas.map(([name, count]) => (
+            <FilterItem
               key={name}
-              type="button"
-              onClick={() => onAreaChange(area === name ? undefined : name)}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground",
-                area === name && "bg-muted text-foreground",
-              )}
-            >
-              {name}
-            </button>
+              icon={<AreaDot area={name} className="mx-1" />}
+              label={name}
+              count={count}
+              active={filter.area === name}
+              onClick={() => toggle("area", name)}
+            />
           ))}
-        </div>
+        </SidebarSection>
+      )}
+
+      {projects.length > 0 && (
+        <SidebarSection title="Proyectos">
+          {projects.map(([name, count]) => (
+            <FilterItem
+              key={name}
+              icon={<FolderKanbanIcon className="size-4" />}
+              label={name}
+              count={count}
+              active={filter.project === name}
+              onClick={() => toggle("project", name)}
+            />
+          ))}
+        </SidebarSection>
       )}
 
       {savedViews.length > 0 && (
-        <div className="flex flex-col gap-0.5">
-          <span className="px-3 pb-1 font-mono text-xs tracking-widest text-muted-foreground uppercase">
-            Mis vistas
-          </span>
+        <SidebarSection title="Mis vistas">
           {savedViews.map((view) => (
             <div key={view.name} className="group flex items-center rounded-md hover:bg-muted">
               <button
@@ -88,9 +113,20 @@ export function TasksSidebar({
               </button>
             </div>
           ))}
-        </div>
+        </SidebarSection>
       )}
     </aside>
+  );
+}
+
+function SidebarSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="px-3 pb-1 font-mono text-xs tracking-widest text-muted-foreground uppercase">
+        {title}
+      </span>
+      {children}
+    </div>
   );
 }
 
@@ -108,22 +144,57 @@ function SidebarLink({ href, active, icon, label, count, highlight }: SidebarLin
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-(--dur-fast) hover:bg-muted hover:text-foreground",
-        active && "bg-card text-foreground shadow-card",
+        "flex items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm text-muted-foreground transition-colors duration-(--dur-fast) hover:bg-muted hover:text-foreground",
+        active && "border-border bg-card text-foreground shadow-card [&>svg]:text-primary",
       )}
     >
       {icon}
       <span className="flex-1">{label}</span>
-      {count !== undefined && (
-        <span
-          className={cn(
-            "font-mono text-xs",
-            highlight && "rounded-full bg-primary px-1.5 text-primary-foreground",
-          )}
-        >
-          {count}
-        </span>
-      )}
+      {count !== undefined && <Count value={count} highlight={highlight} />}
     </Link>
+  );
+}
+
+function FilterItem({
+  icon,
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-3 rounded-md px-3 py-1.5 text-left text-sm text-muted-foreground transition-colors duration-(--dur-fast) hover:bg-muted hover:text-foreground",
+        active && "bg-muted text-foreground",
+      )}
+    >
+      {icon}
+      <span className="flex-1 truncate">{label}</span>
+      <Count value={count} />
+    </button>
+  );
+}
+
+function Count({ value, highlight }: { value: number; highlight?: boolean }) {
+  return (
+    <span
+      className={cn(
+        "font-mono text-xs",
+        highlight &&
+          "grid size-5 place-items-center rounded-full bg-primary/20 text-[0.7rem] text-primary-text",
+      )}
+    >
+      {value}
+    </span>
   );
 }

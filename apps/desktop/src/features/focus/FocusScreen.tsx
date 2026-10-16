@@ -1,17 +1,20 @@
 import { blocksAround, minutesBetween, type DayPlanItem, type Task } from "@rumbo/core";
+import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
 import { Progress } from "@/components/ui/progress";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
+import { useCountdown } from "@/hooks/useCountdown";
 import { timeOf, useNow } from "@/hooks/useNow";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { capitalize, formatDay } from "@/lib/format";
+import { hasCounter } from "@/features/counters/countedTask";
 import { NextStepCard } from "@/features/roadmaps/NextStepCard";
 import { ReviewTodayCard } from "@/features/roadmaps/ReviewDialog";
 import { DayPlanCard } from "./DayPlanCard";
 import { NowCard } from "./NowCard";
+import { NowTaskCard } from "./NowTaskCard";
 import { TodayHabitsCard } from "./TodayHabitsCard";
 import { UntimedCard } from "./UntimedCard";
-import { useFocusTimer } from "./useFocusTimer";
 import { WeekCard } from "./WeekCard";
 
 const DEFAULT_FOCUS_MINUTES = 50;
@@ -20,7 +23,9 @@ export function FocusScreen() {
   const rumbo = useRumbo();
   const today = rumbo.daily.today();
   const now = useNow();
-  const timer = useFocusTimer();
+  const timer = useCountdown(DEFAULT_FOCUS_MINUTES, () =>
+    toast.success("Bloque de foco terminado. Descansa un poco."),
+  );
 
   const plan = useVaultQuery((r) => r.dayPlan.plan(today), [today]).data ?? [];
   const focus = useVaultQuery((r) => r.tasks.focus(), [today]).data ?? [];
@@ -33,6 +38,8 @@ export function FocusScreen() {
   ).data;
 
   const around = blocksAround(plan, timeOf(now));
+  // Sin un bloque de agenda en curso, «Ahora» es la primera tarea del foco que se mide.
+  const countedFocus = around.now ? undefined : focus.filter(hasCounter).find((task) => !task.done);
   // Una tarea del foco con fecha de hoy saldría dos veces.
   const otherTasks = todayTasks.filter(
     (task) =>
@@ -97,7 +104,11 @@ export function FocusScreen() {
               />
             </div>
             <div className="flex flex-col gap-6">
-              <NowCard blocks={around} timer={timer} onStart={() => startFocus()} />
+              {countedFocus ? (
+                <NowTaskCard task={countedFocus} />
+              ) : (
+                <NowCard blocks={around} timer={timer} onStart={() => startFocus()} />
+              )}
               {learning && <NextStepCard topic={learning} />}
               <ReviewTodayCard />
               <TodayHabitsCard
