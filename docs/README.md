@@ -10,6 +10,7 @@ Esta carpeta explica cómo está hecho el proyecto. Empieza por el documento que
 | [Desarrollo](desarrollo.md)               | Cómo levantar el proyecto, comandos, calidad y convenciones   |
 | [Formato del vault](formato-del-vault.md) | Cómo se guardan los datos en las notas (la especificación)    |
 | [Modelo de datos](modelo-de-datos.md)     | Qué guarda la base de datos de la app, tabla a tabla          |
+| [Requisitos y plan](requisitos/)          | La especificación completa del producto y el plan por fases   |
 | [Decisiones (ADR)](adr/)                  | Cada decisión técnica importante, con su contexto y su porqué |
 | [Diseño](design/)                         | Láminas de cada pestaña: la referencia visual de la app       |
 
