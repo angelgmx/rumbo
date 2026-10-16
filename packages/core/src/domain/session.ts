@@ -1,4 +1,3 @@
-import type { Counter } from "./counters";
 import type { ExerciseLevel } from "./exercises";
 import type { ModuleStatus } from "./learning";
 
@@ -6,14 +5,15 @@ import type { ModuleStatus } from "./learning";
 
 export const DEFAULT_SESSION_MINUTES = 25;
 
-/**
- * Lo que dura una sesión: lo que le queda al contador de minutos (o su objetivo si ya
- * lo llenó), el ciclo de trabajo del pomodoro o, sin contador de tiempo, el valor por defecto.
- */
-export function sessionMinutes(counter: Counter | undefined, pomodoroWork: number): number {
-  if (counter?.kind === "pomodoro") return pomodoroWork;
-  if (counter?.kind !== "minutes") return DEFAULT_SESSION_MINUTES;
-  return counter.target > counter.current ? counter.target - counter.current : counter.target;
+/** Lo que dura una sesión: lo que le queda a lo estimado (o todo si ya se pasó), o el valor por defecto. */
+export function sessionMinutes(estimated: number | undefined, spent = 0): number {
+  if (!estimated) return DEFAULT_SESSION_MINUTES;
+  return estimated > spent ? estimated - spent : estimated;
+}
+
+/** Suma lo que acaba de medir una sesión al tiempo real que ya llevaba la tarea. */
+export function creditSession(spent: number | undefined, minutes: number): number {
+  return (spent ?? 0) + Math.round(minutes);
 }
 
 export interface StudyModule {

@@ -12,19 +12,16 @@ import type { Inheritance } from "./useInheritance";
 import type { TaskContext } from "./useTaskContext";
 import type { TaskOptions } from "./useTaskOptions";
 
-/** Las propiedades de la tarea, una fila cada una; el estimado solo sale si hay datos. */
+/** Las propiedades de la tarea, una fila cada una; «Estimado / real» solo sale si hay datos. */
 export function TaskProperties({
   draft,
   context,
-  realMinutes,
   inheritance,
   options,
   onChange,
 }: {
   draft: TaskDraft;
   context: TaskContext;
-  /** Los minutos que lleva medidos el cronómetro de la tarea. */
-  realMinutes: number | undefined;
   inheritance: Inheritance | undefined;
   options: TaskOptions;
   onChange: (changes: Partial<TaskDraft>) => void;
@@ -76,10 +73,10 @@ export function TaskProperties({
         known={options.tags}
         onChange={(tags) => onChange({ tags })}
       />
-      {(draft.duration !== undefined || realMinutes !== undefined) && (
+      {(draft.duration !== undefined || draft.spent !== undefined) && (
         <EstimateProperty
           estimated={draft.duration}
-          real={realMinutes}
+          real={draft.spent}
           onChange={(duration) => onChange({ duration })}
         />
       )}

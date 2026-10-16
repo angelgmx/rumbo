@@ -111,17 +111,6 @@ export {
 } from "./domain/tasks";
 export { parseCapture, parseTaskTitle, type Capture, type TaskTitle } from "./domain/capture";
 export {
-  COUNTER_KINDS,
-  formatCounter,
-  isCounterComplete,
-  parseCounter,
-  creditSession,
-  setCounterMinutes,
-  stepCounter,
-  type Counter,
-  type CounterKind,
-} from "./domain/counters";
-export {
   BLOCK_KINDS,
   blockTitle,
   isRoutineOn,

@@ -9,7 +9,7 @@ export interface SessionRequest {
   title: string;
   minutes: number;
   place?: SessionPlace;
-  /** La tarea a cuyo contador se apunta lo trabajado. */
+  /** La tarea en cuyo tiempo real se apunta lo trabajado. */
   task?: Pick<Task, "path" | "line" | "text">;
 }
 
@@ -20,4 +20,8 @@ export interface SessionState {
   /** Segundos de rondas anteriores aún sin apuntar en la tarea. */
   banked: number;
   finished: boolean;
+  /** Modo pomodoro: rondas de trabajo seguidas de un descanso, con la config del vault. */
+  pomodoro: boolean;
+  /** La ronda en curso es un descanso: no se apunta en la tarea. */
+  resting: boolean;
 }

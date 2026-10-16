@@ -1,6 +1,5 @@
 import type { TaskDraft } from "@rumbo/core";
 import { TaskChips } from "./TaskChips";
-import { TaskCounter } from "./TaskCounter";
 import { TaskProperties } from "./TaskProperties";
 import { TaskResources } from "./TaskResources";
 import { TaskSteps } from "./TaskSteps";
@@ -10,7 +9,7 @@ import { useInheritance } from "./useInheritance";
 import type { TaskContext } from "./useTaskContext";
 import { useTaskOptions } from "./useTaskOptions";
 
-/** Lo que se ve en el panel, igual al crear y al editar: título, contador, propiedades y pasos. */
+/** Lo que se ve en el panel, igual al crear y al editar: título, propiedades y pasos. */
 export function TaskPanelBody({
   draft,
   context,
@@ -30,8 +29,6 @@ export function TaskPanelBody({
 }) {
   const options = useTaskOptions();
   const inheritance = useInheritance(draft);
-  const measured = draft.counter?.kind === "minutes" ? draft.counter.current : 0;
-  const realMinutes = measured > 0 ? measured : undefined;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 pb-6">
@@ -46,15 +43,9 @@ export function TaskPanelBody({
         />
         <TaskChips draft={draft} status={status} onChange={onPatch} />
       </div>
-      <TaskCounter
-        counter={draft.counter}
-        steps={draft.steps ?? []}
-        onChange={(counter) => onPatch({ counter })}
-      />
       <TaskProperties
         draft={draft}
         context={context}
-        realMinutes={realMinutes}
         inheritance={inheritance}
         options={options}
         onChange={onPatch}

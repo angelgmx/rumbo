@@ -4,6 +4,7 @@ import type { KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { StepsBar } from "@/features/tasks/StepsBar";
 import { SectionLabel } from "./SectionLabel";
 
 /** Los pasos de la tarea: una lista de casillas que se marcan, se escriben y se quitan. */
@@ -42,6 +43,13 @@ export function TaskSteps({
           Añadir
         </Button>
       </div>
+      {steps.length > 0 && (
+        <StepsBar
+          done={steps.filter((step) => step.done).length}
+          total={steps.length}
+          className="mb-1"
+        />
+      )}
       {steps.map((step, index) => (
         <div key={index} className="group flex items-center gap-3 py-0.5">
           <Checkbox

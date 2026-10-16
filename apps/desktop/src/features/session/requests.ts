@@ -12,13 +12,13 @@ import {
 } from "@rumbo/core";
 import type { SessionRequest } from "./types";
 
-/** Una tarea: su módulo, si lo tiene, es donde se trabaja; el tiempo sale de su contador. */
+/** Una tarea: su módulo, si lo tiene, es donde se trabaja; el tiempo, de lo que le queda por estimar. */
 export function taskRequest(rumbo: Rumbo, task: Task): SessionRequest {
-  const name = taskToDraft(task).module;
+  const { module: name, duration, spent } = taskToDraft(task);
   const found = name ? rumbo.learning.findModule(name) : undefined;
   return {
     title: task.text,
-    minutes: sessionMinutes(task.counter, rumbo.store.config.pomodoro.work),
+    minutes: sessionMinutes(duration, spent),
     task: { path: task.path, line: task.line, text: task.text },
     place: found && { topic: found.topic.path, module: found.module.name },
   };

@@ -1,4 +1,4 @@
-import type { Task, TaskDraft } from "@rumbo/core";
+import type { Task } from "@rumbo/core";
 import { PlayIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
@@ -33,13 +33,6 @@ export function EditTaskPanel({
     } catch {
       toast.error("No se ha podido guardar el cambio");
     }
-  }
-
-  // El contador se guarda al momento y no con el resto: lo mueven también el cronómetro y el pomodoro.
-  function change(changes: Partial<TaskDraft>) {
-    const { counter, ...rest } = changes;
-    if ("counter" in changes) void attempt(() => rumbo.tasks.setCounter(task, counter));
-    if (Object.keys(rest).length > 0) patch(rest);
   }
 
   const duplicate = () =>
@@ -78,7 +71,7 @@ export function EditTaskPanel({
           onChange: (done) => void attempt(() => rumbo.tasks.setDone(task, done)),
         }}
         creating={false}
-        onPatch={change}
+        onPatch={patch}
         onTitleChange={(text) => patch({ text })}
       />
       {!task.done && (

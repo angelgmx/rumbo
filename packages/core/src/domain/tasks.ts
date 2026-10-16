@@ -1,5 +1,4 @@
 import { CHECKBOX } from "./checkbox";
-import { formatCounter, parseCounter, type Counter } from "./counters";
 import type { IsoDate } from "./dates";
 import { linkTarget } from "./links";
 
@@ -22,8 +21,6 @@ export interface Task {
   tags: string[];
   /** Campos de Dataview como [area:: Negocio]. */
   fields: Record<string, string>;
-  /** Cronómetro, pomodoros, cantidad o progreso. Sin él, solo se marca hecha. */
-  counter?: Counter;
   /** Las casillas con más sangría justo debajo: no son tareas aparte, son sus pasos. */
   steps: TaskStep[];
   /** El resto de líneas con sangría debajo de la tarea. Vacío si no hay. */
@@ -57,7 +54,8 @@ export interface TaskDraft {
   tags?: string[];
   steps?: TaskStep[];
   notes?: string;
-  counter?: Counter;
+  /** Minutos que la sesión de trabajo ha medido en la tarea. */
+  spent?: number;
 }
 
 const PRIORITY_EMOJI: Record<Priority, string> = { high: "⏫", medium: "🔼", low: "🔽" };
@@ -138,7 +136,6 @@ function parseTaskText(path: string, line: number, done: boolean, raw: string): 
     priority: findPriority(raw),
     tags: [...raw.matchAll(/(?:^|\s)#([\p{L}\p{N}_/-]+)/gu)].map((m) => m[1]!),
     fields,
-    counter: parseCounter(fields.counter),
     steps: [],
     notes: "",
   };
@@ -204,7 +201,7 @@ export function formatTaskText(draft: TaskDraft): string {
     draft.module && `[module:: [[${draft.module}]]]`,
     draft.habit && `[habit:: ${draft.habit}]`,
     draft.duration && `[duration:: ${draft.duration}m]`,
-    draft.counter && `[counter:: ${formatCounter(draft.counter)}]`,
+    draft.spent && `[spent:: ${draft.spent}]`,
     draft.priority && PRIORITY_EMOJI[draft.priority],
     draft.recurrence && `🔁 ${draft.recurrence}`,
     draft.scheduled && `⏳ ${draft.scheduled}`,
@@ -258,7 +255,7 @@ const DRAFT_FIELDS = new Set([
   "module",
   "habit",
   "duration",
-  "counter",
+  "spent",
   "due",
   "scheduled",
   "completion",
@@ -292,35 +289,6 @@ export function updateTask(source: string, line: number, changes: TaskChanges): 
     : lines.slice(line + 1, end);
   lines.splice(line, end - line, head, ...children);
   return lines.join("\n");
-}
-
-/**
- * Pone o quita el contador cambiando solo su campo: el resto de la línea queda igual.
- * Se llama a menudo (cada minuto del cronómetro), así que no reescribe la tarea entera.
- */
-export function setTaskCounter(source: string, line: number, counter: Counter | undefined): string {
-  const lines = source.split("\n");
-  if (!CHECKBOX.test(lines[line] ?? "")) return source;
-
-  const field = /\s*\[counter::[^\]]*\]/;
-  const current = lines[line]!;
-  if (!counter) {
-    lines[line] = current.replace(field, "");
-    return lines.join("\n");
-  }
-
-  const value = `[counter:: ${formatCounter(counter)}]`;
-  lines[line] = field.test(current)
-    ? current.replace(/\[counter::[^\]]*\]/, value)
-    : insertBeforeSignifiers(current, value);
-  return lines.join("\n");
-}
-
-// El plugin Tasks lee sus emojis desde el final de la línea: un campo detrás los rompería.
-function insertBeforeSignifiers(line: string, text: string): string {
-  const index = line.search(/[⏫🔼🔽🔁⏳📅🛫✅]/u);
-  if (index === -1) return `${line.trimEnd()} ${text}`;
-  return `${line.slice(0, index).trimEnd()} ${text} ${line.slice(index)}`;
 }
 
 /** Borra una tarea con sus pasos y notas (las líneas con más sangría justo debajo). */
@@ -370,12 +338,11 @@ function dedent(lines: string[]): string[] {
 
 /** Lo que enseña el formulario de una tarea que ya existe. */
 export function taskToDraft(task: Task): TaskDraft {
-  const minutes = Number.parseInt(task.fields.duration ?? "", 10);
   return {
     text: task.text,
     scheduled: task.scheduled,
     due: task.due,
-    duration: Number.isNaN(minutes) ? undefined : minutes,
+    duration: minutesOf(task.fields.duration),
     priority: task.priority,
     recurrence: task.recurrence,
     area: linkTarget(task.fields.area) ?? task.fields.area,
@@ -385,7 +352,7 @@ export function taskToDraft(task: Task): TaskDraft {
     tags: task.tags,
     steps: task.steps,
     notes: task.notes,
-    counter: task.counter,
+    spent: minutesOf(task.fields.spent),
   };
 }
 
@@ -405,4 +372,9 @@ export function habitHistoryFromTasks(tasks: Task[], habitKey: string): Map<IsoD
     byDay.set(date, (byDay.get(date) ?? true) && task.done);
   }
   return byDay;
+}
+
+function minutesOf(value: string | undefined): number | undefined {
+  const minutes = Number.parseInt(value ?? "", 10);
+  return Number.isNaN(minutes) ? undefined : minutes;
 }

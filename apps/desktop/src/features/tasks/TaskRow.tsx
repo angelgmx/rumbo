@@ -1,10 +1,10 @@
 import type { Priority, Task } from "@rumbo/core";
 import { ClockIcon, FileTextIcon, FolderKanbanIcon, RepeatIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CounterChip } from "@/features/counters/CounterChip";
 import { formatShortDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { AreaDot } from "./AreaDot";
+import { StepsChip } from "./StepsChip";
 import { areaOf, projectOf } from "./taskFilters";
 import { noteName, PRIORITY_LABEL } from "./taskLabels";
 
@@ -96,7 +96,7 @@ export function TaskRow({
             {formatShortDay(date)}
           </span>
         )}
-        {task.counter && <CounterChip counter={task.counter} />}
+        <StepsChip steps={task.steps} />
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 import { parseCapture } from "../domain/capture";
-import { creditSession, stepCounter, type Counter } from "../domain/counters";
 import type { IsoDate } from "../domain/dates";
 import { linkTarget } from "../domain/links";
 import { sectionLines } from "../domain/sections";
+import { creditSession } from "../domain/session";
 import {
   appendTask,
   appendTaskDraft,
@@ -10,8 +10,8 @@ import {
   isInView,
   parseTasks,
   removeTask,
-  setTaskCounter,
   setTaskDone,
+  taskToDraft,
   updateTask,
   type Task,
   type TaskChanges,
@@ -105,29 +105,13 @@ export class TaskService {
     await this.edit(task.path, (source) => updateTask(source, task.line, changes));
   }
 
-  /** Pone, cambia o quita (con `undefined`) el contador de una tarea. */
-  async setCounter(task: Task, counter: Counter | undefined): Promise<void> {
-    await this.edit(task.path, (source) => setTaskCounter(source, task.line, counter));
-  }
-
-  /** +1 / -1 en cantidades y progreso; +1 al terminar un pomodoro. */
-  async stepCounter(task: Task, delta: number): Promise<void> {
-    if (!task.counter) return;
-    await this.setCounter(task, stepCounter(task.counter, delta));
-  }
-
-  /** Apunta una sesión de trabajo en el contador de la tarea, buscándola donde esté ahora. */
-  async recordSession(
-    ref: Pick<Task, "path" | "line" | "text">,
-    minutes: number,
-    completed: boolean,
-  ): Promise<void> {
+  /** Apunta los minutos de una sesión de trabajo en la tarea, buscándola donde esté ahora. */
+  async recordSession(ref: Pick<Task, "path" | "line" | "text">, minutes: number): Promise<void> {
     const task = this.all().find(
       ({ path, line, text }) => path === ref.path && line === ref.line && text === ref.text,
     );
-    if (!task?.counter) return;
-    const counter = creditSession(task.counter, minutes, completed);
-    if (counter !== task.counter) await this.setCounter(task, counter);
+    if (!task) return;
+    await this.update(task, { spent: creditSession(taskToDraft(task).spent, minutes) });
   }
 
   async remove(task: Task): Promise<void> {

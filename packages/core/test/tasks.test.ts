@@ -8,6 +8,7 @@ import {
   parseTasks,
   removeTask,
   setTaskDone,
+  taskToDraft,
   updateTask,
 } from "../src/domain/tasks";
 
@@ -287,5 +288,24 @@ describe("tasks inside code blocks", () => {
       ["Real task", 0],
       ["Another real task", 4],
     ]);
+  });
+});
+
+describe("time spent", () => {
+  it("writes the spent minutes and reads them back", () => {
+    const source = appendTaskDraft("", { text: "Leer", duration: 30, spent: 12 });
+    expect(source).toBe("- [ ] Leer [duration:: 30m] [spent:: 12]\n");
+    expect(taskToDraft(parseTasks("x.md", source)[0]!)).toMatchObject({ duration: 30, spent: 12 });
+  });
+
+  it("updates the spent minutes without touching the rest of the line", () => {
+    const next = updateTask("- [ ] Leer [spent:: 12] ⏳ 2026-10-16", 0, { spent: 37 });
+    expect(next).toBe("- [ ] Leer [spent:: 37] ⏳ 2026-10-16");
+  });
+
+  it("keeps a counter from older vaults when the task changes", () => {
+    const old = "- [ ] Leer [counter:: minutes 12/30] ⏳ 2026-10-16";
+    expect(parseTasks("x.md", old)[0]).toMatchObject({ text: "Leer" });
+    expect(updateTask(old, 0, { text: "Leer más" })).toContain("[counter:: minutes 12/30]");
   });
 });

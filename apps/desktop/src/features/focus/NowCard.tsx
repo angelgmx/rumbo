@@ -1,12 +1,10 @@
-import type { CounterKind } from "@rumbo/core";
 import { MoonIcon, PlayIcon, SparklesIcon, TimerIcon } from "lucide-react";
 import { useEffect, useEffectEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Kbd } from "@/components/ui/kbd";
-import { StepCounter } from "@/features/counters/StepCounter";
-import { hasCounter } from "@/features/counters/countedTask";
 import { useSession } from "@/features/session/SessionProvider";
+import { StepsBar } from "@/features/tasks/StepsBar";
 import { cn } from "@/lib/utils";
 import { describeChoice, QUICK_MINUTES, type FocusChoice } from "./choice";
 
@@ -22,7 +20,8 @@ interface NowCardProps {
 export function NowCard({ choice, badDay, onStart, onQuickStart, onToggleBadDay }: NowCardProps) {
   const view = choice && describeChoice(choice);
   const task = choice?.kind === "task" ? choice.task : undefined;
-  const stepped = task && hasCounter(task) && isStepped(task.counter.kind) ? task : undefined;
+  const steps = task?.steps ?? [];
+  const stepsDone = steps.filter((step) => step.done).length;
   const { active } = useSession();
 
   const onSpace = useEffectEvent((event: KeyboardEvent) => {
@@ -55,7 +54,14 @@ export function NowCard({ choice, badDay, onStart, onQuickStart, onToggleBadDay 
         <p className="text-muted-foreground">Nada pendiente por ahora. Buen trabajo.</p>
       )}
 
-      {stepped && <StepCounter key={`${stepped.path}:${stepped.line}`} task={stepped} />}
+      {steps.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <StepsBar done={stepsDone} total={steps.length} />
+          <p className="font-mono text-xs text-muted-foreground">
+            {stepsDone} de {steps.length} pasos
+          </p>
+        </div>
+      )}
 
       {choice && (
         <>
@@ -92,8 +98,6 @@ export function NowCard({ choice, badDay, onStart, onQuickStart, onToggleBadDay 
     </Card>
   );
 }
-
-const isStepped = (kind: CounterKind) => kind === "count" || kind === "progress";
 
 const link =
   "flex items-center gap-2 transition-colors hover:text-primary-text disabled:pointer-events-none disabled:opacity-50";

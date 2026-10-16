@@ -12,10 +12,14 @@ export interface Countdown {
 }
 
 /**
- * Cuenta atrás que solo vive en pantalla. Guarda la hora a la que termina en vez
- * de restar segundos, así no se desfasa aunque la ventana se congele un rato.
+ * Cuenta atrás que solo vive en pantalla; al terminar, `onFinish` puede devolver los minutos
+ * de una ronda que sigue sin pausa. Guarda la hora a la que termina en vez de restar segundos,
+ * así no se desfasa aunque la ventana se congele un rato.
  */
-export function useCountdown(initialMinutes: number, onFinish: () => void): Countdown {
+export function useCountdown(
+  initialMinutes: number,
+  onFinish: () => number | undefined,
+): Countdown {
   const [pausedSeconds, setPausedSeconds] = useState(Math.round(initialMinutes * 60));
   const [endsAt, setEndsAt] = useState<number>();
   const [now, setNow] = useState(() => Date.now());
@@ -31,7 +35,10 @@ export function useCountdown(initialMinutes: number, onFinish: () => void): Coun
       }
       setEndsAt(undefined);
       setPausedSeconds(0);
-      finish();
+      const next = finish();
+      if (next === undefined) return;
+      setNow(Date.now());
+      setEndsAt(Date.now() + next * 60_000);
     }, 1000);
     return () => clearInterval(timer);
   }, [endsAt]);

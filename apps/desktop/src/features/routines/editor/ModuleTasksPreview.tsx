@@ -1,12 +1,5 @@
 import type { TaskDraft } from "@rumbo/core";
-import {
-  CheckIcon,
-  ClockIcon,
-  HashIcon,
-  SparklesIcon,
-  TimerIcon,
-  ToggleRightIcon,
-} from "lucide-react";
+import { CheckIcon, ClockIcon, ListChecksIcon, SparklesIcon } from "lucide-react";
 
 /** «Genera hoy 3 tareas»: lo que creará este bloque de tema al empezar la rutina. */
 export function ModuleTasksPreview({ tasks }: { tasks: TaskDraft[] }) {
@@ -26,7 +19,7 @@ export function ModuleTasksPreview({ tasks }: { tasks: TaskDraft[] }) {
           <li key={task.text} className="flex items-center gap-2.5 text-sm">
             <span className="size-3.5 rounded-sm border" aria-hidden />
             <span className="flex-1 truncate">{shortText(task.text)}</span>
-            <CounterChip task={task} />
+            <TaskHint task={task} />
           </li>
         ))}
       </ul>
@@ -34,32 +27,30 @@ export function ModuleTasksPreview({ tasks }: { tasks: TaskDraft[] }) {
   );
 }
 
-function CounterChip({ task }: { task: TaskDraft }) {
-  const { counter } = task;
+function TaskHint({ task }: { task: TaskDraft }) {
   const className =
     "flex h-6 items-center gap-1 rounded-md border px-2 font-mono text-xs text-muted-foreground";
 
-  if (!counter) {
+  if (task.steps?.length) {
     return (
       <span className={className}>
-        <CheckIcon className="size-3" />
-        Casilla
+        <ListChecksIcon className="size-3" />
+        {task.steps.length} pasos
       </span>
     );
   }
-  if (counter.kind === "minutes") {
+  if (task.duration) {
     return (
       <span className={className}>
         <ClockIcon className="size-3" />
-        {counter.target} min
+        {task.duration} min
       </span>
     );
   }
-  const Icon = { progress: ToggleRightIcon, pomodoro: TimerIcon, count: HashIcon }[counter.kind];
   return (
     <span className={className}>
-      <Icon className="size-3" />
-      {counter.current} / {counter.target}
+      <CheckIcon className="size-3" />
+      Casilla
     </span>
   );
 }

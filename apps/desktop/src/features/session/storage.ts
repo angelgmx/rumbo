@@ -78,6 +78,8 @@ function isStoredSession(value: unknown): value is StoredSession {
     typeof state.length === "number" &&
     typeof state.banked === "number" &&
     typeof state.finished === "boolean" &&
+    typeof state.pomodoro === "boolean" &&
+    typeof state.resting === "boolean" &&
     typeof request.title === "string" &&
     typeof request.minutes === "number"
   );

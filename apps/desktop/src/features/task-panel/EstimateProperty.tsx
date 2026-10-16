@@ -4,7 +4,7 @@ import { formatMinutes } from "@/lib/format";
 import { OptionList } from "./OptionList";
 import { durationOptions } from "./taskChoices";
 
-/** Lo que calculaste que llevaría y lo que lleva de verdad según el cronómetro. */
+/** Lo que calculaste que llevaría y lo que lleva de verdad según la sesión de trabajo. */
 export function EstimateProperty({
   estimated,
   real,

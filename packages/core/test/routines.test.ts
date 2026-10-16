@@ -96,7 +96,7 @@ describe("routine domain", () => {
     expect(weeklyCompliance(routine, [], "2026-10-19")).toEqual([]);
   });
 
-  it("turns a topic block into today's tasks with counters", () => {
+  it("turns a topic block into today's tasks with their estimate and steps", () => {
     const tasks = moduleBlockTasks(
       {
         roadmapTitle: "Java",
@@ -119,14 +119,18 @@ describe("routine domain", () => {
         scheduled: "2026-10-19",
         habit: "programacion",
         area: undefined,
-        counter: { kind: "minutes", current: 0, target: 30 },
+        duration: 30,
       },
       {
         text: "Java · Strings: ejercicios 03–05",
         scheduled: "2026-10-19",
         habit: "programacion",
         area: undefined,
-        counter: { kind: "progress", current: 0, target: 3 },
+        steps: [
+          { text: "03 — a", done: false },
+          { text: "04 — b", done: false },
+          { text: "05 — c", done: false },
+        ],
       },
     ]);
   });
@@ -137,7 +141,7 @@ describe("routine domain", () => {
       routine.blocks[1]!,
       "2026-10-19",
     );
-    expect(task).toMatchObject({ counter: { kind: "minutes", target: 45 } });
+    expect(task).toMatchObject({ duration: 45 });
     expect(task!.text).toContain("repasar");
   });
 });
@@ -213,7 +217,7 @@ describe("RoutineService", () => {
       "Python basics · Variables: ejercicios 01–03",
     ]);
     expect(files.get("Inbox/Inbox.md")).toContain(
-      "Python basics · Variables: ejercicios 01–03 [counter:: progress 0/3] ⏳ 2026-10-16",
+      "Python basics · Variables: ejercicios 01–03 ⏳ 2026-10-16\n    - [ ] 01 — ",
     );
     expect(await rumbo.routines.planBlock(summary!, 1)).toEqual([]);
   });

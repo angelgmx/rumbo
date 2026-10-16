@@ -19,6 +19,7 @@ export interface SessionActions {
   toggle: () => void;
   restart: () => void;
   extend: () => void;
+  togglePomodoro: () => void;
   another: () => void;
   close: () => void;
 }
@@ -26,26 +27,39 @@ export interface SessionActions {
 /**
  * La sesión de trabajo: cuenta atrás, tiempo trabajado y su copia en localStorage.
  * Lo trabajado se apunta en la tarea solo al terminar o cerrar, nunca cada segundo.
+ * En modo pomodoro cada ronda de trabajo va seguida de su descanso, que no se apunta.
  */
 export function useSessionEngine(): { session?: ActiveSession; actions: SessionActions } {
   const rumbo = useRumbo();
   const [restored] = useState(restore);
   const [state, setState] = useState(restored?.state);
-  function record(request: SessionRequest, seconds: number, completed: boolean) {
+  const { work, rest } = rumbo.store.config.pomodoro;
+
+  function record(request: SessionRequest, seconds: number) {
     const minutes = seconds >= MIN_CREDIT_SECONDS ? seconds / 60 : 0;
-    if (!request.task || (minutes === 0 && !completed)) return;
+    if (!request.task || minutes === 0) return;
     rumbo.tasks
-      .recordSession(request.task, minutes, completed)
+      .recordSession(request.task, minutes)
       .catch(() => toast.error("No se ha podido apuntar el tiempo en la tarea"));
   }
 
-  function finish() {
-    if (!state) return;
-    record(state.request, state.banked + state.length, true);
-    setState({ ...state, banked: 0, length: 0, finished: true });
+  /** Termina la ronda; si es de trabajo en pomodoro, devuelve los minutos del descanso que sigue. */
+  function finish(): number | undefined {
+    if (!state) return undefined;
+    if (state.resting) {
+      setState({ ...state, banked: 0, length: 0, resting: false, finished: true });
+      return undefined;
+    }
+    record(state.request, state.banked + state.length);
+    if (!state.pomodoro) {
+      setState({ ...state, banked: 0, length: 0, finished: true });
+      return undefined;
+    }
+    setState({ ...state, banked: 0, length: rest * 60, resting: true });
+    return rest;
   }
 
-  const countdown = useCountdown((restored?.secondsLeft ?? 0) / 60, () => finish());
+  const countdown = useCountdown((restored?.secondsLeft ?? 0) / 60, finish);
 
   const { running, secondsLeft } = countdown;
   useEffect(
@@ -64,29 +78,36 @@ export function useSessionEngine(): { session?: ActiveSession; actions: SessionA
   const resume = useEffectEvent(() => {
     if (resumed.current || !restored) return;
     resumed.current = true;
-    if (restored.owed) record(restored.state.request, restored.owed, true);
+    if (restored.owed) record(restored.state.request, restored.owed);
     else if (restored.running) countdown.start(restored.secondsLeft / 60);
   });
   useEffect(() => resume(), []);
 
   const workedSeconds = (current: SessionState) =>
-    current.banked + current.length - countdown.secondsLeft;
+    current.resting ? 0 : current.banked + current.length - countdown.secondsLeft;
 
   /** Apunta lo trabajado si la sesión sigue abierta; una terminada ya se apuntó. */
   function settle(current: SessionState | undefined) {
-    if (current && !current.finished) record(current.request, workedSeconds(current), false);
+    if (current && !current.finished) record(current.request, workedSeconds(current));
   }
 
   const actions: SessionActions = {
     start(request) {
       settle(state);
-      setState({ request, length: request.minutes * 60, banked: 0, finished: false });
+      setState({
+        request,
+        length: request.minutes * 60,
+        banked: 0,
+        finished: false,
+        pomodoro: false,
+        resting: false,
+      });
       countdown.start(request.minutes);
     },
     toggle: countdown.toggle,
     restart() {
       if (!state) return;
-      const { minutes } = state.request;
+      const minutes = roundMinutes(state);
       setState({ ...state, banked: workedSeconds(state), length: minutes * 60 });
       countdown.start(minutes);
     },
@@ -95,10 +116,20 @@ export function useSessionEngine(): { session?: ActiveSession; actions: SessionA
       setState({ ...state, length: state.length + EXTRA_MINUTES * 60 });
       countdown.extend(EXTRA_MINUTES);
     },
+    togglePomodoro() {
+      if (!state) return;
+      if (state.pomodoro || state.resting) {
+        setState({ ...state, pomodoro: !state.pomodoro });
+        return;
+      }
+      setState({ ...state, pomodoro: true, banked: workedSeconds(state), length: work * 60 });
+      countdown.start(work);
+    },
     another() {
       if (!state) return;
-      setState({ ...state, length: EXTRA_MINUTES * 60, finished: false });
-      countdown.start(EXTRA_MINUTES);
+      const minutes = state.pomodoro ? work : EXTRA_MINUTES;
+      setState({ ...state, length: minutes * 60, finished: false });
+      countdown.start(minutes);
     },
     close() {
       settle(state);
@@ -106,6 +137,11 @@ export function useSessionEngine(): { session?: ActiveSession; actions: SessionA
       setState(undefined);
     },
   };
+
+  function roundMinutes(current: SessionState): number {
+    if (current.resting) return rest;
+    return current.pomodoro ? work : current.request.minutes;
+  }
 
   const session = state && {
     ...state,
@@ -129,9 +165,9 @@ function restore() {
       : Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
   const expired = endsAt !== undefined && secondsLeft === 0 && !state.finished;
   return {
-    state: expired ? { ...state, banked: 0, length: 0, finished: true } : state,
+    state: expired ? { ...state, banked: 0, length: 0, resting: false, finished: true } : state,
     secondsLeft,
     running: endsAt !== undefined && secondsLeft > 0,
-    owed: expired ? state.banked + state.length : 0,
+    owed: expired && !state.resting ? state.banked + state.length : 0,
   };
 }

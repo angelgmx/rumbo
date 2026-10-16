@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { addMinutesToTime, minutesBetween } from "./agenda";
-import type { Counter } from "./counters";
 import { addDays, startOfWeek, WEEKDAYS, type IsoDate, type Weekday } from "./dates";
 import {
   isDone,
@@ -225,7 +224,7 @@ export function moduleBlockTasks(
     tasks.push({
       ...base,
       text: `${prefix}: ver ${work.pendingResource.title}`,
-      counter: { kind: "minutes", current: 0, target: minutes },
+      duration: minutes,
     });
   }
 
@@ -234,13 +233,16 @@ export function moduleBlockTasks(
     tasks.push({
       ...base,
       text: `${prefix}: ${exercisesLabel(exercises)}`,
-      counter: { kind: "progress", current: 0, target: exercises.length },
+      steps: exercises.map(({ id, title }) => ({ text: `${id} — ${title}`, done: false })),
     });
   }
 
   if (tasks.length === 0) {
-    const counter: Counter = { kind: "minutes", current: 0, target: block.minutes };
-    tasks.push({ ...base, text: `${prefix}: repasar conceptos y criterio de dominado`, counter });
+    tasks.push({
+      ...base,
+      text: `${prefix}: repasar conceptos y criterio de dominado`,
+      duration: block.minutes,
+    });
   }
   return tasks;
 }

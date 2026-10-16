@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { creditSession } from "../src/domain/counters";
 import {
+  creditSession,
   DEFAULT_SESSION_MINUTES,
   nextStudyStep,
   sessionMinutes,
@@ -14,20 +14,14 @@ function module(name: string, order: number, overrides: Partial<StudyModule> = {
 const exercise = (id: string, done = false) => ({ id, title: `Ex ${id}`, level: 1 as const, done });
 
 describe("sessionMinutes", () => {
-  it("uses what a minutes counter still needs, or its target once full", () => {
-    expect(sessionMinutes({ kind: "minutes", current: 12, target: 30 }, 25)).toBe(18);
-    expect(sessionMinutes({ kind: "minutes", current: 30, target: 30 }, 25)).toBe(30);
+  it("uses what is left of the estimate, or all of it once spent", () => {
+    expect(sessionMinutes(30, 12)).toBe(18);
+    expect(sessionMinutes(30, 30)).toBe(30);
+    expect(sessionMinutes(30)).toBe(30);
   });
 
-  it("uses the pomodoro work cycle", () => {
-    expect(sessionMinutes({ kind: "pomodoro", current: 0, target: 4 }, 30)).toBe(30);
-  });
-
-  it("falls back to the default without a timed counter", () => {
-    expect(sessionMinutes(undefined, 25)).toBe(DEFAULT_SESSION_MINUTES);
-    expect(sessionMinutes({ kind: "count", current: 1, target: 8 }, 25)).toBe(
-      DEFAULT_SESSION_MINUTES,
-    );
+  it("falls back to the default without an estimate", () => {
+    expect(sessionMinutes(undefined, 12)).toBe(DEFAULT_SESSION_MINUTES);
   });
 });
 
@@ -84,19 +78,8 @@ describe("nextStudyStep", () => {
 });
 
 describe("creditSession", () => {
-  it("adds the worked minutes to a minutes counter", () => {
-    const counter = { kind: "minutes" as const, current: 10, target: 30 };
-    expect(creditSession(counter, 24.6, false).current).toBe(35);
-  });
-
-  it("counts a cycle only when the pomodoro time was completed", () => {
-    const counter = { kind: "pomodoro" as const, current: 1, target: 4 };
-    expect(creditSession(counter, 25, true).current).toBe(2);
-    expect(creditSession(counter, 10, false)).toBe(counter);
-  });
-
-  it("leaves other counters alone", () => {
-    const counter = { kind: "count" as const, current: 1, target: 4 };
-    expect(creditSession(counter, 25, true)).toBe(counter);
+  it("adds the rounded worked minutes to the time already spent", () => {
+    expect(creditSession(10, 24.6)).toBe(35);
+    expect(creditSession(undefined, 12)).toBe(12);
   });
 });

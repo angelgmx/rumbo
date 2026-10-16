@@ -41,7 +41,7 @@ export function DoneCard({
           </Button>
         )}
         <Button size="sm" variant="outline" onClick={actions.another}>
-          Otros 5 min
+          {session.pomodoro ? "Otro pomodoro" : "Otros 5 min"}
         </Button>
       </div>
     </>
