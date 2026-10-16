@@ -14,7 +14,7 @@ Esta carpeta explica cómo está hecho el proyecto. Empieza por el documento que
 
 ## Estado
 
-El proyecto avanza por fases (ver el [roadmap](roadmap.md)). Ahora mismo cierra la **Fase 2 (Aprender)** y prepara la **Fase 3 (Rutinas y Hoy sin fricción)**.
+El proyecto avanza por fases (ver el [roadmap](roadmap.md)). Ahora mismo cierra la **Fase 2 (Roadmaps y Ejercicios)** y prepara la **Fase 3 (Rutinas y Foco sin fricción)**.
 
 ## Reglas en una línea
 

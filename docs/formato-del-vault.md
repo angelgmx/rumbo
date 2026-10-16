@@ -215,7 +215,7 @@ parent: "[[Visión]]"
 deadline: 2027-06-30
 ```
 
-### Jerarquía de Aprender
+### Jerarquía de Roadmaps
 
 ```
 Área            Desarrollo                          type: area
@@ -233,7 +233,7 @@ deadline: 2027-06-30
 - **Ruta**: un camino con orden y fechas por un tema. Un tema puede tener varias; cada una dice a qué tema pertenece con `area:`.
 - **Módulo**: cada paso de una ruta. Sus ejercicios, apuntes y retos salen de las carpetas del tema.
 
-En la app: **Aprender** → **Tema** (pestañas Resumen · Ruta · Apuntes · Ejercicios · Retos · Recursos) → **Módulo**. Las áreas tienen su propia página (Fase 4).
+En la app: **Roadmaps** → **Tema** (pestañas Resumen · Ruta · Apuntes · Ejercicios · Retos · Recursos) → **Módulo**. Las áreas tienen su propia página (Fase 4).
 
 ### Ruta de aprendizaje
 

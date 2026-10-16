@@ -6,11 +6,11 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QuickCaptureProvider } from "@/features/capture/QuickCapture";
 import { HabitsScreen } from "@/features/habits/HabitsScreen";
-import { LearnScreen } from "@/features/learn/LearnScreen";
-import { ModuleScreen } from "@/features/learn/ModuleScreen";
-import { TopicScreen } from "@/features/learn/TopicScreen";
+import { RoadmapsScreen } from "@/features/roadmaps/RoadmapsScreen";
+import { ModuleScreen } from "@/features/roadmaps/ModuleScreen";
+import { TopicScreen } from "@/features/roadmaps/TopicScreen";
 import { TasksScreen } from "@/features/tasks/TasksScreen";
-import { TodayScreen } from "@/features/today/TodayScreen";
+import { FocusScreen } from "@/features/focus/FocusScreen";
 import { AppShell } from "@/layout/AppShell";
 import { SidebarProvider } from "@/layout/SidebarState";
 import { VaultGate } from "./VaultGate";
@@ -30,11 +30,11 @@ export function App() {
                 <SidebarProvider>
                   <AppShell>
                     <Switch>
-                      <Route path="/" component={TodayScreen} />
+                      <Route path="/" component={FocusScreen} />
                       <Route path="/tareas/:view" component={TasksScreen} />
-                      <Route path="/aprender" component={LearnScreen} />
-                      <Route path="/aprender/:topic" component={TopicScreen} />
-                      <Route path="/aprender/:topic/:module" component={ModuleScreen} />
+                      <Route path="/roadmaps" component={RoadmapsScreen} />
+                      <Route path="/roadmaps/:topic" component={TopicScreen} />
+                      <Route path="/roadmaps/:topic/:module" component={ModuleScreen} />
                       <Route path="/habitos" component={HabitsScreen} />
                     </Switch>
                   </AppShell>

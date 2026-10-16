@@ -1,4 +1,4 @@
-import { FlameIcon, GraduationCapIcon, InboxIcon, SunIcon, type LucideIcon } from "lucide-react";
+import { BookOpenIcon, FlameIcon, InboxIcon, SunIcon, type LucideIcon } from "lucide-react";
 import { Link, useRoute } from "wouter";
 import { Logo } from "@/components/Logo";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -6,11 +6,12 @@ import { cn } from "@/lib/utils";
 import { SettingsMenu } from "./SettingsMenu";
 import { useSidebar } from "./SidebarState";
 
+// Mismo orden que las páginas de la especificación. Cada página entra aquí cuando existe.
 const SCREENS: { href: string; match: string; label: string; icon: LucideIcon }[] = [
-  { href: "/", match: "/", label: "Hoy", icon: SunIcon },
+  { href: "/", match: "/", label: "Foco", icon: SunIcon },
   { href: "/tareas/inbox", match: "/tareas/*?", label: "Tareas", icon: InboxIcon },
-  { href: "/aprender", match: "/aprender/*?", label: "Aprender", icon: GraduationCapIcon },
   { href: "/habitos", match: "/habitos", label: "Hábitos", icon: FlameIcon },
+  { href: "/roadmaps", match: "/roadmaps/*?", label: "Roadmaps", icon: BookOpenIcon },
 ];
 
 export function NavRail() {

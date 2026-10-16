@@ -79,7 +79,7 @@ function Topic({ topic }: { topic: TopicSummary }) {
       <main className="flex-1 overflow-y-auto p-6">
         <div className="mx-auto flex max-w-7xl flex-col gap-5">
           <PageTitle
-            backHref="/aprender"
+            backHref="/roadmaps"
             icon={topic}
             title={topic.title}
             subtitle={subtitle(topic)}

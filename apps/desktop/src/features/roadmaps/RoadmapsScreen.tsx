@@ -37,8 +37,8 @@ import { noteCount } from "./topic";
 
 type View = "areas" | "roadmaps";
 
-/** Inicio de Aprender: lo que toca hoy y todos tus temas, agrupados por área. */
-export function LearnScreen() {
+/** Roadmaps: lo que toca hoy y todos tus temas, agrupados por área. */
+export function RoadmapsScreen() {
   const topics = useVaultQuery((r) => r.learning.topics()).data ?? [];
   const due = useDueCards();
   const [view, setView] = useState<View>("areas");
@@ -47,11 +47,11 @@ export function LearnScreen() {
 
   return (
     <>
-      <ScreenHeader title="Aprender" />
+      <ScreenHeader title="Roadmaps" />
       <main className="flex-1 overflow-y-auto p-6">
         <div className="mx-auto flex max-w-7xl flex-col gap-5">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Aprender</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">Roadmaps</h1>
             <p className="mt-1 text-muted-foreground">
               {active.length} {active.length === 1 ? "ruta en marcha" : "rutas en marcha"} ·{" "}
               {due.length} conceptos para repasar hoy

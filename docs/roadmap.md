@@ -6,8 +6,8 @@ El proyecto avanza por fases. Una fase no empieza hasta que la anterior se usa d
 | ------------------------------- | ------- | --------------------------------------------------------------------------------------------------- | ------------------------------- |
 | 0. Fundamentos                  | —       | Formato del vault, plantillas de Obsidian, vault de ejemplo, ADR                                    | Hecha                           |
 | 1. Esqueleto                    | v0.1    | App de escritorio, Hoy, hábitos, tareas, agenda, captura rápida, tema claro/oscuro                  | Hecha                           |
-| 2. Aprender                     | v0.2    | Rutas, temas, módulos, ejercicios y retos, repaso, ritmo de la ruta                                 | **En curso**                    |
-| 3. Rutinas y Hoy sin fricción   | v0.3    | Rutinas, contadores por tarea, botón Empezar, modo 5 minutos, día malo, cerrar el día, modo enfoque | **Diseñada** · lógica en `core` |
+| 2. Roadmaps y Ejercicios        | v0.2    | Rutas, temas, módulos, ejercicios y retos, repaso, ritmo de la ruta                                 | **En curso**                    |
+| 3. Rutinas y Foco sin fricción  | v0.3    | Rutinas, contadores por tarea, botón Empezar, modo 5 minutos, día malo, cerrar el día, modo enfoque | **Diseñada** · lógica en `core` |
 | 4. Calendario                   | v0.4    | Semana, día y mes con rutinas y hábitos, arrastrar tareas, avisos                                   | Pendiente                       |
 | 5. Notas y lectura fácil        | v0.5    | Árbol, lector, editor, búsqueda `Ctrl K`, modo dislexia                                             | Pendiente                       |
 | 6. Áreas, objetivos y proyectos | v0.6    | Áreas, visión, objetivos, proyectos y estimación de si llegas a tiempo                              | Pendiente                       |
@@ -81,3 +81,9 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] Un bloque de tema genera las tareas del día; completar un bloque marca su hábito y empieza el tema
 
 **Pantallas:** cuando el diseño esté aprobado.
+
+**Nombres de la especificación (16 oct):**
+
+- [x] Raíl con los nombres y el orden de la especificación: Hoy pasa a **Foco** y Aprender a **Roadmaps**
+- [ ] Galería de Roadmaps y página **Ejercicios** (láminas `08-roadmaps` y `11-ejercicios`)
+- [ ] La página de tema pasa a **Áreas** cuando exista esa pestaña

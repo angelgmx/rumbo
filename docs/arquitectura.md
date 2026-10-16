@@ -98,7 +98,7 @@ Cada capa solo usa las de debajo. Nunca al revés.
 
 ## Flujo de un cambio
 
-Ejemplo: marcar «Lectura: 25 páginas» en Hoy.
+Ejemplo: marcar «Lectura: 25 páginas» en Foco.
 
 1. La UI llama a `rumbo.habits.setValue("lectura", 25)`.
 2. `HabitService` pide a `DailyService` la daily de hoy (la crea si no existe).

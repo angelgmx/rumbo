@@ -16,7 +16,7 @@ pnpm build      # instaladores para Linux (AppImage, deb y rpm)
 | `src/app`           | Arranque: proveedores, rutas (`App.tsx`), abrir el vault (`VaultGate.tsx`) y el contexto de Rumbo                      |
 | `src/platform`      | Lo único que conoce Tauri: sistema de ficheros, elegir y recordar el vault, watcher, abrir enlaces y notas en Obsidian |
 | `src/layout`        | El marco de la app: raíl de iconos, cabecera de cada pantalla, menú de ajustes                                         |
-| `src/features`      | Una carpeta por pantalla o función: `today`, `habits`, `tasks`, `learn`, `capture`, `welcome`                          |
+| `src/features`      | Una carpeta por pantalla o función: `focus`, `tasks`, `habits`, `roadmaps`, `capture`, `welcome`                       |
 | `src/components`    | Componentes propios que se usan en varias pantallas (logo, icono e ilustración de área, anillo de progreso)            |
 | `src/assets`        | Ilustraciones de las áreas en claro y oscuro, exportadas del generador del diseño                                      |
 | `src/components/ui` | Componentes de shadcn/ui (se añaden con `pnpm dlx shadcn@latest add`, no se editan a mano)                             |
