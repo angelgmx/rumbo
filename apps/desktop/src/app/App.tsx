@@ -5,11 +5,14 @@ import { useHashLocation } from "wouter/use-hash-location";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QuickCaptureProvider } from "@/features/capture/QuickCapture";
+import { ExerciseScreen } from "@/features/exercises/ExerciseScreen";
+import { ExercisesScreen } from "@/features/exercises/ExercisesScreen";
 import { HabitsScreen } from "@/features/habits/HabitsScreen";
 import { RoadmapsScreen } from "@/features/roadmaps/RoadmapsScreen";
 import { RoutineEditorScreen } from "@/features/routines/editor/RoutineEditorScreen";
 import { RoutinesScreen } from "@/features/routines/RoutinesScreen";
 import { ModuleScreen } from "@/features/roadmaps/ModuleScreen";
+import { RoadmapScreen } from "@/features/roadmaps/RoadmapScreen";
 import { TopicScreen } from "@/features/roadmaps/TopicScreen";
 import { TasksScreen } from "@/features/tasks/TasksScreen";
 import { FocusScreen } from "@/features/focus/FocusScreen";
@@ -35,10 +38,16 @@ export function App() {
                       <Route path="/" component={FocusScreen} />
                       <Route path="/tareas/:view" component={TasksScreen} />
                       <Route path="/roadmaps" component={RoadmapsScreen} />
-                      <Route path="/roadmaps/:topic" component={TopicScreen} />
+                      <Route path="/roadmaps/:topic" component={RoadmapScreen} />
                       <Route path="/roadmaps/:topic/:module" component={ModuleScreen} />
                       <Route path="/rutinas" component={RoutinesScreen} />
                       <Route path="/rutinas/:routine" component={RoutineEditorScreen} />
+                      <Route path="/ejercicios" component={ExercisesScreen} />
+                      <Route
+                        path="/ejercicios/:topic/:module/:exercise"
+                        component={ExerciseScreen}
+                      />
+                      <Route path="/areas/:topic" component={TopicScreen} />
                       <Route path="/habitos" component={HabitsScreen} />
                     </Switch>
                   </AppShell>

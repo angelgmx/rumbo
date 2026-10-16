@@ -6,7 +6,7 @@ import { sectionLines } from "./sections";
 //   > [!check] Criterio de dominado …
 //   ## Conceptos a dominar   ← casillas
 //   ## Registro de práctica  ← tabla con una fila por sesión
-// Sus ejercicios viven en otra nota, por niveles: "## Nivel 1 — …" y "### 01 — Título".
+// Sus ejercicios viven en otra nota (ver exercises.ts).
 
 export type ModuleStatus = "not-started" | "learning" | "mastered" | "skipped";
 
@@ -128,63 +128,4 @@ export function addPracticeEntry(
     `| ${entry.date} | ${clean(entry.what)} | ${clean(entry.how)} |`,
   );
   return lines.join("\n");
-}
-
-export type ExerciseLevel = 1 | 2 | 3 | 4;
-
-export interface Exercise {
-  /** El número del encabezado ("05"). Es lo que se guarda al marcarlo hecho. */
-  id: string;
-  title: string;
-  level: ExerciseLevel;
-  levelName: string;
-  /** El enunciado tal cual: suele ser un bloque de código listo para copiar al IDE. */
-  statement: string;
-  done: boolean;
-}
-
-/** Lee la nota de ejercicios. `done` son los números que ya están hechos (de su frontmatter). */
-export function parseExercises(source: string, done: string[]): Exercise[] {
-  const exercises: Exercise[] = [];
-  let level: ExerciseLevel = 1;
-  let levelName = "";
-  let current: Omit<Exercise, "statement"> | undefined;
-  let statement: string[] = [];
-
-  const finish = () => {
-    if (current) exercises.push({ ...current, statement: statement.join("\n").trim() });
-    current = undefined;
-    statement = [];
-  };
-
-  for (const line of source.split("\n")) {
-    const levelMatch = /^##\s+(?:Nivel|Level)\s+([1-4])\s*[—-]?\s*(.*)$/i.exec(line);
-    if (levelMatch) {
-      finish();
-      level = Number(levelMatch[1]) as ExerciseLevel;
-      levelName = levelMatch[2]!.trim();
-      continue;
-    }
-    const exerciseMatch = /^###\s+(\d+)\s*[—-]\s*(.+)$/.exec(line);
-    if (exerciseMatch) {
-      finish();
-      const id = exerciseMatch[1]!;
-      current = { id, title: exerciseMatch[2]!.trim(), level, levelName, done: done.includes(id) };
-      continue;
-    }
-    // Cualquier otro "##" cierra el ejercicio (p. ej. notas al final del fichero).
-    if (/^##\s/.test(line)) {
-      finish();
-      continue;
-    }
-    if (current) statement.push(line);
-  }
-  finish();
-  return exercises;
-}
-
-/** Saca el código del enunciado (lo de dentro de ```), que es lo que se copia al IDE. */
-export function exerciseCode(statement: string): string {
-  const match = /```[\w-]*\n([\s\S]*?)```/.exec(statement);
-  return (match?.[1] ?? statement).trimEnd();
 }

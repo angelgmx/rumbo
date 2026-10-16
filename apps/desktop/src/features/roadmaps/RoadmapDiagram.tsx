@@ -14,6 +14,7 @@ import { useTheme } from "next-themes";
 import { useMemo } from "react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { checkpointLabel, checkpoints } from "./checkpoints";
 import { moduleHref } from "./links";
 import { STATUS_LABEL } from "./moduleStatus";
 
@@ -112,16 +113,8 @@ function layout(
     }
   });
 
-  // Cada reto cuelga del último módulo que lo enlaza: ahí ya sabes todo lo que pide.
-  const lastModuleOf = new Map<string, { challenge: ChallengeSummary; module: ModuleSummary }>();
-  for (const module of roadmap.modules) {
-    for (const linked of module.challenges) {
-      const challenge = challenges.find((candidate) => candidate.path === linked.path);
-      if (challenge) lastModuleOf.set(challenge.path, { challenge, module });
-    }
-  }
-  for (const { challenge, module } of lastModuleOf.values()) {
-    const anchor = positions.get(module.path)!;
+  for (const { challenge, after } of checkpoints(roadmap, challenges)) {
+    const anchor = positions.get(after.path)!;
     nodes.push({
       id: challenge.path,
       type: "challenge",
@@ -130,8 +123,8 @@ function layout(
       data: { challenge } satisfies ChallengeNodeData,
     });
     edges.push({
-      id: `${module.path}->${challenge.path}`,
-      source: module.path,
+      id: `${after.path}->${challenge.path}`,
+      source: after.path,
       target: challenge.path,
       sourceHandle: "bottom",
       style: { strokeDasharray: "4 4" },
@@ -187,11 +180,7 @@ function ChallengeNode({ data }: NodeProps<Node<ChallengeNodeData>>) {
     <div className="flex w-[180px] cursor-pointer items-center gap-2 rounded-lg bg-foreground px-3 py-2 text-xs text-background shadow-card">
       <Handle type="target" position={Position.Top} className="opacity-0" />
       <FlagIcon className="size-3.5 shrink-0" />
-      <span className="truncate">
-        {data.challenge.number
-          ? `Reto ${data.challenge.number} · ${data.challenge.title}`
-          : data.challenge.title}
-      </span>
+      <span className="truncate">{checkpointLabel(data.challenge)}</span>
     </div>
   );
 }

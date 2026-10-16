@@ -34,3 +34,11 @@ export function formatDate(date: IsoDate, format: string): string {
   const [year, month, day] = date.split("-");
   return format.replaceAll("YYYY", year!).replaceAll("MM", month!).replaceAll("DD", day!);
 }
+
+/** Días de `from` a `to`: 1 si `to` es mañana, negativo si es antes. */
+export function daysBetween(from: IsoDate, to: IsoDate): number {
+  const [y1, m1, d1] = from.split("-").map(Number);
+  const [y2, m2, d2] = to.split("-").map(Number);
+  // Date.UTC evita que el cambio de hora cuente un día de más o de menos.
+  return Math.round((Date.UTC(y2!, m2! - 1, d2!) - Date.UTC(y1!, m1! - 1, d1!)) / 86_400_000);
+}

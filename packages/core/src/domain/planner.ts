@@ -1,5 +1,5 @@
 import { addDays, WEEKDAYS, weekdayOf, type IsoDate, type Weekday } from "./dates";
-import type { ExerciseLevel } from "./learning";
+import type { ExerciseLevel } from "./exercises";
 
 // El planificador reparte lo que te queda de una ruta en tu horario de estudio
 // y calcula cuándo terminarás cada tema. No guarda nada: se recalcula cada vez,

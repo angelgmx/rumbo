@@ -11,6 +11,7 @@ import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { formatDayMonth } from "@/lib/format";
 import { Breadcrumb } from "./Breadcrumb";
+import { topicCrumbs } from "./crumbs";
 import { STATUS_LABEL, STATUS_STYLE } from "./moduleStatus";
 import { ObsidianButton } from "./ObsidianButton";
 import { PageTitle } from "./PageTitle";
@@ -33,7 +34,7 @@ export function TopicScreen() {
   if (!topic) {
     return (
       <>
-        <ScreenHeader title={<Breadcrumb />} />
+        <ScreenHeader title={<Breadcrumb items={topicCrumbs()} />} />
         <Empty>
           <EmptyHeader>
             <EmptyTitle>No encuentro este tema</EmptyTitle>
@@ -63,7 +64,7 @@ function Topic({ topic }: { topic: TopicSummary }) {
   return (
     <>
       <ScreenHeader
-        title={<Breadcrumb topic={topic} />}
+        title={<Breadcrumb items={topicCrumbs(topic)} />}
         actions={
           <>
             <ObsidianButton path={topic.path} />

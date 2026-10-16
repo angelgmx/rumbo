@@ -1,29 +1,28 @@
-import type { TopicSummary } from "@rumbo/core";
+import { Fragment } from "react";
 import { Link } from "wouter";
-import { topicHref } from "./links";
 
-/** Roadmaps › Desarrollo › Java › Bucles, con enlace en lo que se puede abrir. */
-export function Breadcrumb({ topic, module }: { topic?: TopicSummary; module?: string }) {
+export interface Crumb {
+  label: string;
+  href?: string;
+}
+
+/** Miga de pan: «Roadmaps › Java desde cero › Bucles». La última es donde estás. */
+export function Breadcrumb({ items }: { items: Crumb[] }) {
   return (
     <span className="text-muted-foreground">
-      <Link href="/roadmaps">Roadmaps</Link>
-      {topic?.area && <> › {topic.area.title}</>}
-      {topic && (
-        <>
-          {" › "}
-          {module ? (
-            <Link href={topicHref(topic.path)}>{topic.title}</Link>
-          ) : (
-            <span className="text-foreground">{topic.title}</span>
-          )}
-        </>
-      )}
-      {module && (
-        <>
-          {" › "}
-          <span className="text-foreground">{module}</span>
-        </>
-      )}
+      {items.map((item, index) => {
+        const last = index === items.length - 1;
+        return (
+          <Fragment key={`${item.label}-${index}`}>
+            {index > 0 && " › "}
+            {item.href && !last ? (
+              <Link href={item.href}>{item.label}</Link>
+            ) : (
+              <span className={last ? "text-foreground" : undefined}>{item.label}</span>
+            )}
+          </Fragment>
+        );
+      })}
     </span>
   );
 }

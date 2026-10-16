@@ -234,7 +234,7 @@ deadline: 2027-06-30
 - **Ruta**: un camino con orden y fechas por un tema. Un tema puede tener varias; cada una dice a qué tema pertenece con `area:`.
 - **Módulo**: cada paso de una ruta. Sus ejercicios, apuntes y retos salen de las carpetas del tema.
 
-En la app: **Roadmaps** → **Tema** (pestañas Resumen · Ruta · Apuntes · Ejercicios · Retos · Recursos) → **Módulo**. Las áreas tienen su propia página (Fase 4).
+En la app: **Roadmaps** (galería de rutas) → la **ruta** abierta (pistas, ritmo y panel del módulo) → **Módulo**. **Ejercicios** junta los ejercicios y retos de un tema. La página del **tema** (pestañas Resumen · Ruta · Apuntes · Ejercicios · Retos · Recursos) cuelga de **Áreas**.
 
 ### Ruta de aprendizaje
 
@@ -263,7 +263,15 @@ status: active
 habit: programacion # opcional: el hábito de tareas en el que se estudia
 schedule:
   - { days: [mon, tue, wed, thu, fri], from: "17:00", to: "19:00" }
+deadline: 2027-01-08 # opcional: la fecha a la que quieres llegar
+start: 2026-11-03 # opcional: si la ruta está planificada y empieza más adelante
+tracks: # opcional: pistas en paralelo; sin pistas, la ruta es una sola
+  - { key: fundamentos, label: Fundamentos }
+  - { key: poo, label: POO }
 ```
+
+- `status`: `planned`, `active`, `paused` o `done` (también `planificada`, `activa`, `pausada`, `completada`).
+- **Ritmo** — con `deadline`, la app compara lo que te da tu horario al día con lo que hace falta para llegar, y calcula cuánto te retrasas. Si no llegas, propone subir el ritmo, mover la fecha (cambia `deadline`) o quitar los últimos módulos sin empezar (pasan a `saltado`). No se guarda nada más.
 
 **Tema** — `type: module`
 
@@ -271,6 +279,7 @@ schedule:
 type: module
 roadmap: "[[Java desde cero]]"
 order: 4
+track: fundamentos # opcional: su pista; si no dice ninguna, va a la primera
 title: Bucles # o "tema" con alias
 status: aprendiendo # sin-empezar | aprendiendo | dominado | saltado (o en inglés)
 ```
@@ -311,6 +320,40 @@ done: ["01", "03"] # los que ya hiciste; lo escribe la app al marcarlos
 ````
 
 Los niveles son del 1 al 4 (`## Nivel N` o `## Level N`). El enunciado de cada ejercicio es lo que hay bajo su `###`; «Copiar al IDE» copia el bloque de código.
+
+Cada ejercicio puede tener, debajo del enunciado, partes opcionales con `####`. La página del ejercicio las enseña por separado (las pistas y la solución, tapadas):
+
+````markdown
+### 02 — Invertir un String
+
+```java
+/* enunciado… */
+```
+
+#### Pistas
+
+- Recorre el String de atrás hacia delante.
+
+#### Tests
+
+```java
+assert invertir("hola").equals("aloh");
+```
+
+#### Solución
+
+```java
+…
+```
+
+#### Mi solución
+
+```java
+…   ← lo escribe la app al guardar lo que pegas o subes
+```
+````
+
+Vale el nombre en inglés (`Hints`, `Solution`, `My solution`). Al guardar tu solución, la app cambia solo `#### Mi solución` de ese ejercicio; si no existe, la añade al final del ejercicio.
 
 **Recursos del tema** — en el frontmatter del tema, de cualquier plataforma:
 

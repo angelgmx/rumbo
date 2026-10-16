@@ -57,7 +57,7 @@ export function TopicRoadmap({ topic }: { topic: TopicSummary }) {
 }
 
 /** Los módulos agrupados por la semana en que terminarías cada uno, según tu horario. */
-function WeeksList({ topic }: { topic: TopicSummary }) {
+export function WeeksList({ topic }: { topic: TopicSummary }) {
   const roadmap = topic.roadmap!;
   const groups = new Map<string, ModuleSummary[]>();
   for (const module of roadmap.modules) {

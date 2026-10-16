@@ -388,6 +388,50 @@ describe("learning", () => {
   });
 });
 
+describe("roadmap pace and scope", () => {
+  async function editRoadmap(change: (source: string) => string) {
+    const path = "Areas/Python/Python basics.md";
+    files.set(path, change(files.get(path)!));
+    await rumbo.store.refresh(path);
+  }
+
+  it("puts every module in a track and estimates the whole route", () => {
+    const [roadmap] = rumbo.learning.roadmaps();
+    expect(roadmap!.tracks).toEqual([{ key: "python", label: "Python" }]);
+    expect(roadmap!.modules[0]!.track).toBe("python");
+    expect(roadmap!.plan.totalMinutes).toBeGreaterThan(0);
+    expect(roadmap!.pace.state).toBe("no-deadline");
+  });
+
+  it("compares the schedule with the deadline and lets you move it", async () => {
+    await editRoadmap((source) =>
+      source.replace("mode: classic", "mode: classic\ndeadline: 2026-10-16"),
+    );
+    let roadmap = rumbo.learning.roadmaps()[0]!;
+    expect(roadmap.deadline).toBe("2026-10-16");
+    expect(roadmap.pace.state).toBe("behind");
+
+    await rumbo.learning.setDeadline(roadmap, roadmap.plan.finishes);
+    roadmap = rumbo.learning.roadmaps()[0]!;
+    expect(roadmap.deadline).toBe(roadmap.plan.finishes);
+  });
+
+  it("reduces the scope by skipping modules", async () => {
+    const roadmap = rumbo.learning.roadmaps()[0]!;
+    await rumbo.learning.skipModules([roadmap.current!]);
+    expect(rumbo.learning.roadmaps()[0]!.plan.totalMinutes).toBe(0);
+  });
+
+  it("saves my solution inside the exercise", async () => {
+    const module = rumbo.learning.roadmaps()[0]!.current!;
+    await rumbo.learning.saveSolution(module, module.exercises[0]!, "a, b = b, a");
+    expect(files.get("Areas/Python/Exercises/Exercises - Variables.md")).toContain(
+      "#### Mi solución\n\n```python\na, b = b, a\n```",
+    );
+    expect(rumbo.learning.module(module.path)!.exercises[0]!.mySolution).toBe("a, b = b, a");
+  });
+});
+
 describe("topics", () => {
   it("reads a topic with its roadmap, notes by folder and challenges", () => {
     const [topic] = rumbo.learning.topics();
