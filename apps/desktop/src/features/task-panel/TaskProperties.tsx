@@ -1,19 +1,13 @@
 import type { TaskDraft } from "@rumbo/core";
-import { BookOpenIcon } from "lucide-react";
-import { AreaProperty } from "./AreaProperty";
-import { DatesProperty } from "./DatesProperty";
-import { EstimateProperty } from "./EstimateProperty";
-import { GoalProperty } from "./GoalProperty";
-import { OptionProperty } from "./OptionProperty";
-import { SectionLabel } from "@/components/panel/SectionLabel";
-import { REPEATS } from "./taskChoices";
-import { TagsProperty } from "./TagsProperty";
-import { TimeProperty } from "./TimeProperty";
+import { PanelSection } from "@/components/panel/PanelSection";
+import { EffortGroup } from "./EffortGroup";
+import { WhenGroup } from "./WhenGroup";
+import { WhereGroup } from "./WhereGroup";
 import type { Inheritance } from "./useInheritance";
 import type { TaskContext } from "./useTaskContext";
 import type { TaskOptions } from "./useTaskOptions";
 
-/** Las propiedades de la tarea, una fila cada una. */
+/** Las propiedades de la tarea, en tres grupos: cuándo, dónde y esfuerzo. */
 export function TaskProperties({
   draft,
   context,
@@ -28,60 +22,18 @@ export function TaskProperties({
   onChange: (changes: Partial<TaskDraft>) => void;
 }) {
   return (
-    <section className="flex flex-col">
-      <div className="mb-1">
-        <SectionLabel>Propiedades</SectionLabel>
+    <PanelSection title="Propiedades">
+      <div className="flex flex-col gap-4">
+        <WhenGroup draft={draft} onChange={onChange} />
+        <WhereGroup
+          draft={draft}
+          context={context}
+          inheritance={inheritance}
+          options={options}
+          onChange={onChange}
+        />
+        <EffortGroup draft={draft} onChange={onChange} />
       </div>
-      {options.areas.length > 0 && (
-        <AreaProperty
-          value={draft.area}
-          inherited={inheritance}
-          options={options.areas}
-          onChange={(area) => onChange({ area })}
-        />
-      )}
-      {options.projects.length > 0 && (
-        <OptionProperty
-          label="Proyecto"
-          clearLabel="Sin proyecto"
-          value={draft.projectId?.toString()}
-          options={options.projects}
-          onChange={(project) => onChange({ projectId: project ? Number(project) : undefined })}
-        />
-      )}
-      {options.modules.length > 0 && (
-        <OptionProperty
-          icon={<BookOpenIcon className="size-4 text-muted-foreground" />}
-          label="Módulo"
-          clearLabel="Sin módulo"
-          value={draft.module}
-          options={options.modules}
-          onChange={(module) => onChange({ module })}
-        />
-      )}
-      {context.goal && <GoalProperty goal={context.goal} />}
-      <DatesProperty scheduled={draft.scheduled} due={draft.due} onChange={onChange} />
-      {draft.scheduled && (
-        <TimeProperty value={draft.time} onChange={(time) => onChange({ time })} />
-      )}
-      <OptionProperty
-        label="Repite"
-        clearLabel="No se repite"
-        empty="No"
-        value={draft.recurrence}
-        options={REPEATS}
-        onChange={(recurrence) => onChange({ recurrence })}
-      />
-      <TagsProperty
-        tags={draft.tags ?? []}
-        known={options.tags}
-        onChange={(tags) => onChange({ tags })}
-      />
-      <EstimateProperty
-        estimated={draft.duration}
-        real={draft.spent}
-        onChange={(duration) => onChange({ duration })}
-      />
-    </section>
+    </PanelSection>
   );
 }

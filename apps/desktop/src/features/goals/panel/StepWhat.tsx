@@ -1,5 +1,6 @@
 import type { GoalInput } from "@rumbo/core";
-import { DateRow, AreaRow, PeriodRow } from "../propertyRows";
+import { DateRow } from "@/components/panel/DateRow";
+import { AreaRow, PeriodRow } from "../propertyRows";
 import { Input } from "@/components/ui/input";
 import { StepSection } from "./StepSection";
 

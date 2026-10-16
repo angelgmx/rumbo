@@ -14,7 +14,7 @@ export function TimeProperty({
     <PropertyRow
       label="Hora"
       value={value && <span className="font-mono">{value}</span>}
-      empty="Sin hora"
+      empty="Añadir hora"
       width="w-56"
     >
       {(close) => (

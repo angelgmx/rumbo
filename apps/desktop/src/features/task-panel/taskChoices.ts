@@ -15,11 +15,6 @@ export const PRIORITIES: PropertyOption[] = (["high", "medium", "low"] as const)
   label: PRIORITY_LABEL[value],
 }));
 
-export const STATUSES: PropertyOption[] = [
-  { value: "pending", label: "Pendiente" },
-  { value: "done", label: "Hecha" },
-];
-
 /** Las duraciones de siempre y, si la tarea trae otra, también esa. */
 export function durationOptions(current: number | undefined): PropertyOption[] {
   const minutes =

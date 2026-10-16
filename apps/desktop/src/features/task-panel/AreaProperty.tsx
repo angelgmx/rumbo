@@ -20,6 +20,7 @@ export function AreaProperty({
   return (
     <PropertyRow
       label="Área"
+      empty="Elegir área"
       value={
         shown && (
           <>

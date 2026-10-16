@@ -5,7 +5,8 @@ import { PropertyRow, ReadOnlyRow } from "@/components/panel/PropertyRow";
 import { STATUS_LABEL, STATUS_ORDER } from "../goalLabels";
 import { GoalProgress } from "../GoalProgress";
 import { GoalStatusTag } from "../GoalStatusTag";
-import { AreaRow, DateRow, PeriodRow } from "../propertyRows";
+import { DateRow } from "@/components/panel/DateRow";
+import { AreaRow, PeriodRow } from "../propertyRows";
 
 /** Las propiedades del objetivo, como en Notion: cada valor se cambia donde se lee. */
 export function GoalProperties({ summary }: { summary: GoalSummary }) {

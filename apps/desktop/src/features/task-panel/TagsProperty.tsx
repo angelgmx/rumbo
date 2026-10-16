@@ -32,6 +32,7 @@ export function TagsProperty({
   return (
     <PropertyRow
       label="Etiquetas"
+      empty="Añadir etiquetas"
       value={tags.length > 0 ? <TagList tags={tags} /> : undefined}
       width="w-64 gap-2 p-2.5"
     >
