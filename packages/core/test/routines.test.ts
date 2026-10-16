@@ -208,6 +208,16 @@ describe("RoutineService", () => {
     expect(summary!.clashes).toEqual([]);
   });
 
+  it("names a habit block after its habit, by key or by its old note link", async () => {
+    const [summary] = rumbo.routines.list().routines;
+    const legacy = summary!.routine.blocks.find((block) => block.kind === "habit")!;
+    expect(rumbo.routines.blockName(legacy)).toBe("Reading");
+    expect(rumbo.routines.blockName({ kind: "habit", ref: "reading", minutes: 20 })).toBe(
+      "Reading",
+    );
+    expect(rumbo.routines.blockName({ kind: "habit", ref: "nope", minutes: 20 })).toBe("Hábito");
+  });
+
   it("changes its time and its blocks", async () => {
     await rumbo.routines.update(ROUTINE, { start: "19:00" });
     await rumbo.routines.addBlock(ROUTINE, { kind: "break", minutes: 5 }, 0);

@@ -3,6 +3,7 @@ import { minutesBetween } from "@rumbo/core";
 import { CheckIcon, InfoIcon } from "lucide-react";
 import { useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { useRumbo } from "@/app/RumboContext";
+import { LookPicker, type Look } from "@/components/LookPicker";
 import { OptionSelect } from "@/components/OptionSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Kbd } from "@/components/ui/kbd";
 import { Switch } from "@/components/ui/switch";
+import { useArea } from "@/hooks/useArea";
 import type { HabitKind } from "./habitKinds";
 import { ChallengePicker } from "./ChallengePicker";
 import { KindPicker } from "./KindPicker";
@@ -52,6 +54,8 @@ export function HabitForm({ initial, started, submitLabel, onSubmit, onCancel }:
   const [area, setArea] = useState<string | null>(initial?.area ?? null);
   const [goal, setGoal] = useState<string | null>(initial?.goal ?? null);
   const [until, setUntil] = useState<IsoDate | undefined>(initial?.until);
+  const [look, setLook] = useState<Look>({ icon: initial?.icon, color: initial?.color });
+  const areaLook = useArea(area ?? undefined);
 
   const problem = findProblem();
 
@@ -79,6 +83,8 @@ export function HabitForm({ initial, started, submitLabel, onSubmit, onCancel }:
       area: area ?? undefined,
       goal: goal ?? undefined,
       until,
+      icon: look.icon,
+      color: look.color,
     });
   }
 
@@ -91,14 +97,17 @@ export function HabitForm({ initial, started, submitLabel, onSubmit, onCancel }:
     <form onSubmit={submit} onKeyDown={onKeyDown} className="flex min-h-0 flex-col">
       <div className="flex flex-col gap-7 overflow-y-auto px-6 py-5">
         <Section number={1} title="¿Qué hábito quieres tener?">
-          <Input
-            autoFocus
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Gym, Inglés, Leer…"
-            aria-label="Nombre del hábito"
-            className="h-11 text-base"
-          />
+          <div className="flex items-center gap-3">
+            <LookPicker value={look} fallback={areaLook} onChange={setLook} />
+            <Input
+              autoFocus
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Gym, Inglés, Leer…"
+              aria-label="Nombre del hábito"
+              className="h-11 text-base"
+            />
+          </div>
         </Section>
 
         <Section number={2} title="¿Cómo sabes que lo has hecho?">

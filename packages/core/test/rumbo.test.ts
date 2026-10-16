@@ -357,6 +357,8 @@ describe("editing habits", () => {
       unit: "min",
       schedule: ["mon", "wed"],
       area: "Python",
+      icon: "languages",
+      color: "#F5B83D",
     });
     expect(key).toBe("ingles-b2");
 
@@ -366,6 +368,8 @@ describe("editing habits", () => {
       target: 30,
       schedule: ["mon", "wed"],
       area: "Python",
+      icon: "languages",
+      color: "#F5B83D",
       started: "2026-10-15",
     });
   });
@@ -396,13 +400,18 @@ describe("editing habits", () => {
     expect(habit.unit).toBeUndefined();
   });
 
-  it("archives and removes habits", async () => {
+  it("archives, restores and removes habits", async () => {
     await rumbo.habits.archive("running");
     expect(rumbo.habits.list().map((summary) => summary.habit.key)).toEqual(["reading"]);
+    expect(rumbo.habits.archived().map((summary) => summary.habit.key)).toEqual(["running"]);
+
+    await rumbo.habits.restore("running");
+    expect(rumbo.habits.archived()).toEqual([]);
+    expect(rumbo.habits.list().map((summary) => summary.habit.key)).toEqual(["reading", "running"]);
 
     await rumbo.habits.remove("reading");
     expect(rumbo.habits.get("reading")).toBeUndefined();
-    expect(rumbo.habits.list()).toEqual([]);
+    expect(rumbo.habits.list().map((summary) => summary.habit.key)).toEqual(["running"]);
   });
 });
 

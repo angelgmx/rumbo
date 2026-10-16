@@ -57,7 +57,8 @@ Los hábitos viven en la base de datos de la app (tablas `habitos` y `registros_
 - **Clave fija** (`ingles-b2`): no cambia al editar. La usan las tareas (`habito`), las rutas (`habit:` en su nota) y los bloques de rutina (`ref`).
 - **Versión mínima.** En los de cantidad y tiempo, `minimo` salva la racha un día flojo (si no hay, la mitad de la meta). Foco la ofrece cuando una racha de 3 días o más corre peligro.
 - **Hábitos de tareas.** El hábito es el hueco fijo («Programación, de lunes a viernes de 17:00 a 19:00») y lo que haces dentro cambia cada día: son tareas con ese hábito. El día cuenta si tenía tareas y estaban todas terminadas.
-- **Archivar** lo oculta sin borrar nada. **Eliminar** lo borra con todo lo apuntado.
+- **Icono y color** propios (de Lucide); si no tiene, los de su área.
+- **Archivar** lo oculta sin borrar nada y se recupera desde «Archivados». **Eliminar** lo borra con todo lo apuntado.
 - Con fecha `hasta` es un **reto**: la app enseña «día 15 de 66» y, al terminar, deja de salir en tu día.
 - Racha, mejor racha, % de 30 días, totales y mejor día de la semana se calculan; no se guardan.
 - Los días que no tocan no rompen la racha, ni los **días malos** de la daily. Con «N veces por semana» la racha va en semanas.

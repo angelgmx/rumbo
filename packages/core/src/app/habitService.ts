@@ -50,13 +50,12 @@ export class HabitService {
 
   /** Los que no están archivados, por nombre. */
   list(): HabitSummary[] {
-    const today = this.daily.today();
-    const badDays = this.daily.badDays();
-    return this.habits
-      .all()
-      .filter((habit) => !habit.archived)
-      .map((habit) => this.summarize(habit, today, badDays))
-      .sort((a, b) => a.habit.name.localeCompare(b.habit.name));
+    return this.summaries((habit) => !habit.archived);
+  }
+
+  /** Los archivados, por nombre: se pueden recuperar o borrar. */
+  archived(): HabitSummary[] {
+    return this.summaries((habit) => habit.archived);
   }
 
   get(key: string | undefined): Habit | undefined {
@@ -102,14 +101,33 @@ export class HabitService {
   }
 
   /** Lo oculta sin borrar nada de lo apuntado. */
-  async archive(key: string): Promise<void> {
-    const habit = this.habits.get(key);
-    if (habit) await this.habits.save({ ...habit, archived: true });
+  archive(key: string): Promise<void> {
+    return this.setArchived(key, true);
+  }
+
+  /** Lo vuelve a sacar con todo su historial. */
+  restore(key: string): Promise<void> {
+    return this.setArchived(key, false);
   }
 
   /** Lo borra con todo lo apuntado. */
   remove(key: string): Promise<void> {
     return this.habits.remove(key);
+  }
+
+  private async setArchived(key: string, archived: boolean): Promise<void> {
+    const habit = this.habits.get(key);
+    if (habit) await this.habits.save({ ...habit, archived });
+  }
+
+  private summaries(include: (habit: Habit) => boolean): HabitSummary[] {
+    const today = this.daily.today();
+    const badDays = this.daily.badDays();
+    return this.habits
+      .all()
+      .filter(include)
+      .map((habit) => this.summarize(habit, today, badDays))
+      .sort((a, b) => a.habit.name.localeCompare(b.habit.name));
   }
 
   private summarize(habit: Habit, today: IsoDate, badDays: ReadonlySet<IsoDate>): HabitSummary {

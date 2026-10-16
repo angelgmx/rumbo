@@ -70,4 +70,10 @@ export const MIGRATIONS: string[][] = [
       PRIMARY KEY (habito_id, dia)
     )`,
   ],
+  [
+    // El aspecto propio del hábito: un icono de Lucide ("dumbbell") y un color ("#34C38F").
+    // Si no tiene, se usan los de su área.
+    "ALTER TABLE habitos ADD COLUMN icono TEXT",
+    "ALTER TABLE habitos ADD COLUMN color TEXT",
+  ],
 ];

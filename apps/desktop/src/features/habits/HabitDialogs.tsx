@@ -5,6 +5,7 @@ import {
   FlameIcon,
   PencilIcon,
   PlusIcon,
+  RotateCcwIcon,
   Trash2Icon,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -62,7 +63,7 @@ export function NewHabitButton() {
   );
 }
 
-/** Menú de cada hábito: editar, archivar o eliminar. */
+/** Menú de cada hábito: editar, archivar o eliminar; si está archivado, recuperar o eliminar. */
 export function HabitMenu({ summary }: { summary: HabitSummary }) {
   const rumbo = useRumbo();
   const { habit } = summary;
@@ -77,7 +78,14 @@ export function HabitMenu({ summary }: { summary: HabitSummary }) {
 
   async function archive() {
     await rumbo.habits.archive(habit.key);
-    toast.success(`«${habit.name}» archivado. Su historial se guarda.`);
+    toast.success(`«${habit.name}» archivado. Su historial se guarda.`, {
+      action: { label: "Deshacer", onClick: () => void rumbo.habits.restore(habit.key) },
+    });
+  }
+
+  async function restore() {
+    await rumbo.habits.restore(habit.key);
+    toast.success(`«${habit.name}» vuelve a tus hábitos`);
   }
 
   async function remove() {
@@ -97,14 +105,23 @@ export function HabitMenu({ summary }: { summary: HabitSummary }) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => setEditing(true)}>
-              <PencilIcon />
-              Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={archive}>
-              <ArchiveIcon />
-              Archivar
-            </DropdownMenuItem>
+            {habit.archived ? (
+              <DropdownMenuItem onClick={restore}>
+                <RotateCcwIcon />
+                Recuperar
+              </DropdownMenuItem>
+            ) : (
+              <>
+                <DropdownMenuItem onClick={() => setEditing(true)}>
+                  <PencilIcon />
+                  Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={archive}>
+                  <ArchiveIcon />
+                  Archivar
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
@@ -158,6 +175,8 @@ function toInput({ habit }: HabitSummary): HabitInput {
     schedule: habit.schedule,
     area: habit.area,
     goal: habit.goal,
+    icon: habit.icon,
+    color: habit.color,
     start: habit.start,
     end: habit.end,
     until: habit.until,

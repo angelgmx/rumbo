@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useRumbo } from "@/app/RumboContext";
+import { useHabitLook } from "@/hooks/useHabitLook";
 import { useArea, type AreaLook } from "@/hooks/useArea";
 
 // Colores de las láminas para las rutinas sin área: así cada tipo se reconoce de un vistazo.
@@ -34,10 +35,10 @@ export function useRoutineLook(routine: Routine): AreaLook {
 /** Color de un bloque: el del área de su hábito; los demás, el de la rutina o neutro. */
 export function useBlockColor(kind: BlockKind, ref: string | undefined, routineColor: string) {
   const { routines } = useRumbo();
-  const habitArea = kind === "habit" ? routines.habitOf(ref)?.area : undefined;
-  const area = useArea(habitArea);
+  const habit = kind === "habit" ? routines.habitOf(ref) : undefined;
+  const look = useHabitLook(habit);
 
-  if (kind === "habit") return habitArea ? area.color : routineColor;
+  if (kind === "habit") return habit?.color || habit?.area ? look.color : routineColor;
   if (kind === "module" || kind === "task") return routineColor;
   return "var(--muted-foreground)";
 }

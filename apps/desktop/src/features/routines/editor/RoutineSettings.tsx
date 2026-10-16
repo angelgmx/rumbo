@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useRumbo } from "@/app/RumboContext";
 import { AreaIcon } from "@/components/AreaIcon";
 import { Card } from "@/components/ui/card";
-import { useArea } from "@/hooks/useArea";
+import { useHabitLook } from "@/hooks/useHabitLook";
 import { formatMinutes } from "@/lib/format";
 import { WeekdayChips } from "../WeekdayChips";
 
@@ -71,7 +71,7 @@ function Cell({
 }
 
 function MainHabit({ summary }: { summary: HabitSummary }) {
-  const area = useArea(summary.habit.area);
+  const area = useHabitLook(summary.habit);
   const { start, end } = summary.habit;
   return (
     <span className="flex min-w-0 items-center gap-2.5">

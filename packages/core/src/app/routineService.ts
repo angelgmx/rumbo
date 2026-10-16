@@ -142,6 +142,12 @@ export class RoutineService {
     return block.kind === "module" ? this.moduleFor(block)?.roadmap.habit : undefined;
   }
 
+  /** El nombre de un bloque: el suyo, el del hábito que marca o el de la nota a la que apunta. */
+  blockName(block: RoutineBlock): string {
+    if (block.title || block.kind !== "habit") return blockTitle(block);
+    return this.habitOf(block.ref)?.name ?? "Hábito";
+  }
+
   /**
    * El hábito de un bloque va por su clave. Las rutinas de antes lo señalan con el wikilink a
    * su nota antigua, que sigue en el vault y guarda la clave.
@@ -164,7 +170,7 @@ export class RoutineService {
       return [
         {
           index: block.index,
-          title: blockTitle(block),
+          title: this.blockName(block),
           minutes: block.minutes,
           start: block.start,
           end: block.end,

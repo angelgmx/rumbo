@@ -1,7 +1,7 @@
 import type { HabitSummary, HabitValue } from "@rumbo/core";
 import { AreaIcon } from "@/components/AreaIcon";
 import { describeValue, HabitValueControl } from "@/features/habits/HabitValueControl";
-import { useArea } from "@/hooks/useArea";
+import { useHabitLook } from "@/hooks/useHabitLook";
 import { StepCard } from "./StepCard";
 
 /** Paso 1: los hábitos de hoy, para apuntar lo que falte. */
@@ -32,7 +32,7 @@ function HabitTile({
   onChange: (key: string, value: HabitValue) => void;
 }) {
   const { habit, today } = summary;
-  const area = useArea(habit.area);
+  const area = useHabitLook(habit);
   const todayTasks = habit.kind === "tasks" ? summary.todayTasks : undefined;
   const amount = habit.kind === "check" ? undefined : describeValue(habit, today, todayTasks);
 

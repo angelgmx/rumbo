@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/empty";
 import { HabitTasks } from "@/features/habits/HabitTasks";
 import { HabitValueControl } from "@/features/habits/HabitValueControl";
-import { useArea } from "@/hooks/useArea";
+import { useHabitLook } from "@/hooks/useHabitLook";
 import { formatMinutes } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { DayEntry } from "./dayEntries";
@@ -89,7 +89,7 @@ interface PlanRowProps extends Pick<DayPlanCardProps, "onToggleBlock" | "onHabit
 
 function PlanRow({ item, isCurrent, onToggleBlock, onHabitChange }: PlanRowProps) {
   const minutes = item.end ? minutesBetween(item.start, item.end) : undefined;
-  const area = useArea(item.kind === "habit" ? item.habit.habit.area : undefined);
+  const area = useHabitLook(item.kind === "habit" ? item.habit.habit : undefined);
   const habitTasks =
     item.kind === "habit" && item.habit.habit.kind === "tasks" ? item.habit : undefined;
 

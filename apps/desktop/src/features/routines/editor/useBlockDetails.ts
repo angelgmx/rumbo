@@ -28,7 +28,7 @@ export function useBlockDetails(summary: RoutineSummary, block: RoutineBlock): B
     const key = rumbo.routines.habitOf(block.ref)?.key;
     const habit = summary.habits.find((item) => item.habit.key === key);
     return {
-      title: block.title ?? habit?.habit.name ?? blockTitle(block),
+      title: rumbo.routines.blockName(block),
       subtitle: habit ? habitGoal(habit) : "Hábito",
       habit,
       followsRoadmap: false,

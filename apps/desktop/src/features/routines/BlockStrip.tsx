@@ -1,4 +1,5 @@
-import { blockTitle, type RoutineBlock } from "@rumbo/core";
+import type { RoutineBlock } from "@rumbo/core";
+import { useRumbo } from "@/app/RumboContext";
 import { cn } from "@/lib/utils";
 import { BREAK_PATTERN, useBlockColor } from "./look";
 
@@ -32,7 +33,8 @@ function Segment({
 }) {
   const color = useBlockColor(block.kind, block.ref, routineColor);
   const isBreak = block.kind === "break";
-  const title = blockTitle(block);
+  const { routines } = useRumbo();
+  const title = routines.blockName(block);
 
   return (
     <div

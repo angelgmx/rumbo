@@ -15,6 +15,8 @@ interface HabitRow {
   frecuencia: string;
   area: string | null;
   objetivo: string | null;
+  icono: string | null;
+  color: string | null;
   hora_inicio: string | null;
   hora_fin: string | null;
   empezado: string | null;
@@ -165,6 +167,8 @@ function toRow(habit: Habit): Record<string, SqlValue> {
     frecuencia: JSON.stringify(scheduleToRow(habit.schedule)),
     area: habit.area ?? null,
     objetivo: habit.goal ?? null,
+    icono: habit.icon ?? null,
+    color: habit.color ?? null,
     hora_inicio: habit.start ?? null,
     hora_fin: habit.end ?? null,
     empezado: habit.started ?? null,
@@ -184,6 +188,8 @@ function fromRow(row: HabitRow): Habit {
     schedule: scheduleFromRow(JSON.parse(row.frecuencia)),
     area: row.area ?? undefined,
     goal: row.objetivo ?? undefined,
+    icon: row.icono ?? undefined,
+    color: row.color ?? undefined,
     start: row.hora_inicio ?? undefined,
     end: row.hora_fin ?? undefined,
     started: row.empezado ?? undefined,

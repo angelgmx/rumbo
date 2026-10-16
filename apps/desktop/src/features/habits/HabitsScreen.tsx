@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/empty";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
+import { ArchivedHabits } from "./ArchivedHabits";
 import { NewHabitButton } from "./HabitDialogs";
 import { WeekTracker } from "./WeekTracker";
 import { YearHeatmap } from "./YearHeatmap";
@@ -20,6 +21,7 @@ export function HabitsScreen() {
   const today = rumbo.daily.today();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today));
   const habits = useVaultQuery((r) => r.habits.list()).data;
+  const archived = useVaultQuery((r) => r.habits.archived()).data ?? [];
 
   if (!habits) return <ScreenHeader title="Hábitos" actions={<NewHabitButton />} />;
 
@@ -32,7 +34,7 @@ export function HabitsScreen() {
     <>
       <ScreenHeader title="Hábitos" actions={<NewHabitButton />} />
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-6">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">Hábitos</h1>
             <p className="mt-1 text-muted-foreground">
@@ -68,6 +70,7 @@ export function HabitsScreen() {
               ))}
             </>
           )}
+          <ArchivedHabits habits={archived} />
         </div>
       </main>
     </>
