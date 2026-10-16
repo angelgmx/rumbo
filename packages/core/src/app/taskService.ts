@@ -89,20 +89,31 @@ export class TaskService {
   }
 
   /**
-   * El objetivo al que empuja una tarea: el de su proyecto, el de su hábito o el de la ruta de
+   * El objetivo al que empuja una tarea: el suyo, el de su proyecto, el de su hábito o el de la ruta de
    * su módulo (por la propia ruta o por su hábito). Es el título del objetivo.
    */
-  goalOf(links: { module?: string; habit?: string; projectId?: number }): string | undefined {
+  goalOf(links: {
+    module?: string;
+    habit?: string;
+    projectId?: number;
+    goalId?: number;
+  }): string | undefined {
     const { goals, habits, projects } = this.links;
     const roadmap = this.linked(this.named(links.module), "roadmap");
     const key = links.habit ?? roadmap?.data.habit;
     const goalId =
+      links.goalId ??
       projects.get(links.projectId)?.goalId ??
       (typeof key === "string" ? habits.get(key)?.goalId : undefined);
     const goal =
       goals.get(goalId) ??
       goals.all().find((stored) => roadmap && stored.roadmaps.includes(roadmap.name));
     return goal?.goal.title;
+  }
+
+  /** Las tareas conectadas directamente a un objetivo, hechas o no. */
+  forGoal(goalId: number): Task[] {
+    return this.all().filter((task) => task.goalId === goalId);
   }
 
   /** Las tareas de un proyecto, hechas o no. */

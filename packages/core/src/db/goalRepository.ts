@@ -12,6 +12,7 @@ interface GoalRow {
   por_que: string;
   horizonte: string | null;
   periodo: string | null;
+  inicio: string | null;
   fecha_limite: string | null;
   estado: string;
   resultados_clave: string;
@@ -168,6 +169,7 @@ function toRow(goal: Goal): Record<string, SqlValue> {
     por_que: goal.why,
     horizonte: goal.horizon ? HORIZON_TO_ROW[goal.horizon] : null,
     periodo: goal.period ?? null,
+    inicio: goal.start ?? null,
     fecha_limite: goal.deadline ?? null,
     estado: STATUS_TO_ROW[goal.status],
     resultados_clave: JSON.stringify(goal.keyResults.map(keyResultToRow)),
@@ -185,6 +187,7 @@ function fromRow(row: GoalRow): Goal {
     why: row.por_que,
     horizon: row.horizonte ? HORIZON_FROM_ROW[row.horizonte] : undefined,
     period: row.periodo ?? undefined,
+    start: row.inicio ?? undefined,
     deadline: row.fecha_limite ?? undefined,
     status: STATUS_FROM_ROW[row.estado] ?? "active",
     keyResults: (JSON.parse(row.resultados_clave) as KeyResultRow[]).map(keyResultFromRow),

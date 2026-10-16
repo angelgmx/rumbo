@@ -108,6 +108,7 @@ export const MIGRATIONS: string[][] = [
       por_que TEXT NOT NULL DEFAULT '',
       horizonte TEXT CHECK (horizonte IN ('anio', 'trimestre')),
       periodo TEXT,
+      inicio TEXT,
       fecha_limite TEXT,
       estado TEXT NOT NULL DEFAULT 'activo'
         CHECK (estado IN ('sin_empezar', 'activo', 'pausado', 'hecho', 'abandonado', 'fallido')),
@@ -148,5 +149,7 @@ export const MIGRATIONS: string[][] = [
     // nota hasta que se importa; al importar se enlazan y se vacían.
     "ALTER TABLE habitos ADD COLUMN objetivo_id INTEGER REFERENCES objetivos (id) ON DELETE SET NULL",
     "ALTER TABLE tareas ADD COLUMN proyecto_id INTEGER REFERENCES proyectos (id) ON DELETE SET NULL",
+    // Una tarea suelta también puede empujar un objetivo, sin pasar por un proyecto.
+    "ALTER TABLE tareas ADD COLUMN objetivo_id INTEGER REFERENCES objetivos (id) ON DELETE SET NULL",
   ],
 ];

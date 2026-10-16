@@ -38,6 +38,7 @@ export interface Goal {
   horizon?: GoalHorizon;
   /** «2027» o «2027-T1». */
   period?: string;
+  start?: IsoDate;
   deadline?: IsoDate;
   status: GoalStatus;
   keyResults: KeyResult[];

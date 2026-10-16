@@ -143,6 +143,15 @@ describe("goals", () => {
     expect(rumbo.goals.get(id!)!.notes).toEqual([]);
   });
 
+  it("brings the tasks connected straight to it, and starts today", async () => {
+    const id = await rumbo.goals.create(goal);
+    await rumbo.tasks.create({ text: "Apuntarme a un intercambio", goalId: id });
+    const summary = rumbo.goals.get(id!)!;
+    expect(summary.goal.start).toBe("2026-10-15");
+    expect(summary.tasks.map((task) => task.text)).toEqual(["Apuntarme a un intercambio"]);
+    expect(rumbo.tasks.goalOf({ goalId: id })).toBe("B2");
+  });
+
   it("keeps projects and habits when a goal is removed", async () => {
     const id = await rumbo.goals.create(goal, {
       projects: [],

@@ -133,6 +133,7 @@ Lo que organiza tu día pasa del vault a SQLite, una entidad por PR. Ver [Modelo
 
 ## Apuntado para más adelante
 
+- [ ] **Vocabulario** (idea): una lista para apuntar palabras y frases de un idioma, con su traducción y ejemplo, conectada a su ruta y repasable.
 - [ ] **Iconos para diferenciar de un vistazo** (librería Lucide, la de toda la app):
   - Selector de icono con buscador al crear o editar un área, una ruta o un hábito.
   - Icono por tipo de tarea: estudio, ejercicio, lectura, vídeo, llamada, recado, revisión… (por su módulo, hábito o etiqueta, o elegido a mano).

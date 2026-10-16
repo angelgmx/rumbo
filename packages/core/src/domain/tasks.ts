@@ -15,6 +15,8 @@ export interface Task {
   area?: string;
   /** El proyecto al que pertenece. */
   projectId?: number;
+  /** El objetivo que empuja directamente, sin pasar por un proyecto. */
+  goalId?: number;
   /** Nombre de la nota del módulo de una ruta. */
   module?: string;
   /** La clave del hábito al que pertenece: la tarea cuenta para cumplirlo ese día. */
@@ -48,6 +50,7 @@ export interface TaskDraft {
   recurrence?: string;
   area?: string;
   projectId?: number;
+  goalId?: number;
   module?: string;
   habit?: string;
   tags?: string[];
@@ -100,6 +103,7 @@ export function taskToDraft(task: Task): TaskDraft {
     recurrence: task.recurrence,
     area: task.area,
     projectId: task.projectId,
+    goalId: task.goalId,
     module: task.module,
     habit: task.habit,
     tags: task.tags,

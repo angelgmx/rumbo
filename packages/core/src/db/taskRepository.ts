@@ -20,6 +20,7 @@ interface TaskRow {
   minutos_trabajados: number;
   area: string | null;
   proyecto_id: number | null;
+  objetivo_id: number | null;
   modulo: string | null;
   habito: string | null;
   en_foco_el: string | null;
@@ -44,6 +45,7 @@ const COLUMNS = {
   spent: "minutos_trabajados",
   area: "area",
   projectId: "proyecto_id",
+  goalId: "objetivo_id",
   module: "modulo",
   habit: "habito",
   focusOn: "en_foco_el",
@@ -175,6 +177,7 @@ function fromRow(row: TaskRow): Task {
     tags: JSON.parse(row.etiquetas) as string[],
     area: row.area ?? undefined,
     projectId: row.proyecto_id ?? undefined,
+    goalId: row.objetivo_id ?? undefined,
     module: row.modulo ?? undefined,
     habit: row.habito ?? undefined,
     duration: row.duracion_min ?? undefined,

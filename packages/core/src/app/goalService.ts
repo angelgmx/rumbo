@@ -13,6 +13,7 @@ import type { DailyService } from "./dailyService";
 import type { HabitService, HabitSummary } from "./habitService";
 import type { LearningService, RoadmapSummary } from "./learningService";
 import type { ProjectService, ProjectSummary } from "./projectService";
+import type { TaskService } from "./taskService";
 import type { VaultStore } from "./vaultStore";
 
 export interface GoalSummary {
@@ -22,7 +23,7 @@ export interface GoalSummary {
   progress?: number;
   daysLeft?: number;
   projects: ProjectSummary[];
-  /** Las tareas pendientes de sus proyectos, las que tienen fecha primero. */
+  /** Sus tareas pendientes, propias y de sus proyectos, las que tienen fecha primero. */
   tasks: Task[];
   habits: HabitSummary[];
   roadmaps: RoadmapSummary[];
@@ -47,6 +48,7 @@ export class GoalService {
     private readonly habits: HabitService,
     private readonly learning: LearningService,
     private readonly daily: DailyService,
+    private readonly tasks: TaskService,
   ) {}
 
   /** Todos, los que vencen antes primero; los que no tienen fecha, al final. */
@@ -64,9 +66,13 @@ export class GoalService {
     return this.list().find((summary) => summary.id === id);
   }
 
-  /** Crea el objetivo, activo, y lo conecta con lo que lo empuja. Devuelve su id. */
+  /** Crea el objetivo, activo y empezado hoy si no dice otra cosa, y lo conecta. Devuelve su id. */
   async create(input: GoalInput, drivers?: GoalDriverRefs): Promise<number | undefined> {
-    const id = await this.goals.insert({ ...input, status: "active" }, this.daily.today());
+    const today = this.daily.today();
+    const id = await this.goals.insert(
+      { ...input, start: input.start ?? today, status: "active" },
+      today,
+    );
     if (id !== undefined && drivers) await this.setDrivers(id, drivers);
     return id;
   }
@@ -147,7 +153,10 @@ export class GoalService {
       }),
       daysLeft: daysLeft(goal, today),
       projects,
-      tasks: projects.flatMap((project) => project.nextTasks).sort(byDate),
+      tasks: [
+        ...this.tasks.forGoal(id).filter((task) => !task.done),
+        ...projects.flatMap((project) => project.nextTasks),
+      ].sort(byDate),
       habits,
       roadmaps,
       notes: notes.flatMap((name) => this.store.findByName(name) ?? []),
