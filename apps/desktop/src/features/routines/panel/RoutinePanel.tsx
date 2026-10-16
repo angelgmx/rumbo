@@ -5,7 +5,7 @@ import {
   timedBlocks,
   type RoutineSummary,
 } from "@rumbo/core";
-import type { KeyboardEvent, ReactNode } from "react";
+import type { KeyboardEvent } from "react";
 import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
 import { PanelFooter } from "@/components/panel/PanelFooter";
@@ -13,6 +13,7 @@ import { PanelHeader } from "@/components/panel/PanelHeader";
 import { SidePanel } from "@/components/panel/SidePanel";
 import { formatMinutes } from "@/lib/format";
 import { useRoutineLook } from "../look";
+import { ClashNotice } from "./ClashNotice";
 import { RoutineBlocks } from "./RoutineBlocks";
 import { RoutineProperties } from "./RoutineProperties";
 import { isBlockComplete, routineInput, useRoutineDraft } from "./useRoutineDraft";
@@ -24,13 +25,10 @@ export type RoutineTarget = "new" | RoutineSummary;
 export function RoutinePanel({
   target,
   onClose,
-  children,
 }: {
   /** Sin él, el panel está cerrado. */
   target: RoutineTarget | undefined;
   onClose: () => void;
-  /** Hueco bajo el nombre, para lo que se añada a la cabecera de la rutina. */
-  children?: ReactNode;
 }) {
   return (
     <SidePanel open={target !== undefined} title="Rutina" onClose={onClose}>
@@ -39,9 +37,7 @@ export function RoutinePanel({
           key={target === "new" ? "new" : target.id}
           summary={target === "new" ? undefined : target}
           onClose={onClose}
-        >
-          {children}
-        </RoutinePanelContent>
+        />
       )}
     </SidePanel>
   );
@@ -50,11 +46,9 @@ export function RoutinePanel({
 function RoutinePanelContent({
   summary,
   onClose,
-  children,
 }: {
   summary: RoutineSummary | undefined;
   onClose: () => void;
-  children: ReactNode;
 }) {
   const rumbo = useRumbo();
   const { draft, patch, ...blocks } = useRoutineDraft(summary);
@@ -104,16 +98,15 @@ function RoutinePanelContent({
               className="min-w-0 flex-1 bg-transparent text-2xl leading-10 font-semibold tracking-tight outline-none placeholder:text-muted-foreground/50"
             />
           </div>
-          {children}
         </div>
         <RoutineProperties draft={draft} minutes={minutes} onChange={patch} />
+        <ClashNotice clashes={rumbo.routines.clashes(routine, summary?.id)} />
         <RoutineBlocks
           blocks={draft.blocks}
           timed={timedBlocks(routine)}
           minutes={minutes}
           end={routineEnd(routine)}
           onChange={blocks.changeBlock}
-          onRetype={blocks.retypeBlock}
           onRemove={blocks.removeBlock}
           onMove={blocks.moveBlock}
           onAdd={blocks.addBlock}

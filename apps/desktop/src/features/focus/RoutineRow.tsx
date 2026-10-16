@@ -90,7 +90,7 @@ function StepChip({
   onComplete: () => void;
 }) {
   const Icon = step.done ? CheckCircle2Icon : CircleIcon;
-  const canComplete = !step.done && step.habit.habit.kind !== "tasks";
+  const canComplete = !step.done && step.completable;
 
   return (
     <button

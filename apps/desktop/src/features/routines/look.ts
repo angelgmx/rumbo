@@ -39,26 +39,33 @@ export function useBlockColor(kind: BlockKind, ref: string | undefined, routineC
   const look = useHabitLook(habit);
 
   if (kind === "habit") return habit?.color || habit?.area ? look.color : routineColor;
-  if (kind === "module" || kind === "task") return routineColor;
-  return "var(--muted-foreground)";
+  return kind === "break" ? "var(--muted-foreground)" : routineColor;
 }
 
 export const BLOCK_KIND_LABEL: Record<BlockKind, string> = {
   habit: "Hábito",
-  module: "Módulo",
+  module: "Estudio de ruta",
   task: "Tarea",
+  activity: "Actividad",
   break: "Descanso",
-  custom: "Libre",
+};
+
+export const BLOCK_KIND_HINT: Record<BlockKind, string> = {
+  habit: "Completar el bloque marca el hábito",
+  module: "Toca el tema en curso y crea las tareas del día",
+  task: "Una tarea que ya tienes",
+  activity: "Café, estirar… lo que quieras",
+  break: "Un respiro entre bloques",
 };
 
 export const BLOCK_KIND_ICON: Record<BlockKind, LucideIcon> = {
   habit: FlameIcon,
   module: BookOpenIcon,
   task: CheckIcon,
+  activity: PencilIcon,
   break: CoffeeIcon,
-  custom: PencilIcon,
 };
 
-/** Fondo rayado de los descansos, igual en la franja del día y en el editor. */
+/** Fondo rayado de los descansos, en la franja del día y en la tarjeta. */
 export const BREAK_PATTERN =
   "repeating-linear-gradient(135deg, color-mix(in oklab, var(--muted-foreground) 18%, transparent) 0 4px, transparent 4px 8px)";

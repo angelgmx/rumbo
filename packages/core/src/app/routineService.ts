@@ -1,17 +1,14 @@
 import type { RoutineRepository } from "../db/routineRepository";
 import type { IsoDate } from "../domain/dates";
-import type { Habit, HabitSchedule } from "../domain/habits";
+import type { Habit } from "../domain/habits";
 import { linkTarget } from "../domain/links";
 import {
   blockTitle,
-  insertBlock,
   isRoutineOn,
   moduleBlockTasks,
-  moveBlock,
   nextRoutineDay,
-  removeBlock,
   routineClashes,
-  updateBlock,
+  taskClashes,
   weeklyCompliance,
   routineEnd,
   routineMinutes,
@@ -22,9 +19,10 @@ import {
   type RoutineClash,
   type RoutineBlock,
   type RoutineInput,
+  type TaskClash,
   type TimedBlock,
 } from "../domain/routines";
-import type { TaskDraft } from "../domain/tasks";
+import type { Task, TaskDraft } from "../domain/tasks";
 import type { DailyService } from "./dailyService";
 import type { HabitService, HabitSummary } from "./habitService";
 import type { LearningService, ModuleSummary, RoadmapSummary } from "./learningService";
@@ -43,8 +41,6 @@ export interface RoutineSummary {
   weeks: number[];
   /** El próximo día que toca, si no es hoy. */
   next?: IsoDate;
-  /** Otras rutinas con las que se pisa en hora. */
-  clashes: RoutineClash[];
 }
 
 export interface RoutineStep {
@@ -55,14 +51,14 @@ export interface RoutineStep {
   start: string;
   end: string;
   done: boolean;
-  habit: HabitSummary;
+  /** Se puede marcar a mano: los hábitos de tareas se cumplen terminando sus tareas. */
+  completable: boolean;
 }
 
-/** Lo que se puede cambiar de una rutina sin tocar sus bloques. */
-interface RoutineChanges {
-  title?: string;
-  start?: string;
-  days?: HabitSchedule;
+/** Con qué se pisa una rutina: otras rutinas activas y tareas con hora. */
+export interface RoutineClashes {
+  routines: RoutineClash[];
+  tasks: TaskClash[];
 }
 
 type StoredRoutine = Pick<RoutineSummary, "id" | "title" | "routine">;
@@ -85,7 +81,7 @@ export class RoutineService {
     // Los hábitos se leen una vez para todas: leerlos por rutina repetiría el cálculo.
     const habits = this.habits.list();
     return stored
-      .map((item) => this.summarize(item, stored, habits))
+      .map((item) => this.summarize(item, habits))
       .sort((a, b) => a.routine.start.localeCompare(b.routine.start));
   }
 
@@ -93,11 +89,7 @@ export class RoutineService {
     return this.list().find((summary) => summary.id === id);
   }
 
-  private summarize(
-    item: StoredRoutine,
-    all: StoredRoutine[],
-    habits: HabitSummary[],
-  ): RoutineSummary {
+  private summarize(item: StoredRoutine, habits: HabitSummary[]): RoutineSummary {
     const { routine } = item;
     const today = this.daily.today();
     const own = this.routineHabits(routine, habits);
@@ -109,10 +101,6 @@ export class RoutineService {
       habits: own,
       weeks: weeklyCompliance(routine, own, today),
       next: isRoutineOn(routine, today) ? undefined : nextRoutineDay(routine, today),
-      clashes: routineClashes(
-        routine,
-        all.filter((other) => other.id !== item.id),
-      ),
     };
   }
 
@@ -127,10 +115,24 @@ export class RoutineService {
     return block.kind === "module" ? this.moduleFor(block)?.roadmap.habit : undefined;
   }
 
-  /** El nombre de un bloque: el suyo, el del hábito que marca o el de la nota a la que apunta. */
+  /** El nombre de un bloque: el suyo, el del hábito o la tarea a la que apunta, o el de su tema. */
   blockName(block: RoutineBlock): string {
-    if (block.title || block.kind !== "habit") return blockTitle(block);
-    return this.habitOf(block.ref)?.name ?? "Hábito";
+    if (block.title) return block.title;
+    if (block.kind === "habit") return this.habitOf(block.ref)?.name ?? "Hábito";
+    if (block.kind === "task") return this.taskOf(block)?.text ?? "Tarea";
+    return this.studyName(block) ?? blockTitle(block);
+  }
+
+  /** Un bloque que sigue una ruta se llama como ella; uno que apunta a un tema, como el tema. */
+  private studyName(block: RoutineBlock): string | undefined {
+    const found = block.kind === "module" ? this.moduleFor(block) : undefined;
+    if (!found) return undefined;
+    return linkTarget(block.ref) === found.roadmap.name ? found.roadmap.title : found.module.title;
+  }
+
+  /** La tarea a la que apunta un bloque, por su id. */
+  taskOf(block: RoutineBlock): Task | undefined {
+    return block.kind === "task" && block.ref ? this.tasks.get(Number(block.ref)) : undefined;
   }
 
   /** El hábito de un bloque, por su clave. */
@@ -139,14 +141,14 @@ export class RoutineService {
   }
 
   /**
-   * Los pasos de la rutina que se pueden comprobar: los bloques ligados a un hábito, hechos o
-   * pendientes según ese hábito. Los libres y los descansos no dejan rastro y no salen.
+   * Los pasos de la rutina que se pueden comprobar: los bloques de hábito, de tema y de tarea,
+   * hechos o pendientes según su hábito o su tarea. Las actividades y los descansos no dejan
+   * rastro y no salen.
    */
   steps(summary: RoutineSummary): RoutineStep[] {
     return summary.blocks.flatMap((block) => {
-      const key = this.habitKeyOf(block);
-      const habit = summary.habits.find((candidate) => candidate.habit.key === key);
-      if (!habit) return [];
+      const state = this.stateOf(block, summary);
+      if (!state) return [];
       return [
         {
           index: block.index,
@@ -154,11 +156,23 @@ export class RoutineService {
           minutes: block.minutes,
           start: block.start,
           end: block.end,
-          done: habit.doneToday,
-          habit,
+          ...state,
         },
       ];
     });
+  }
+
+  private stateOf(
+    block: RoutineBlock,
+    summary: RoutineSummary,
+  ): Pick<RoutineStep, "done" | "completable"> | undefined {
+    if (block.kind === "task") {
+      const task = this.taskOf(block);
+      return task && { done: task.done, completable: !task.done };
+    }
+    const key = this.habitKeyOf(block);
+    const habit = summary.habits.find((candidate) => candidate.habit.key === key);
+    return habit && { done: habit.doneToday, completable: habit.habit.kind !== "tasks" };
   }
 
   /** Las rutinas activas que tocan hoy, por hora de inicio. */
@@ -169,11 +183,6 @@ export class RoutineService {
 
   setActive(id: number, active: boolean): Promise<void> {
     return this.change(id, (routine) => ({ ...routine, active }));
-  }
-
-  /** Cambia el nombre, la hora o los días. Las horas de los bloques se recalculan solas. */
-  update(id: number, changes: RoutineChanges): Promise<void> {
-    return this.change(id, (routine) => ({ ...routine, ...withoutEmptyFields(changes) }));
   }
 
   /** Crea una rutina. Devuelve su id. */
@@ -194,40 +203,24 @@ export class RoutineService {
     return this.routines.remove(id);
   }
 
-  /** Cambia un bloque de sitio. */
-  moveBlock(id: number, from: number, to: number): Promise<void> {
-    return this.editBlocks(id, (blocks) => moveBlock(blocks, from, to));
-  }
-
-  /** Añade un bloque en una posición; sin posición, al final. */
-  addBlock(id: number, block: RoutineBlock, at?: number): Promise<void> {
-    return this.editBlocks(id, (blocks) => insertBlock(blocks, withoutEmptyFields(block), at));
-  }
-
-  removeBlock(id: number, index: number): Promise<void> {
-    return this.editBlocks(id, (blocks) => removeBlock(blocks, index));
-  }
-
-  /** Cambia los minutos o el título de un bloque. */
-  updateBlock(
-    id: number,
-    index: number,
-    changes: Partial<Pick<RoutineBlock, "minutes" | "title">>,
-  ): Promise<void> {
-    return this.editBlocks(id, (blocks) => updateBlock<RoutineBlock>(blocks, index, changes));
-  }
-
-  private editBlocks(id: number, edit: (blocks: RoutineBlock[]) => RoutineBlock[]): Promise<void> {
-    return this.change(id, (routine) => ({ ...routine, blocks: edit(routine.blocks) }));
-  }
-
   private async change(id: number, apply: (routine: Routine) => Routine): Promise<void> {
     const routine = this.routines.get(id);
     if (routine) await this.routines.save(id, apply(routine));
   }
 
-  /** Las tareas que generaría hoy un bloque de un tema (para enseñarlas antes de crearlas). */
-  blockTasks(summary: RoutineSummary, index: number): TaskDraft[] {
+  /** Con qué se pisa una rutina (aunque aún no esté guardada). `ownId` deja fuera la suya. */
+  clashes(routine: Routine, ownId?: number): RoutineClashes {
+    const others = this.routines
+      .all()
+      .filter(({ id }) => id !== ownId)
+      .map((other) => ({ title: other.routine.title ?? "", routine: other.routine }));
+    return {
+      routines: routineClashes(routine, others),
+      tasks: taskClashes(routine, this.tasks.all(), this.daily.today()),
+    };
+  }
+
+  private blockTasks(summary: RoutineSummary, index: number): TaskDraft[] {
     const block = summary.routine.blocks[index];
     if (block?.kind !== "module") return [];
     const work = this.moduleWork(block);
@@ -249,16 +242,22 @@ export class RoutineService {
   }
 
   /**
-   * Terminar un bloque: si es un hábito, se apunta hoy; si es un tema
-   * sin empezar, pasa a «aprendiendo». Las tareas se marcan aparte, una a una.
+   * Terminar un bloque: un hábito se apunta hoy, una tarea se marca hecha y un tema sin
+   * empezar pasa a «aprendiendo». Las tareas que genera un tema se marcan aparte, una a una.
    */
   async completeBlock(summary: RoutineSummary, index: number): Promise<void> {
     const block = summary.routine.blocks[index];
     if (block?.kind === "habit") await this.completeHabit(block);
+    if (block?.kind === "task") await this.completeTask(block);
     if (block?.kind === "module") {
       const module = this.moduleFor(block)?.module;
       if (module?.status === "not-started") await this.learning.setStatus(module, "learning");
     }
+  }
+
+  private async completeTask(block: RoutineBlock): Promise<void> {
+    const task = this.taskOf(block);
+    if (task && !task.done) await this.tasks.setDone(task, true);
   }
 
   private async completeHabit(block: RoutineBlock): Promise<void> {
@@ -303,10 +302,6 @@ export class RoutineService {
     }
     return undefined;
   }
-}
-
-function withoutEmptyFields<T extends object>(value: T): T {
-  return Object.fromEntries(Object.entries(value).filter(([, field]) => field !== undefined)) as T;
 }
 
 /** Un bloque de tiempo suma sus minutos; uno de cantidad da el día por cumplido. */

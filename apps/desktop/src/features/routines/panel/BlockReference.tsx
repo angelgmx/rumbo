@@ -1,55 +1,49 @@
-import type { RoutineBlock } from "@rumbo/core";
+import type { BlockKind, RoutineBlock } from "@rumbo/core";
 import { useRumbo } from "@/app/RumboContext";
 import { OptionList } from "@/components/panel/OptionList";
 import { PropertyPopover } from "@/components/panel/PropertyPopover";
 import { cn } from "@/lib/utils";
-import { BLOCK_KIND_LABEL } from "../look";
 import { useReferenceOptions } from "./useReferenceOptions";
 
-const PICK_LABEL = { habit: "Elige un hábito", module: "Elige un tema" } as const;
-const TITLE_PLACEHOLDER = { task: "Nombre de la tarea", break: "Descanso", custom: "Título" };
+export const PICK_LABEL = {
+  habit: "Elige un hábito",
+  module: "Elige una ruta",
+  task: "Elige una tarea",
+} as const;
 
-/** Lo que dice el bloque: la nota a la que apunta (hábito, tema) o su título (los demás). */
+export type ReferenceKind = keyof typeof PICK_LABEL;
+
+export function isReferenceKind(kind: BlockKind): kind is ReferenceKind {
+  return kind in PICK_LABEL;
+}
+
+/** A qué apunta el bloque: su hábito, su ruta o su tarea; se cambia al pulsarlo. */
 export function BlockReference({
   block,
+  kind,
   onChange,
 }: {
   block: RoutineBlock;
-  onChange: (changes: Partial<RoutineBlock>) => void;
-}) {
-  if (block.kind === "habit" || block.kind === "module") {
-    return <NotePicker block={{ ...block, kind: block.kind }} onChange={onChange} />;
-  }
-  return (
-    <input
-      value={block.title ?? ""}
-      onChange={(event) => onChange({ title: event.target.value })}
-      placeholder={TITLE_PLACEHOLDER[block.kind]}
-      aria-label={`Título del bloque de ${BLOCK_KIND_LABEL[block.kind].toLowerCase()}`}
-      className="h-8 min-w-0 flex-1 rounded-md bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground/60 hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
-    />
-  );
-}
-
-function NotePicker({
-  block,
-  onChange,
-}: {
-  block: RoutineBlock & { kind: "habit" | "module" };
-  onChange: (changes: Partial<RoutineBlock>) => void;
+  kind: ReferenceKind;
+  onChange: (ref: string) => void;
 }) {
   const { routines } = useRumbo();
-  const options = useReferenceOptions(block.kind);
+  const options = useReferenceOptions(kind);
   const label = options.find((option) => option.value === block.ref)?.label;
 
   return (
     <PropertyPopover
-      label={PICK_LABEL[block.kind]}
+      label={PICK_LABEL[kind]}
       width="w-72"
-      className={cn("h-8 min-w-0 flex-1 rounded-md px-2", !block.ref && "text-muted-foreground/60")}
+      className={cn(
+        "h-7 min-w-0 rounded-md px-2 text-xs",
+        !block.ref && "text-muted-foreground/60",
+      )}
       trigger={
         <span className="truncate">
-          {block.ref ? (label ?? routines.blockName(block)) : PICK_LABEL[block.kind]}
+          {block.ref
+            ? (label ?? routines.blockName({ ...block, title: undefined }))
+            : PICK_LABEL[kind]}
         </span>
       }
     >
@@ -58,7 +52,8 @@ function NotePicker({
           options={options}
           value={block.ref}
           onChoose={(ref) => {
-            onChange({ ref });
+            if (!ref) return;
+            onChange(ref);
             close();
           }}
         />

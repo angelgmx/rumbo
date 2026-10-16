@@ -1,6 +1,5 @@
 import type { RoutineSummary } from "@rumbo/core";
 import { ClockIcon } from "lucide-react";
-import { Link } from "wouter";
 import { useRumbo } from "@/app/RumboContext";
 import { AreaIcon } from "@/components/AreaIcon";
 import { Card } from "@/components/ui/card";
@@ -9,7 +8,6 @@ import { formatMinutes } from "@/lib/format";
 import { BlockStrip } from "./BlockStrip";
 import { ComplianceBars } from "./ComplianceBars";
 import { useRoutineLook } from "./look";
-import { routineHref } from "./links";
 import { RoutineDayStatus } from "./RoutineDayStatus";
 import { RoutineMenu } from "./RoutineMenu";
 import { useRoutinePurpose } from "./useRoutinePurpose";
@@ -28,12 +26,13 @@ export function RoutineCard({ summary, onEdit }: { summary: RoutineSummary; onEd
         <div className="flex items-start gap-3">
           <AreaIcon area={look} className="size-10 rounded-xl [&_svg]:size-[18px]" />
           <div className="min-w-0 flex-1">
-            <Link
-              href={routineHref(summary.id)}
+            <button
+              type="button"
+              onClick={onEdit}
               className="font-medium after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none"
             >
               {summary.title}
-            </Link>
+            </button>
             <p className="truncate text-sm text-muted-foreground">{purpose}</p>
           </div>
           <label className="relative z-10 flex items-center gap-2.5 text-sm">

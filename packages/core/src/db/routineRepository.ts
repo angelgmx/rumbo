@@ -26,6 +26,7 @@ interface BlockRow {
   titulo?: string;
   habito?: string;
   tema?: string;
+  tarea?: string;
 }
 
 const KIND_TO_ROW: Record<Routine["kind"], string> = {
@@ -42,8 +43,8 @@ const BLOCK_TO_ROW: Record<BlockKind, string> = {
   habit: "habito",
   module: "tema",
   task: "tarea",
+  activity: "actividad",
   break: "descanso",
-  custom: "libre",
 };
 const BLOCK_FROM_ROW = invert(BLOCK_TO_ROW);
 
@@ -134,21 +135,22 @@ function fromRow(row: RoutineRow): Routine {
   };
 }
 
-// El `ref` de un bloque es la clave del hábito o el enlace al tema; cada uno va en su campo.
+// El `ref` de un bloque es la clave del hábito, el enlace al tema o el id de la tarea; cada uno va en su campo.
 function blockToRow(block: RoutineBlock): BlockRow {
   const row: BlockRow = { tipo: BLOCK_TO_ROW[block.kind], minutos: block.minutes };
   if (block.title) row.titulo = block.title;
   if (block.ref && block.kind === "habit") row.habito = block.ref;
   if (block.ref && block.kind === "module") row.tema = block.ref;
+  if (block.ref && block.kind === "task") row.tarea = block.ref;
   return row;
 }
 
 function blockFromRow(row: BlockRow): RoutineBlock {
   const block: RoutineBlock = {
-    kind: BLOCK_FROM_ROW[row.tipo] ?? "custom",
+    kind: BLOCK_FROM_ROW[row.tipo] ?? "activity",
     minutes: row.minutos,
   };
-  const ref = row.habito ?? row.tema;
+  const ref = row.habito ?? row.tema ?? row.tarea;
   if (ref) block.ref = ref;
   if (row.titulo) block.title = row.titulo;
   return block;

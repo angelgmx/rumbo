@@ -43,8 +43,8 @@ const DEFAULT_MINUTES: Record<BlockKind, number> = {
   habit: 15,
   module: 45,
   task: 15,
+  activity: 15,
   break: 10,
-  custom: 15,
 };
 
 /** Lo que se edita en el panel: una rutina en blanco o la copia de una que existe. */
@@ -58,17 +58,16 @@ export function useRoutineDraft(summary: RoutineSummary | undefined) {
   return {
     draft,
     patch,
-    addBlock: (kind: BlockKind) =>
+    addBlock: (kind: BlockKind, ref?: string) =>
       editBlocks((blocks) =>
-        insertBlock(blocks, { id: crypto.randomUUID(), block: newBlock(kind) }),
+        insertBlock(blocks, {
+          id: crypto.randomUUID(),
+          block: { kind, ref, minutes: DEFAULT_MINUTES[kind] },
+        }),
       ),
     changeBlock: (index: number, changes: Partial<RoutineBlock>) =>
       editBlocks((blocks) =>
         updateBlock(blocks, index, { block: { ...blocks[index]!.block, ...changes } }),
-      ),
-    retypeBlock: (index: number, kind: BlockKind) =>
-      editBlocks((blocks) =>
-        updateBlock(blocks, index, { block: { kind, minutes: blocks[index]!.block.minutes } }),
       ),
     removeBlock: (index: number) => editBlocks((blocks) => removeBlock(blocks, index)),
     moveBlock: (from: number, to: number) => editBlocks((blocks) => moveBlock(blocks, from, to)),
@@ -91,15 +90,11 @@ export function routineInput(draft: RoutineDraft): RoutineInput {
   };
 }
 
-/** Un bloque está listo cuando dice qué es: la nota a la que apunta o su título. */
+/** Un bloque está listo cuando dice qué es: a qué apunta o, si es una actividad, su título. */
 export function isBlockComplete({ kind, ref, title }: RoutineBlock): boolean {
-  if (kind === "habit" || kind === "module") return Boolean(ref);
   if (kind === "break") return true;
-  return Boolean(title?.trim());
-}
-
-function newBlock(kind: BlockKind): RoutineBlock {
-  return { kind, minutes: DEFAULT_MINUTES[kind] };
+  if (kind === "activity") return Boolean(title?.trim());
+  return Boolean(ref);
 }
 
 function draftOf({ routine, title }: RoutineSummary): RoutineDraft {

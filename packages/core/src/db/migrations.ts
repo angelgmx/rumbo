@@ -179,4 +179,21 @@ export const MIGRATIONS: string[][] = [
     "ALTER TABLE rutinas ADD COLUMN objetivo_id INTEGER REFERENCES objetivos (id) ON DELETE SET NULL",
     "ALTER TABLE rutinas ADD COLUMN habito TEXT",
   ],
+  [
+    // Los bloques «libre» pasan a «actividad» y los de «tarea» sin tarea elegida también: solo
+    // tenían título y minutos. Desde ahora un bloque de tarea apunta a una tarea por su id:
+    //   {"tipo": "tarea", "tarea": "12", "minutos": 20}
+    //   {"tipo": "actividad", "titulo": "Café", "minutos": 10}
+    `UPDATE rutinas SET bloques = (
+      SELECT json_group_array(json(
+        CASE WHEN json_extract(value, '$.tipo') IN ('libre', 'tarea')
+          THEN json_set(value, '$.tipo', 'actividad')
+          ELSE value
+        END))
+      FROM (SELECT value FROM json_each(rutinas.bloques) ORDER BY key)
+    )
+    WHERE EXISTS (
+      SELECT 1 FROM json_each(rutinas.bloques) WHERE json_extract(value, '$.tipo') IN ('libre', 'tarea')
+    )`,
+  ],
 ];

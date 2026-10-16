@@ -11,18 +11,10 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { BLOCK_KINDS, type BlockKind, type RoutineBlock, type TimedBlock } from "@rumbo/core";
-import { PlusIcon } from "lucide-react";
+import type { BlockKind, RoutineBlock, TimedBlock } from "@rumbo/core";
 import { SectionLabel } from "@/components/panel/SectionLabel";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { formatMinutes } from "@/lib/format";
-import { BLOCK_KIND_ICON, BLOCK_KIND_LABEL } from "../look";
+import { AddBlock } from "./AddBlock";
 import { BlockItem } from "./BlockItem";
 import type { DraftBlock } from "./useRoutineDraft";
 
@@ -32,10 +24,9 @@ interface RoutineBlocksProps {
   minutes: number;
   end: string;
   onChange: (index: number, changes: Partial<RoutineBlock>) => void;
-  onRetype: (index: number, kind: BlockKind) => void;
   onRemove: (index: number) => void;
   onMove: (from: number, to: number) => void;
-  onAdd: (kind: BlockKind) => void;
+  onAdd: (kind: BlockKind, ref?: string) => void;
 }
 
 /** Los bloques de la rutina en orden, con su hora; se arrastran para reordenar. */
@@ -45,7 +36,6 @@ export function RoutineBlocks({
   minutes,
   end,
   onChange,
-  onRetype,
   onRemove,
   onMove,
   onAdd,
@@ -81,7 +71,6 @@ export function RoutineBlocks({
                 block={block}
                 start={timed[index]!.start}
                 onChange={(changes) => onChange(index, changes)}
-                onRetype={(kind) => onRetype(index, kind)}
                 onRemove={() => onRemove(index)}
               />
             ))}
@@ -90,29 +79,5 @@ export function RoutineBlocks({
       </DndContext>
       <AddBlock onAdd={onAdd} />
     </section>
-  );
-}
-
-function AddBlock({ onAdd }: { onAdd: (kind: BlockKind) => void }) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={<Button variant="ghost" className="justify-start text-muted-foreground" />}
-      >
-        <PlusIcon data-icon="inline-start" />
-        Añadir bloque
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        {BLOCK_KINDS.map((kind) => {
-          const Icon = BLOCK_KIND_ICON[kind];
-          return (
-            <DropdownMenuItem key={kind} onClick={() => onAdd(kind)}>
-              <Icon />
-              {BLOCK_KIND_LABEL[kind]}
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }

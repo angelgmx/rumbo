@@ -57,25 +57,25 @@ Cada capa solo usa las de debajo. Nunca al revés.
 
 ### `domain/`
 
-| Fichero          | Responsabilidad                                                                                          |
-| ---------------- | -------------------------------------------------------------------------------------------------------- |
-| `dates.ts`       | Fechas como texto `AAAA-MM-DD` (sin zonas horarias), días de la semana, sumar días.                      |
-| `habits.ts`      | Esquema Zod del hábito, si un valor cuenta como hecho, racha actual, mejor racha y cumplimiento.         |
-| `daily.ts`       | Ruta de la daily de un día, contenido de una daily nueva e historial de hábitos a partir de las dailies. |
-| `tasks.ts`       | El modelo de tarea y en qué vista sale cada una.                                                         |
-| `noteTasks.ts`   | Leer las casillas de las notas antiguas (formato del plugin Tasks) para importarlas.                     |
-| `agenda.ts`      | Leer y añadir bloques con hora bajo `## Agenda` (formato del plugin Day Planner).                        |
-| `capture.ts`     | Captura rápida en lenguaje natural («gym mañana 18:00 1h30 #gym») y título de tarea («hoy 45m !alta»).   |
-| `checkbox.ts`    | Marcar o desmarcar una casilla de Markdown en su línea.                                                  |
-| `links.ts`       | Sacar el nombre de nota de los wikilinks.                                                                |
-| `learning.ts`    | Leer un tema (criterio, conceptos, registro de práctica) y su nota de ejercicios por niveles.            |
-| `challenges.ts`  | Leer un reto: de qué va, qué temas pone a prueba y cuántos requisitos llevas.                            |
-| `planner.ts`     | Repartir lo que queda de una ruta en el horario y calcular fechas.                                       |
-| `resources.ts`   | Recursos de un tema (cursos, vídeos, docs…) y adivinar tipo y fuente por la URL.                         |
-| `review.ts`      | FSRS en días: cuándo vuelve una tarjeta según cómo la recordaste.                                        |
-| `routines.ts`    | Rutinas: hora de cada bloque, si toca hoy, reordenar, vigencia y tareas de hoy de un bloque de tema.     |
-| `sections.ts`    | Líneas bajo un encabezado.                                                                               |
-| `inboxTriage.ts` | Organizar el Inbox con IA: el mensaje para el modelo y leer su respuesta sin fiarse de ella.             |
+| Fichero          | Responsabilidad                                                                                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `dates.ts`       | Fechas como texto `AAAA-MM-DD` (sin zonas horarias), días de la semana, sumar días.                                                                    |
+| `habits.ts`      | Esquema Zod del hábito, si un valor cuenta como hecho, racha actual, mejor racha y cumplimiento.                                                       |
+| `daily.ts`       | Ruta de la daily de un día, contenido de una daily nueva e historial de hábitos a partir de las dailies.                                               |
+| `tasks.ts`       | El modelo de tarea y en qué vista sale cada una.                                                                                                       |
+| `noteTasks.ts`   | Leer las casillas de las notas antiguas (formato del plugin Tasks) para importarlas.                                                                   |
+| `agenda.ts`      | Leer y añadir bloques con hora bajo `## Agenda` (formato del plugin Day Planner).                                                                      |
+| `capture.ts`     | Captura rápida en lenguaje natural («gym mañana 18:00 1h30 #gym») y título de tarea («hoy 45m !alta»).                                                 |
+| `checkbox.ts`    | Marcar o desmarcar una casilla de Markdown en su línea.                                                                                                |
+| `links.ts`       | Sacar el nombre de nota de los wikilinks.                                                                                                              |
+| `learning.ts`    | Leer un tema (criterio, conceptos, registro de práctica) y su nota de ejercicios por niveles.                                                          |
+| `challenges.ts`  | Leer un reto: de qué va, qué temas pone a prueba y cuántos requisitos llevas.                                                                          |
+| `planner.ts`     | Repartir lo que queda de una ruta en el horario y calcular fechas.                                                                                     |
+| `resources.ts`   | Recursos de un tema (cursos, vídeos, docs…) y adivinar tipo y fuente por la URL.                                                                       |
+| `review.ts`      | FSRS en días: cuándo vuelve una tarjeta según cómo la recordaste.                                                                                      |
+| `routines.ts`    | Rutinas: hora de cada bloque, si toca hoy, reordenar, vigencia, choques con otras rutinas y con tareas con hora, y tareas de hoy de un bloque de tema. |
+| `sections.ts`    | Líneas bajo un encabezado.                                                                                                                             |
+| `inboxTriage.ts` | Organizar el Inbox con IA: el mensaje para el modelo y leer su respuesta sin fiarse de ella.                                                           |
 
 ### `vault/`
 
@@ -102,7 +102,7 @@ Cada capa solo usa las de debajo. Nunca al revés.
 | `dayPlanService.ts`     | Tu día ordenado por hora: bloques de la agenda + hábitos con hora que tocan ese día.                                                                                                                |
 | `learningService.ts`    | Temas y rutas de aprendizaje tal como están en el vault (apuntes por carpeta, módulos, ejercicios, retos y recursos); estado, conceptos, ejercicios hechos, registro de práctica y la tarea de hoy. |
 | `reviewService.ts`      | Repaso espaciado de los conceptos que ya sabes (FSRS).                                                                                                                                              |
-| `routineService.ts`     | Rutinas: listar, las de hoy, activar, crear, guardar entera, reordenar bloques, crear las tareas de un bloque y terminar un bloque.                                                                 |
+| `routineService.ts`     | Rutinas: listar, las de hoy, activar, crear, guardar entera, avisar de choques, crear las tareas de un bloque y terminar un bloque.                                                                 |
 | `closeDayService.ts`    | Cerrar el día: lo que salió bien según los datos, la energía y el primer bloque de mañana.                                                                                                          |
 | `inboxTriageService.ts` | Propuestas de la IA para el Inbox (tarea, idea, proyecto u objetivo) y aplicar solo las aceptadas.                                                                                                  |
 | `rumbo.ts`              | `createRumbo(fs, clock)`: abre el vault y monta todos los servicios.                                                                                                                                |

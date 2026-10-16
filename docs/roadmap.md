@@ -81,13 +81,14 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] Rutinas (`type: routine`): bloques con hora calculada, rutinas de hoy, vigencia, reordenar, activar y pausar
 - [x] Un bloque de tema genera las tareas del día; completar un bloque marca su hábito y empieza el tema
 
-- [x] Editar bloques (añadir, quitar, minutos, nombre), cumplimiento de las últimas 4 semanas y choques entre rutinas
+- [x] Bloques que hacen algo: hábito, estudio de ruta, tarea (completarlo la marca hecha), actividad (antes «libre») y descanso; migración de los bloques guardados
+- [x] Cumplimiento de las últimas 4 semanas y choques de una rutina con otras rutinas activas y con tareas con hora
 
 **Pantallas:**
 
-- [x] **Rutinas**: el día en una franja (rutinas, huecos libres, línea de ahora, la siguiente con «Empezar»), una tarjeta por rutina con sus días, bloques y cumplimiento, filtro por área y un panel para crear y editar con propiedades y bloques
-- [x] Eliminar una rutina (con confirmación) desde su tarjeta o su editor
-- [x] **Editor de rutina**: días y hora, bloques que se arrastran para ordenarlos, minutos y nombre en su sitio, las tareas que genera hoy cada bloque de tema, resumen y biblioteca de temas, hábitos y tareas para arrastrar
+- [x] **Rutinas**: el día en una franja (rutinas, huecos libres, línea de ahora, la siguiente con «Empezar»), una tarjeta por rutina con sus días, bloques y cumplimiento, filtro por área y un panel único para crear y editar con propiedades, bloques y aviso de choques
+- [x] Eliminar una rutina (con confirmación) desde su tarjeta
+- [x] **Panel de rutina**: pulsar una rutina (tarjeta o franja del día) abre su panel; «Añadir bloque» ofrece los tipos y, según el tipo, su selector; cada bloque se edita en línea (título, minutos, referencia), se arrastra para ordenarlo y se quita
 - [x] Interruptor rediseñado (encendido con halo, foco con anillo, deshabilitado)
 - [x] Contadores en la interfaz: elegir el contador al crear una tarea, verlo en las filas de Tareas y en Foco, y usarlo en el detalle de la tarea (cronómetro, pomodoro, −/+ y progreso)
 - [x] **Panel de tarea** lateral, estilo Notion, único para crear, ver y editar (`Ctrl N`, los botones «Nueva tarea» y pulsar una tarea): título grande (en lenguaje natural al crear, que rellena las propiedades), lista de propiedades (estado, cuándo, fecha límite, duración, prioridad, repetir, área heredada del módulo o proyecto, proyecto, módulo, etiquetas y contador), notas y pasos. Al editar cada cambio se guarda al momento en la línea de la tarea; hay «Duplicar» y «Eliminar» (con confirmación). Al crear, pie con «Crear tarea» (`Ctrl Enter`) y «Crear otra»

@@ -63,7 +63,7 @@ export {
 export type { HabitSummary } from "./app/habitService";
 export { type CaptureResult } from "./app/taskService";
 
-export type { RoutineStep, RoutineSummary } from "./app/routineService";
+export type { RoutineClashes, RoutineStep, RoutineSummary } from "./app/routineService";
 export { MAX_BAD_DAYS_PER_MONTH } from "./domain/badDays";
 export {
   DEFAULT_SESSION_MINUTES,

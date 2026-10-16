@@ -15,10 +15,11 @@ interface TodayCardProps {
   date: IsoDate;
   today: RoutineSummary[];
   other: RoutineSummary[];
+  onOpen: (summary: RoutineSummary) => void;
 }
 
 /** «Tu jueves»: la franja del día a la izquierda y, a la derecha, cuánto hay hoy y qué viene. */
-export function TodayCard({ date, today, other }: TodayCardProps) {
+export function TodayCard({ date, today, other, onOpen }: TodayCardProps) {
   const now = timeOf(useNow());
   const next = today.find((summary) => summary.end > now);
   const total = today.reduce((sum, summary) => sum + summary.minutes, 0);
@@ -31,7 +32,7 @@ export function TodayCard({ date, today, other }: TodayCardProps) {
           <span className="text-sm text-muted-foreground">{formatDayMonth(date)}</span>
         </h2>
         <div className="my-auto">
-          <DayTimeline today={today} other={other} />
+          <DayTimeline today={today} other={other} onOpen={onOpen} />
         </div>
       </div>
 

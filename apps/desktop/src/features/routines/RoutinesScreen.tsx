@@ -19,7 +19,7 @@ import { RoutinePanel, type RoutineTarget } from "./panel/RoutinePanel";
 
 const ALL_AREAS = "all";
 
-/** Rutinas: lo que haces cada día y a qué hora. Cada bloque marca un hábito o avanza un tema. */
+/** Rutinas: lo que haces cada día y a qué hora. Pulsar una abre su panel para editarla. */
 export function RoutinesScreen() {
   const rumbo = useRumbo();
   const list = useVaultQuery((r) => r.routines.list()).data;
@@ -61,7 +61,8 @@ export function RoutinesScreen() {
             <div>
               <h1 className="text-3xl font-semibold tracking-tight">Rutinas</h1>
               <p className="mt-1 text-muted-foreground">
-                Lo que haces cada día y a qué hora. Cada bloque marca un hábito o avanza un tema.
+                Lo que haces cada día y a qué hora. Cada bloque marca un hábito, avanza una ruta o
+                hace una tarea.
               </p>
             </div>
             {areas.length > 0 && (
@@ -85,13 +86,14 @@ export function RoutinesScreen() {
                 </EmptyMedia>
                 <EmptyTitle>Todavía no tienes rutinas</EmptyTitle>
                 <EmptyDescription>
-                  Una rutina pone en orden y a su hora tus hábitos, tus temas y tus tareas.
+                  Una rutina pone en orden y a su hora tus hábitos, tus rutas de estudio y tus
+                  tareas.
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
           ) : (
             <>
-              <TodayCard date={today} today={todays} other={others} />
+              <TodayCard date={today} today={todays} other={others} onOpen={setTarget} />
               <div className="grid grid-cols-2 gap-4">
                 {visible.map((summary) => (
                   <RoutineCard

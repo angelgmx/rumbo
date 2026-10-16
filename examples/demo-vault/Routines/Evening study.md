@@ -10,7 +10,7 @@ blocks:
   - { kind: habit, ref: "[[Habit — Reading]]", minutes: 15 }
   - { kind: module, ref: "[[Python basics]]", minutes: 45 }
   - { kind: break, minutes: 10 }
-  - { kind: custom, title: Write it in my own words, minutes: 10 }
+  - { kind: activity, title: Write it in my own words, minutes: 10 }
 ---
 
 # Evening study

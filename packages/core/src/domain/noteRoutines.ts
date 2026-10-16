@@ -11,7 +11,7 @@ export function parseNoteRoutine(
   note: { name: string; data: Record<string, unknown> },
   habitKey: (link: string) => string | undefined,
 ): Routine | undefined {
-  const parsed = routineSchema.safeParse(note.data);
+  const parsed = routineSchema.safeParse(withCurrentBlockKinds(note.data));
   if (!parsed.success) return undefined;
   const routine = parsed.data;
   return {
@@ -24,4 +24,15 @@ export function parseNoteRoutine(
         : block,
     ),
   };
+}
+
+// Las notas antiguas llamaban «custom» a la actividad y su «task» solo tenía título.
+function withCurrentBlockKinds(data: Record<string, unknown>): Record<string, unknown> {
+  if (!Array.isArray(data.blocks)) return data;
+  const blocks = data.blocks.map((block: unknown) => {
+    if (typeof block !== "object" || block === null) return block;
+    const { kind, ref } = block as { kind?: unknown; ref?: unknown };
+    return kind === "custom" || (kind === "task" && !ref) ? { ...block, kind: "activity" } : block;
+  });
+  return { ...data, blocks };
 }

@@ -11,7 +11,6 @@ import { GoalScreen } from "@/features/goals/GoalScreen";
 import { GoalsScreen } from "@/features/goals/GoalsScreen";
 import { HabitsScreen } from "@/features/habits/HabitsScreen";
 import { RoadmapsScreen } from "@/features/roadmaps/RoadmapsScreen";
-import { RoutineEditorScreen } from "@/features/routines/editor/RoutineEditorScreen";
 import { RoutinesScreen } from "@/features/routines/RoutinesScreen";
 import { SettingsScreen } from "@/features/settings/SettingsScreen";
 import { ModuleScreen } from "@/features/roadmaps/ModuleScreen";
@@ -48,7 +47,6 @@ export function App() {
                         <Route path="/roadmaps/:topic" component={RoadmapScreen} />
                         <Route path="/roadmaps/:topic/:module" component={ModuleScreen} />
                         <Route path="/rutinas" component={RoutinesScreen} />
-                        <Route path="/rutinas/:routine" component={RoutineEditorScreen} />
                         <Route path="/ejercicios" component={ExercisesScreen} />
                         <Route
                           path="/ejercicios/:topic/:module/:exercise"
