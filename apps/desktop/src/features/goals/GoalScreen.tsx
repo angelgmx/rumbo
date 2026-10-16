@@ -1,28 +1,26 @@
-import { PencilIcon } from "lucide-react";
-import { useState } from "react";
 import { useParams } from "wouter";
 import { useRumbo } from "@/app/RumboContext";
 import { InlineTitle } from "@/components/InlineTitle";
-import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Breadcrumb } from "@/features/roadmaps/Breadcrumb";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
-import { daysLeftLabel, periodLabel } from "./goalLabels";
-import { GoalPanel } from "./panel/GoalPanel";
+import { periodLabel } from "./goalLabels";
 import { DeleteGoalButton } from "./page/DeleteGoalButton";
 import { GoalKeyResults } from "./page/GoalKeyResults";
 import { GoalObstacle } from "./page/GoalObstacle";
+import { GoalPaceCard } from "./page/GoalPaceCard";
+import { GoalPlan } from "./page/plan/GoalPlan";
+import { GoalProgressCard } from "./page/GoalProgressCard";
 import { GoalProperties } from "./page/GoalProperties";
-import { GoalRelations } from "./page/GoalRelations";
+import { GoalUpcoming } from "./page/GoalUpcoming";
 import { GoalWhy } from "./page/GoalWhy";
 
-/** Un objetivo abierto: sus propiedades, su porqué, su métrica y todo lo que lo empuja. */
+/** Un objetivo abierto y editable en su sitio: el contenido a la izquierda, el resumen a la derecha. */
 export function GoalScreen() {
   const rumbo = useRumbo();
   const id = Number(useParams<{ id: string }>().id);
   const summary = useVaultQuery((r) => r.goals.get(id), [id]).data;
-  const [editing, setEditing] = useState(false);
 
   if (!summary) {
     return (
@@ -40,7 +38,7 @@ export function GoalScreen() {
     );
   }
 
-  const { goal, daysLeft } = summary;
+  const { goal } = summary;
   const crumbs = [
     { label: "Objetivos", href: "/objetivos" },
     ...(goal.period ? [{ label: periodLabel(goal.period) }] : []),
@@ -51,41 +49,34 @@ export function GoalScreen() {
     <>
       <ScreenHeader
         title={<Breadcrumb items={crumbs} />}
-        actions={
-          <>
-            <Button variant="outline" onClick={() => setEditing(true)}>
-              <PencilIcon data-icon="inline-start" />
-              Editar
-            </Button>
-            <DeleteGoalButton summary={summary} />
-          </>
-        }
+        actions={<DeleteGoalButton summary={summary} />}
       />
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="mx-auto flex max-w-3xl flex-col gap-8">
-          <div>
+        <div className="mx-auto grid max-w-7xl items-start gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <div className="flex flex-col gap-8">
             <InlineTitle
               label="Título del objetivo"
               value={goal.title}
               onSave={(title) => void rumbo.goals.update(summary.id, { title })}
-              className="block w-full px-2 py-1 text-3xl font-semibold tracking-tight"
+              className="-mx-2 block w-full px-2 py-1 text-3xl font-semibold tracking-tight"
             />
-            {daysLeft !== undefined && goal.status === "active" && (
-              <p className="mt-1 px-2 text-muted-foreground">{daysLeftLabel(daysLeft)}</p>
-            )}
+            <GoalWhy
+              key={goal.why}
+              why={goal.why}
+              onSave={(why) => void rumbo.goals.update(summary.id, { why })}
+            />
+            <GoalKeyResults summary={summary} />
+            <GoalPlan summary={summary} />
+            <GoalObstacle goal={goal} />
           </div>
-          <GoalProperties summary={summary} />
-          <GoalWhy
-            key={goal.why}
-            why={goal.why}
-            onSave={(why) => void rumbo.goals.update(summary.id, { why })}
-          />
-          <GoalKeyResults summary={summary} />
-          <GoalObstacle goal={goal} />
-          <GoalRelations summary={summary} />
+          <aside className="flex flex-col gap-4">
+            <GoalProperties summary={summary} />
+            <GoalProgressCard summary={summary} />
+            <GoalPaceCard summary={summary} />
+            <GoalUpcoming summary={summary} />
+          </aside>
         </div>
       </main>
-      <GoalPanel open={editing} goal={summary} onClose={() => setEditing(false)} />
     </>
   );
 }

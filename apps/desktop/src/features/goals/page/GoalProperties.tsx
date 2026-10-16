@@ -1,17 +1,16 @@
 import type { GoalInput, GoalStatus, GoalSummary } from "@rumbo/core";
 import { useRumbo } from "@/app/RumboContext";
 import { OptionList } from "@/components/panel/OptionList";
-import { PropertyRow, ReadOnlyRow } from "@/components/panel/PropertyRow";
+import { PropertyRow } from "@/components/panel/PropertyRow";
 import { STATUS_LABEL, STATUS_ORDER } from "../goalLabels";
-import { GoalProgress } from "../GoalProgress";
 import { GoalStatusTag } from "../GoalStatusTag";
-import { DateRow } from "@/components/panel/DateRow";
 import { AreaRow, PeriodRow } from "../propertyRows";
+import { GoalDatesRow } from "./GoalDatesRow";
 
 /** Las propiedades del objetivo, como en Notion: cada valor se cambia donde se lee. */
 export function GoalProperties({ summary }: { summary: GoalSummary }) {
   const rumbo = useRumbo();
-  const { id, goal, progress } = summary;
+  const { id, goal } = summary;
   const change = (changes: Partial<GoalInput>) => void rumbo.goals.update(id, changes);
 
   return (
@@ -30,21 +29,7 @@ export function GoalProperties({ summary }: { summary: GoalSummary }) {
       </PropertyRow>
       <AreaRow area={goal.area} onChange={change} />
       <PeriodRow period={goal.period} onChange={change} />
-      <DateRow
-        label="Inicio"
-        empty="Sin inicio"
-        date={goal.start}
-        onChange={(start) => change({ start })}
-      />
-      <DateRow
-        label="Fecha límite"
-        empty="Sin fecha"
-        date={goal.deadline}
-        onChange={(deadline) => change({ deadline })}
-      />
-      <ReadOnlyRow label="Progreso">
-        <GoalProgress progress={progress} />
-      </ReadOnlyRow>
+      <GoalDatesRow start={goal.start} deadline={goal.deadline} onChange={change} />
     </section>
   );
 }

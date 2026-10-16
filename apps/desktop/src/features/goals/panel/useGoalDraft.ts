@@ -1,4 +1,4 @@
-import type { GoalDriverRefs, GoalInput, GoalSummary } from "@rumbo/core";
+import type { GoalDriverRefs, GoalInput } from "@rumbo/core";
 import { useState } from "react";
 
 const BLANK: GoalInput = {
@@ -12,11 +12,9 @@ const BLANK: GoalInput = {
 const NO_DRIVERS: GoalDriverRefs = { projects: [], habits: [], roadmaps: [], notes: [] };
 
 /** Lo que se rellena en el panel, con lo que impide guardarlo (si algo lo impide). */
-export function useGoalDraft(summary: GoalSummary | undefined) {
-  const [input, setInput] = useState<GoalInput>(() => (summary ? inputOf(summary) : BLANK));
-  const [drivers, setDrivers] = useState<GoalDriverRefs>(() =>
-    summary ? driversOf(summary) : NO_DRIVERS,
-  );
+export function useGoalDraft() {
+  const [input, setInput] = useState<GoalInput>(BLANK);
+  const [drivers, setDrivers] = useState<GoalDriverRefs>(NO_DRIVERS);
   return {
     input,
     drivers,
@@ -34,19 +32,5 @@ export function cleaned(input: GoalInput): GoalInput {
     title: input.title.trim(),
     keyResults: input.keyResults.filter((keyResult) => keyResult.title.trim()),
     plans: input.plans.filter((plan) => plan.if.trim() && plan.then.trim()),
-  };
-}
-
-function inputOf({ goal }: GoalSummary): GoalInput {
-  const { status: _status, ...input } = goal;
-  return input;
-}
-
-function driversOf(summary: GoalSummary): GoalDriverRefs {
-  return {
-    projects: summary.projects.map(({ id }) => id),
-    habits: summary.habits.map(({ habit }) => habit.key),
-    roadmaps: summary.roadmaps.map(({ name }) => name),
-    notes: summary.notes.map(({ name }) => name),
   };
 }

@@ -39,3 +39,11 @@ export function daysLeftLabel(days: number): string {
   if (days > 1) return `quedan ${days} días`;
   return days === -1 ? "venció ayer" : `venció hace ${-days} días`;
 }
+
+/** «2,5 % por semana» */
+export function weeklyPaceLabel(progressPerWeek: number): string {
+  const value = new Intl.NumberFormat("es", { maximumFractionDigits: 1 }).format(
+    progressPerWeek * 100,
+  );
+  return `${value} % por semana`;
+}
