@@ -22,6 +22,7 @@ function problemOf(draft: HabitInput): string | undefined {
 }
 
 function inputOf(habit: Habit): HabitInput {
-  const { name, kind, target, unit, schedule, area, goal, icon, color, start, end, until } = habit;
-  return { name, kind, target, unit, schedule, area, goal, icon, color, start, end, until };
+  const { name, kind, target, unit, schedule, area, goalId, icon, color, start, end, until } =
+    habit;
+  return { name, kind, target, unit, schedule, area, goalId, icon, color, start, end, until };
 }

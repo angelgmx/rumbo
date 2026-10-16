@@ -109,3 +109,22 @@ export {
   type RoutineTemplate,
   type TimedBlock,
 } from "./domain/routines";
+export type { GoalDriverRefs, GoalSummary } from "./app/goalService";
+export type { ProjectSummary } from "./app/projectService";
+export {
+  GOAL_STATUSES,
+  type Goal,
+  type GoalHorizon,
+  type GoalInput,
+  type GoalMetric,
+  type GoalStatus,
+  type IfThen,
+} from "./domain/goals";
+export {
+  PROJECT_STATUSES,
+  type Milestone,
+  type Project,
+  type ProjectInput,
+  type ProjectLink,
+  type ProjectStatus,
+} from "./domain/projects";

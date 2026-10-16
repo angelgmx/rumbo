@@ -4,8 +4,8 @@ Rumbo lee y escribe un vault de Obsidian normal. No hay base de datos: cada nota
 
 ## Reglas
 
-1. **El tipo lo dice el frontmatter, no la carpeta.** `type: habit`, `type: goal`… Las notas se pueden mover de carpeta sin que nada se rompa.
-2. **Las relaciones son wikilinks.** `goal: "[[Inglés B2]]"`, para que Obsidian las enseñe en el grafo y en los backlinks.
+1. **El tipo lo dice el frontmatter, no la carpeta.** `type: area`, `type: roadmap`… Las notas se pueden mover de carpeta sin que nada se rompa.
+2. **Las relaciones son wikilinks.** `roadmap: "[[Java desde cero]]"`, para que Obsidian las enseñe en el grafo y en los backlinks.
 3. **Claves en inglés, valores en tu idioma.** Las claves son el formato público. Si tu vault usa otros nombres, se mapean con `aliases` en la config.
 4. **Solo se guardan hechos.** «Fui al gym el día X», «el módulo Y está dominado». Nunca `streak: 12`.
 5. **Lo desconocido se respeta.** La app nunca borra ni reordena frontmatter que no entiende. Al cambiar un valor, el resto del fichero queda igual byte a byte.
@@ -24,8 +24,6 @@ folders:
   daily_format: YYYY/MM/YYYY-MM-DD # subcarpetas y nombre de cada daily
   inbox: 00 - Inbox/Inbox.md # solo para importar las tareas antiguas una vez
   ideas: 00 - Inbox/Ideas.md # solo para importar las ideas antiguas una vez
-  goals: Objetivos
-  projects: Proyectos # por defecto, Projects
   templates: 05 - Plantillas # aquí se busca la plantilla "Daily.md"
 
 pomodoro: # minutos de trabajo y descanso, y bloques por defecto
@@ -160,40 +158,25 @@ color: "#E76F00"
 roadmap: "[[Java desde cero]]"
 ```
 
-### Objetivo — `type: goal`
+### Objetivos y proyectos
 
-```yaml
-type: goal
-title: Inglés B2 conversacional
-area: "[[Inglés]]"
-horizon: year # year | quarter
-period: 2027
-status: active # active | done | paused | dropped
-parent: "[[Visión]]"
-deadline: 2027-06-30
-```
+Viven en la base de datos de la app (tablas `objetivos` y `proyectos`, ver [Modelo de datos](modelo-de-datos.md)).
 
-### Proyecto — `type: project`
-
-Sus tareas son las casillas de la propia nota.
-
-```yaml
-type: project
-title: Viaje a Japón
-area: "[[Personal]]" # opcional
-status: active # active | done | paused | dropped
-```
+- **Objetivo:** un resultado en una fecha. Qué, por qué, cómo se mide (desde → hasta), qué te frenará (planes «si… entonces») y qué lo empuja: proyectos, hábitos y rutas. El progreso se calcula: por la métrica o, si no tiene, por lo que lo empuja. Sin nada, está «sin plan».
+- **Proyecto:** algo con un final y un **resultado** que dice cuándo está terminado. Tiene hitos, enlaces (repo, web) y sus tareas. El progreso sale de los hitos o, si no tiene, de sus tareas.
+- Una ruta empuja un objetivo desde el objetivo (no se escribe nada en la nota de la ruta).
+- **Lo que ya tenías:** las notas `type: goal` y `type: project` se importan una vez. Las notas no se tocan.
 
 ### Organizar el Inbox con IA
 
 «Procesar con IA» manda a la IA el texto de las tareas sin procesar del inbox, las áreas de arriba del todo y una semana de calendario. Por cada una propone qué es y no escribe nada hasta que aceptas:
 
-| Propone  | Al aceptar                                                                       |
-| -------- | -------------------------------------------------------------------------------- |
-| Tarea    | Le pone el área (`[area:: …]`) y la fecha (`⏳`); deja de estar sin procesar     |
-| Idea     | Pasa a la nota de ideas                                                          |
-| Proyecto | Crea la nota `type: project` en `folders.projects` y quita la tarea del inbox    |
-| Objetivo | Crea la nota `type: goal` en `folders.goals`, activa, y quita la tarea del inbox |
+| Propone  | Al aceptar                                                                   |
+| -------- | ---------------------------------------------------------------------------- |
+| Tarea    | Le pone el área (`[area:: …]`) y la fecha (`⏳`); deja de estar sin procesar |
+| Idea     | Pasa a la nota de ideas                                                      |
+| Proyecto | Crea el proyecto, en marcha, y quita la tarea del inbox                      |
+| Objetivo | Crea el objetivo, activo, y quita la tarea del inbox                         |
 
 Un área que no existe o una fecha que no es real se descartan. Una tarea sin área ni fecha no se propone: no cambiaría nada.
 
@@ -239,7 +222,6 @@ Java/
 ```yaml
 type: roadmap
 title: Java desde cero
-goal: "[[Dominar un stack backend]]"
 status: active
 habit: programacion # opcional: el hábito de tareas en el que se estudia
 schedule:

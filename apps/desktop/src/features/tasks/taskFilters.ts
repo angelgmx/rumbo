@@ -3,6 +3,7 @@ import type { Task } from "@rumbo/core";
 /** Los filtros de la lista de tareas. Vacío = todas. */
 export interface TaskFilter {
   area?: string;
+  /** El id del proyecto, en texto como el resto de filtros. */
   project?: string;
   tag?: string;
 }
@@ -12,7 +13,7 @@ export function areaOf(task: Task): string | undefined {
 }
 
 export function projectOf(task: Task): string | undefined {
-  return task.project;
+  return task.projectId === undefined ? undefined : String(task.projectId);
 }
 
 export function matchesFilter(task: Task, filter: TaskFilter): boolean {

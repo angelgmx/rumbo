@@ -1,7 +1,9 @@
 import { ChangeFeed } from "../changeFeed";
 import { AppDatabase } from "../db/appDatabase";
 import { HabitRepository } from "../db/habitRepository";
+import { GoalRepository } from "../db/goalRepository";
 import { IdeaRepository } from "../db/ideaRepository";
+import { ProjectRepository } from "../db/projectRepository";
 import { RoutineRepository } from "../db/routineRepository";
 import { TaskRepository } from "../db/taskRepository";
 import { systemClock, type Clock, type Database, type FileSystem } from "../ports";
@@ -9,11 +11,13 @@ import { AgendaService } from "./agendaService";
 import { CloseDayService } from "./closeDayService";
 import { DailyService } from "./dailyService";
 import { DayPlanService } from "./dayPlanService";
+import { GoalService } from "./goalService";
 import { HabitService } from "./habitService";
 import { IdeaService } from "./ideaService";
 import { InboxTriageService } from "./inboxTriageService";
 import { LearningService } from "./learningService";
 import { ProgressService } from "./progressService";
+import { ProjectService } from "./projectService";
 import { RoadmapEditService } from "./roadmapEditService";
 import { ReviewService } from "./reviewService";
 import { RoutineService } from "./routineService";
@@ -38,6 +42,8 @@ export interface Rumbo {
   learning: LearningService;
   review: ReviewService;
   routines: RoutineService;
+  goals: GoalService;
+  projects: ProjectService;
   closeDay: CloseDayService;
   roadmaps: RoadmapEditService;
 }
@@ -74,17 +80,27 @@ async function open({ fs, database, clock = systemClock }: RumboSources): Promis
   const taskRepository = await TaskRepository.open(db);
   const habitRepository = await HabitRepository.open(db);
   const routineRepository = await RoutineRepository.open(db);
+  const goalRepository = await GoalRepository.open(db);
+  const projectRepository = await ProjectRepository.open(db);
   await new VaultImport(db, store, daily, {
     ideas: ideaRepository,
     tasks: taskRepository,
     habits: habitRepository,
     routines: routineRepository,
+    goals: goalRepository,
+    projects: projectRepository,
   }).run();
-  const tasks = new TaskService(taskRepository, store, daily, agenda, habitRepository);
+  const tasks = new TaskService(taskRepository, store, daily, agenda, {
+    habits: habitRepository,
+    goals: goalRepository,
+    projects: projectRepository,
+  });
   const habits = new HabitService(habitRepository, daily, tasks);
   const learning = new LearningService(store, daily, tasks, habitRepository);
   const ideas = new IdeaService(ideaRepository, daily, tasks);
   const routines = new RoutineService(routineRepository, daily, habits, tasks, learning);
+  const projects = new ProjectService(projectRepository, tasks, daily, goalRepository);
+  const goals = new GoalService(goalRepository, projects, habits, learning, daily);
 
   return {
     changes,
@@ -94,7 +110,9 @@ async function open({ fs, database, clock = systemClock }: RumboSources): Promis
     habits,
     tasks,
     ideas,
-    triage: new InboxTriageService(store, daily, tasks, ideas),
+    goals,
+    projects,
+    triage: new InboxTriageService(store, daily, tasks, ideas, goals, projects),
     progress: new ProgressService(habits, agenda),
     views: new SavedViewService(store),
     dayPlan: new DayPlanService(agenda, habits),

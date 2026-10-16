@@ -11,8 +11,6 @@ const rawSchema = z.object({
       daily_format: z.string().default("YYYY-MM-DD"),
       inbox: z.string().default("Inbox.md"),
       ideas: z.string().optional(),
-      goals: z.string().default("Goals"),
-      projects: z.string().default("Projects"),
       templates: z.string().optional(),
     })
     .prefault({}),

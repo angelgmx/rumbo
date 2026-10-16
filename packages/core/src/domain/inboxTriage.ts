@@ -9,7 +9,7 @@ export type TriageKind = (typeof TRIAGE_KINDS)[number];
 
 export interface TriageProposal {
   kind: TriageKind;
-  /** El título de la nota nueva si es un proyecto o un objetivo. */
+  /** El título del proyecto o del objetivo nuevo. */
   title: string;
   /** Siempre una de las áreas del vault. */
   area?: string;

@@ -38,8 +38,8 @@ export interface Habit {
   /** Icono de Lucide ("dumbbell") y color ("#34C38F"). Sin ellos, los del área. */
   icon?: string;
   color?: string;
-  /** El objetivo al que empuja, por el nombre de su nota. */
-  goal?: string;
+  /** El objetivo al que empuja. */
+  goalId?: number;
   /** Franja en la que lo haces ("07:00" a "08:30"). Con ella sale en tu día y en el calendario. */
   start?: string;
   end?: string;
@@ -233,7 +233,7 @@ function firstDay(habit: Habit, history: HabitHistory, today: IsoDate): IsoDate 
   return days[0] ?? today;
 }
 
-/** Lo que se rellena al crear o editar un hábito. El área y el objetivo van por su nombre. */
+/** Lo que se rellena al crear o editar un hábito. El área va por su nombre. */
 export interface HabitInput {
   name: string;
   kind: Habit["kind"];
@@ -241,7 +241,7 @@ export interface HabitInput {
   unit?: string;
   schedule: HabitSchedule;
   area?: string;
-  goal?: string;
+  goalId?: number;
   icon?: string;
   color?: string;
   /** Último día, si es un reto con duración. */
@@ -295,7 +295,7 @@ export function habitFromInput(input: HabitInput): Omit<Habit, "key" | "started"
     unit: hasAmount ? input.unit?.trim() || undefined : undefined,
     schedule: input.schedule,
     area: input.area?.trim() || undefined,
-    goal: input.goal?.trim() || undefined,
+    goalId: input.goalId,
     icon: input.icon || undefined,
     color: input.color || undefined,
     until: input.until || undefined,

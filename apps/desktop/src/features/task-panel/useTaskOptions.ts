@@ -10,7 +10,7 @@ export interface TaskOptions {
 
 const NONE: TaskOptions = { areas: [], projects: [], modules: [], tags: [] };
 
-/** Lo que se puede elegir en las propiedades: lo que ya existe en el vault. */
+/** Lo que se puede elegir en las propiedades: lo que ya existe en el vault y en la base de datos. */
 export function useTaskOptions(): TaskOptions {
   return (
     useVaultQuery((rumbo) => ({
@@ -19,10 +19,9 @@ export function useTaskOptions(): TaskOptions {
         .map((note) => String(note.data.name ?? note.name))
         .sort((a, b) => a.localeCompare(b))
         .map((name) => ({ value: name, label: name })),
-      projects: rumbo.store
-        .notesOfType("project")
-        .map((note) => ({ value: note.name, label: note.name }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
+      projects: rumbo.projects
+        .list()
+        .map(({ id, project }) => ({ value: String(id), label: project.title })),
       modules: rumbo.learning.roadmaps().flatMap((roadmap) =>
         roadmap.modules.map((module) => ({
           value: module.name,

@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { AreaDot } from "./AreaDot";
 import type { TaskFilter } from "./taskFilters";
 import { IDEAS_VIEW, TASK_VIEWS } from "./taskViews";
+import { useProjectTitle } from "./useProjectTitle";
 
 interface TasksSidebarProps {
   /** El `slug` de la vista abierta. */
@@ -17,6 +18,7 @@ interface TasksSidebarProps {
   counts: Record<string, number>;
   /** [nombre, tareas pendientes] */
   areas: [string, number][];
+  /** [id del proyecto, tareas pendientes] */
   projects: [string, number][];
   filter: TaskFilter;
   onFilterChange: (filter: TaskFilter) => void;
@@ -38,6 +40,7 @@ export function TasksSidebar({
   onRemoveSavedView,
 }: TasksSidebarProps) {
   const { create } = useTaskPanel();
+  const projectTitle = useProjectTitle();
   const toggle = (key: "area" | "project", value: string) =>
     onFilterChange({ ...filter, [key]: filter[key] === value ? undefined : value });
 
@@ -82,14 +85,14 @@ export function TasksSidebar({
 
       {projects.length > 0 && (
         <SidebarSection title="Proyectos">
-          {projects.map(([name, count]) => (
+          {projects.map(([id, count]) => (
             <FilterItem
-              key={name}
+              key={id}
               icon={<FolderKanbanIcon className="size-4" />}
-              label={name}
+              label={projectTitle(id)}
               count={count}
-              active={filter.project === name}
-              onClick={() => toggle("project", name)}
+              active={filter.project === id}
+              onClick={() => toggle("project", id)}
             />
           ))}
         </SidebarSection>

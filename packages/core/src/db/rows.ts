@@ -31,3 +31,8 @@ export function scheduleFromRow(row: ScheduleRow): HabitSchedule {
 export function invert<K extends string>(map: Record<K, string>): Record<string, K> {
   return Object.fromEntries(Object.entries(map).map(([key, value]) => [value, key]));
 }
+
+/** Quita los campos sin valor: una fila sin `area` no debe dejar `area: undefined`. */
+export function withoutUndefined<T extends object>(value: T): T {
+  return Object.fromEntries(Object.entries(value).filter(([, field]) => field !== undefined)) as T;
+}

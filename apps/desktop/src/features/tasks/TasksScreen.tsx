@@ -31,10 +31,12 @@ import { SaveViewButton } from "./SaveViewButton";
 import { areaOf, countBy, matchesFilter, projectOf, type TaskFilter } from "./taskFilters";
 import { GroupedTaskList, TaskList } from "./TaskList";
 import { TasksSidebar } from "./TasksSidebar";
+import { useProjectTitle } from "./useProjectTitle";
 import { findView, IDEAS_VIEW, TASK_VIEWS, type TaskViewInfo } from "./taskViews";
 
 export function TasksScreen() {
   const rumbo = useRumbo();
+  const projectTitle = useProjectTitle();
   const today = rumbo.daily.today();
   const viewSlug = useParams<{ view: string }>().view;
   const showIdeas = viewSlug === IDEAS_VIEW.slug;
@@ -75,7 +77,7 @@ export function TasksScreen() {
     navigate(`/tareas/${info.slug}`);
     setFiltered({
       view: info.slug,
-      filter: { area: saved.area, project: saved.project, tag: saved.tag },
+      filter: { area: saved.area, project: saved.project?.toString(), tag: saved.tag },
     });
   }
 
@@ -112,7 +114,13 @@ export function TasksScreen() {
               {current.view === "done" && (
                 <ArchiveDoneButton count={all.filter((task) => task.done && !task.habit).length} />
               )}
-              <SaveViewButton view={{ view: current.view, ...filter }} />
+              <SaveViewButton
+                view={{
+                  view: current.view,
+                  ...filter,
+                  project: filter.project ? Number(filter.project) : undefined,
+                }}
+              />
             </>
           )
         }
@@ -169,6 +177,7 @@ export function TasksScreen() {
                     onChange={(project) => setFilter({ ...filter, project })}
                     options={countBy(inCurrentView, projectOf).map(([value, count]) => ({
                       value,
+                      label: projectTitle(value),
                       count,
                     }))}
                   />

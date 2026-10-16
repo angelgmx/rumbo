@@ -96,4 +96,54 @@ export const MIGRATIONS: string[][] = [
       creada TEXT NOT NULL
     )`,
   ],
+  [
+    // Un objetivo con su métrica y sus planes «si… entonces» dentro: siempre van con él.
+    //   metrica: {"nombre": "Sesiones", "desde": 6, "hasta": 80, "unidad": "sesiones", "actual": 12}
+    //   planes:  [{"si": "me da vergüenza", "entonces": "reservo 3 clases el domingo"}]
+    `CREATE TABLE objetivos (
+      id INTEGER PRIMARY KEY,
+      titulo TEXT NOT NULL CHECK (length(trim(titulo)) > 0),
+      area TEXT,
+      por_que TEXT NOT NULL DEFAULT '',
+      horizonte TEXT CHECK (horizonte IN ('anio', 'trimestre')),
+      periodo TEXT,
+      fecha_limite TEXT,
+      estado TEXT NOT NULL DEFAULT 'activo'
+        CHECK (estado IN ('sin_empezar', 'activo', 'pausado', 'hecho', 'abandonado', 'fallido')),
+      metrica TEXT CHECK (metrica IS NULL OR json_valid(metrica)),
+      obstaculo TEXT NOT NULL DEFAULT '',
+      planes TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(planes)),
+      creado TEXT NOT NULL
+    )`,
+    // Las rutas viven en el vault: se señalan por el nombre de su nota.
+    `CREATE TABLE objetivo_rutas (
+      objetivo_id INTEGER NOT NULL REFERENCES objetivos (id) ON DELETE CASCADE,
+      ruta_nota TEXT NOT NULL,
+      PRIMARY KEY (objetivo_id, ruta_nota)
+    )`,
+    // Un proyecto con sus hitos y enlaces dentro:
+    //   hitos:   [{"titulo": "Landing", "fecha": "2026-11-30", "hecho": false}]
+    //   enlaces: [{"titulo": "Repo", "url": "https://github.com/…"}]
+    `CREATE TABLE proyectos (
+      id INTEGER PRIMARY KEY,
+      titulo TEXT NOT NULL CHECK (length(trim(titulo)) > 0),
+      resultado TEXT NOT NULL DEFAULT '',
+      area TEXT,
+      objetivo_id INTEGER REFERENCES objetivos (id) ON DELETE SET NULL,
+      estado TEXT NOT NULL DEFAULT 'idea'
+        CHECK (estado IN ('idea', 'en_marcha', 'bloqueado', 'hecho')),
+      inicio TEXT,
+      fecha_limite TEXT,
+      terminado TEXT,
+      enlaces TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(enlaces)),
+      hitos TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(hitos)),
+      archivado INTEGER NOT NULL DEFAULT 0 CHECK (archivado IN (0, 1)),
+      creado TEXT NOT NULL
+    )`,
+    // Los hábitos y las tareas pasan a señalar su objetivo y su proyecto por id. Las columnas
+    // de texto de antes (`habitos.objetivo`, `tareas.proyecto`) solo guardan el nombre de la
+    // nota hasta que se importa; al importar se enlazan y se vacían.
+    "ALTER TABLE habitos ADD COLUMN objetivo_id INTEGER REFERENCES objetivos (id) ON DELETE SET NULL",
+    "ALTER TABLE tareas ADD COLUMN proyecto_id INTEGER REFERENCES proyectos (id) ON DELETE SET NULL",
+  ],
 ];

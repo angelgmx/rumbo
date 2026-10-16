@@ -136,16 +136,16 @@ describe("InboxTriageService", () => {
     expect(rumbo.tasks.all().some((task) => task.text === "Buy a new notebook")).toBe(false);
   });
 
-  it("creates an active goal note for an accepted goal", async () => {
+  it("creates an active goal for an accepted goal", async () => {
     const [suggestion] = await rumbo.triage.propose(
       fakeAi([{ index: 0, kind: "goal", title: "Write every day", area: "Python" }]),
     );
 
     await rumbo.triage.accept(suggestion!);
 
-    expect(files.get("Goals/Write every day.md")).toBe(
-      '---\ntype: goal\ntitle: Write every day\narea: "[[Python]]"\nstatus: active\n---\n\n# Write every day\n',
-    );
+    expect(
+      rumbo.goals.list().map(({ goal }) => [goal.title, goal.area, goal.status]),
+    ).toContainEqual(["Write every day", "Python", "active"]);
     expect(rumbo.tasks.all().some((task) => task.text === "Buy a new notebook")).toBe(false);
   });
 
@@ -161,7 +161,7 @@ describe("InboxTriageService", () => {
     await rumbo.triage.accept(first!);
     await rumbo.triage.accept(second!);
 
-    expect(files.has("Projects/Trip.md")).toBe(true);
+    expect(rumbo.projects.list().map(({ project }) => project.title)).toEqual(["Trip"]);
     expect(rumbo.tasks.list("inbox")).toHaveLength(0);
   });
 });

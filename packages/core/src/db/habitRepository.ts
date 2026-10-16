@@ -2,7 +2,7 @@ import type { IsoDate } from "../domain/dates";
 import type { Habit, HabitHistory, HabitKind, HabitValue } from "../domain/habits";
 import type { SqlValue } from "../ports";
 import type { AppDatabase } from "./appDatabase";
-import { invert, scheduleFromRow, scheduleToRow } from "./rows";
+import { invert, scheduleFromRow, scheduleToRow, withoutUndefined } from "./rows";
 
 /** Una fila de `habitos`, tal como sale de SQLite. */
 interface HabitRow {
@@ -15,7 +15,7 @@ interface HabitRow {
   unidad: string | null;
   frecuencia: string;
   area: string | null;
-  objetivo: string | null;
+  objetivo_id: number | null;
   icono: string | null;
   color: string | null;
   hora_inicio: string | null;
@@ -133,7 +133,8 @@ export class HabitRepository {
     );
   }
 
-  private async reload(): Promise<void> {
+  /** Vuelve a leer de la base de datos, para cuando algo la cambia por fuera del repositorio. */
+  async reload(): Promise<void> {
     const rows = await this.db.select<HabitRow>("SELECT * FROM habitos");
     const records = await this.db.select<RecordRow>("SELECT * FROM registros_habito");
     const byId = new Map<number, Stored>();
@@ -156,7 +157,7 @@ function toRow(habit: Habit): Record<string, SqlValue> {
     unidad: habit.unit ?? null,
     frecuencia: JSON.stringify(scheduleToRow(habit.schedule)),
     area: habit.area ?? null,
-    objetivo: habit.goal ?? null,
+    objetivo_id: habit.goalId ?? null,
     icono: habit.icon ?? null,
     color: habit.color ?? null,
     hora_inicio: habit.start ?? null,
@@ -168,7 +169,7 @@ function toRow(habit: Habit): Record<string, SqlValue> {
 }
 
 function fromRow(row: HabitRow): Habit {
-  const habit: Habit = {
+  return withoutUndefined<Habit>({
     key: row.clave,
     name: row.nombre,
     kind: KIND_FROM_ROW[row.tipo] ?? "check",
@@ -177,7 +178,7 @@ function fromRow(row: HabitRow): Habit {
     unit: row.unidad ?? undefined,
     schedule: scheduleFromRow(JSON.parse(row.frecuencia)),
     area: row.area ?? undefined,
-    goal: row.objetivo ?? undefined,
+    goalId: row.objetivo_id ?? undefined,
     icon: row.icono ?? undefined,
     color: row.color ?? undefined,
     start: row.hora_inicio ?? undefined,
@@ -185,8 +186,5 @@ function fromRow(row: HabitRow): Habit {
     started: row.empezado ?? undefined,
     until: row.hasta ?? undefined,
     archived: row.archivado === 1,
-  };
-  return Object.fromEntries(
-    Object.entries(habit).filter(([, value]) => value !== undefined),
-  ) as unknown as Habit;
+  });
 }

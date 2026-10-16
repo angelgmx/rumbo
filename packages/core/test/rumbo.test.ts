@@ -232,25 +232,28 @@ describe("inherited area", () => {
   });
 
   it("comes from the area of the project when there is no module", async () => {
-    files.set("Projects/Rumbo.md", '---\ntype: project\narea: "[[Python]]"\n---\n');
-    await rumbo.store.refresh("Projects/Rumbo.md");
-    expect(rumbo.tasks.inheritedArea({ project: "Rumbo" })).toBe("Python");
+    const projectId = await rumbo.projects.create({
+      title: "Rumbo",
+      outcome: "Publicada la v1",
+      area: "Python",
+      status: "active",
+      links: [],
+      milestones: [],
+    });
+    expect(rumbo.tasks.inheritedArea({ projectId })).toBe("Python");
   });
 
   it("is nothing when the links point nowhere", () => {
     expect(rumbo.tasks.inheritedArea({})).toBeUndefined();
-    expect(rumbo.tasks.inheritedArea({ module: "Nope", project: "Nope" })).toBeUndefined();
+    expect(rumbo.tasks.inheritedArea({ module: "Nope", projectId: 99 })).toBeUndefined();
   });
 });
 
 describe("goal of a task", () => {
   beforeEach(async () => {
-    await rumbo.habits.create({
-      name: "Python",
-      kind: "check",
-      schedule: "daily",
-      goal: "Learn Python",
-    });
+    // El objetivo de ejemplo se importa de su nota.
+    const goalId = rumbo.goals.list()[0]!.id;
+    await rumbo.habits.create({ name: "Python", kind: "check", schedule: "daily", goalId });
   });
 
   it("comes from the habit of the task", () => {

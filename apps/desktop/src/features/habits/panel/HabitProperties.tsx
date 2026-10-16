@@ -22,11 +22,11 @@ export function HabitProperties({
   started: IsoDate;
   onChange: (changes: Partial<HabitInput>) => void;
 }) {
-  const { store } = useRumbo();
+  const { store, goals: goalService } = useRumbo();
   const areas = store.notesOfType("area").map((note) => String(note.data.name ?? note.name));
-  const goals = store
-    .notesOfType("goal")
-    .map((note) => ({ value: note.name, label: String(note.data.title ?? note.name) }));
+  const goals = goalService
+    .list()
+    .map(({ id, goal }) => ({ value: String(id), label: goal.title }));
 
   return (
     <section className="flex flex-col">
@@ -79,16 +79,16 @@ export function HabitProperties({
       <PropertyRow
         label="Objetivo"
         empty="Sin objetivo"
-        value={goals.find((goal) => goal.value === draft.goal)?.label ?? draft.goal}
+        value={goals.find((goal) => goal.value === draft.goalId?.toString())?.label}
         width="w-64"
       >
         {(close) => (
           <OptionList
             options={goals}
-            value={draft.goal}
+            value={draft.goalId?.toString()}
             clearLabel="Sin objetivo"
             onChoose={(goal) => {
-              onChange({ goal });
+              onChange({ goalId: goal ? Number(goal) : undefined });
               close();
             }}
           />

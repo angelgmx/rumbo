@@ -6,10 +6,7 @@ describe("parseNoteHabit", () => {
     expect(
       parseNoteHabit({ key: "gym", name: "Gym", area: "[[Salud]]", goal: "[[Correr 10K|10K]]" }),
     ).toMatchObject({
-      key: "gym",
-      kind: "check",
-      schedule: "daily",
-      area: "Salud",
+      habit: { key: "gym", kind: "check", schedule: "daily", area: "Salud" },
       goal: "Correr 10K",
     });
   });

@@ -9,7 +9,6 @@ folders:
   daily: Diario
   daily_format: YYYY/MM/YYYY-MM-DD
   inbox: Inbox.md
-  goals: Objetivos
   templates: Plantillas
 `,
   "Inbox.md": "# Inbox\n\n",

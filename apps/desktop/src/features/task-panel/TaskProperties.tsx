@@ -43,9 +43,9 @@ export function TaskProperties({
         <OptionProperty
           label="Proyecto"
           clearLabel="Sin proyecto"
-          value={draft.project}
+          value={draft.projectId?.toString()}
           options={options.projects}
-          onChange={(project) => onChange({ project })}
+          onChange={(project) => onChange({ projectId: project ? Number(project) : undefined })}
         />
       )}
       {options.modules.length > 0 && (

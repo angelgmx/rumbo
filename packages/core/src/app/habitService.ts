@@ -100,6 +100,12 @@ export class HabitService {
     if (habit) await this.habits.save({ ...habit, ...habitFromInput(input) });
   }
 
+  /** Lo conecta con un objetivo, o lo desconecta con `undefined`. */
+  async setGoal(key: string, goalId: number | undefined): Promise<void> {
+    const habit = this.habits.get(key);
+    if (habit) await this.habits.save({ ...habit, goalId });
+  }
+
   /** Lo oculta sin borrar nada de lo apuntado. */
   archive(key: string): Promise<void> {
     return this.setArchived(key, true);

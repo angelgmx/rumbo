@@ -132,7 +132,6 @@ export function noteTaskToDraft(task: NoteTask): TaskDraft {
     priority: task.priority,
     recurrence: task.recurrence,
     area: linkTarget(task.fields.area) ?? task.fields.area,
-    project: linkTarget(task.fields.project) ?? task.fields.project,
     module: linkTarget(task.fields.module) ?? task.fields.module,
     habit: task.fields.habit,
     tags: task.tags,
@@ -155,4 +154,9 @@ function indentOf(line: string): number {
 function minutesOf(value: string | undefined): number | undefined {
   const minutes = Number.parseInt(value ?? "", 10);
   return Number.isNaN(minutes) ? undefined : minutes;
+}
+
+/** El proyecto de una casilla, por el nombre de su nota: al importar se cambia por su id. */
+export function noteTaskProject(task: NoteTask): string | undefined {
+  return linkTarget(task.fields.project) ?? task.fields.project;
 }

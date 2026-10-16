@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { noteTaskToDraft, parseTasks } from "../src/domain/noteTasks";
+import { noteTaskProject, noteTaskToDraft, parseTasks } from "../src/domain/noteTasks";
 
 // Las casillas de las notas antiguas: solo se leen para importarlas a la base de datos.
 
@@ -65,9 +65,9 @@ describe("noteTaskToDraft", () => {
       "x.md",
       "- [ ] Leer [project:: [[Citalash]]] [habit:: code] [duration:: 30m] [spent:: 12] ⏫",
     );
+    expect(noteTaskProject(task!)).toBe("Citalash");
     expect(noteTaskToDraft(task!)).toMatchObject({
       text: "Leer",
-      project: "Citalash",
       habit: "code",
       duration: 30,
       spent: 12,

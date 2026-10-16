@@ -126,8 +126,8 @@ Lo que organiza tu día pasa del vault a SQLite, una entidad por PR. Ver [Modelo
 - [x] Tareas, con sus pasos, etiquetas y el foco del día
 - [x] Hábitos y registros
 - [x] Rutinas y bloques
-- [ ] Objetivos y planes si… entonces
-- [ ] Proyectos e hitos
+- [x] Objetivos y planes si… entonces
+- [x] Proyectos e hitos
 - [ ] Sesiones, cierres del día y agenda
 - [ ] Exportar a Markdown y copia de seguridad en Ajustes
 

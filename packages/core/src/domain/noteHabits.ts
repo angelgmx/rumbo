@@ -29,11 +29,17 @@ const noteHabitSchema = z.object({
   archived: z.boolean().default(false),
 });
 
-/** El hábito de una nota, con el área y el objetivo por su nombre. Si está mal escrita, nada. */
-export function parseNoteHabit(data: Record<string, unknown>): Habit | undefined {
+/**
+ * El hábito de una nota, con el área por su nombre, y el nombre de la nota de su objetivo
+ * (al importar se cambia por su id). Si la nota está mal escrita, nada.
+ */
+export function parseNoteHabit(
+  data: Record<string, unknown>,
+): { habit: Habit; goal?: string } | undefined {
   const parsed = noteHabitSchema.safeParse(data);
   if (!parsed.success) return undefined;
-  return { ...parsed.data, area: linkTarget(parsed.data.area), goal: linkTarget(parsed.data.goal) };
+  const { goal, ...habit } = parsed.data;
+  return { habit: { ...habit, area: linkTarget(habit.area) }, goal: linkTarget(goal) };
 }
 
 /** Un historial por hábito, sacado del campo "habits" de todas las dailies. */

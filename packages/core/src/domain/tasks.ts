@@ -13,8 +13,8 @@ export interface Task {
   tags: string[];
   /** Nombre del área del vault. */
   area?: string;
-  /** Nombre de la nota del proyecto. */
-  project?: string;
+  /** El proyecto al que pertenece. */
+  projectId?: number;
   /** Nombre de la nota del módulo de una ruta. */
   module?: string;
   /** La clave del hábito al que pertenece: la tarea cuenta para cumplirlo ese día. */
@@ -47,7 +47,7 @@ export interface TaskDraft {
   priority?: Priority;
   recurrence?: string;
   area?: string;
-  project?: string;
+  projectId?: number;
   module?: string;
   habit?: string;
   tags?: string[];
@@ -86,7 +86,7 @@ export function isRecentlyDone(task: Task, today: IsoDate, days = RECENT_DONE_DA
 
 /** Sin procesar: sin fecha, área ni proyecto. Es lo que enseña el Inbox. */
 function isUnprocessed(task: Task): boolean {
-  return !task.done && !task.scheduled && !task.due && !task.area && !task.project;
+  return !task.done && !task.scheduled && !task.due && !task.area && !task.projectId;
 }
 
 /** Lo que enseña el formulario de una tarea que ya existe. */
@@ -99,7 +99,7 @@ export function taskToDraft(task: Task): TaskDraft {
     priority: task.priority,
     recurrence: task.recurrence,
     area: task.area,
-    project: task.project,
+    projectId: task.projectId,
     module: task.module,
     habit: task.habit,
     tags: task.tags,

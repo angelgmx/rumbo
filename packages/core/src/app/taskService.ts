@@ -10,7 +10,9 @@ import {
   type TaskDraft,
   type TaskView,
 } from "../domain/tasks";
+import type { GoalRepository } from "../db/goalRepository";
 import type { HabitRepository } from "../db/habitRepository";
+import type { ProjectRepository } from "../db/projectRepository";
 import type { TaskRepository } from "../db/taskRepository";
 import type { Note } from "../vault/vault";
 import type { AgendaService } from "./agendaService";
@@ -29,7 +31,11 @@ export class TaskService {
     private readonly store: VaultStore,
     private readonly daily: DailyService,
     private readonly agenda: AgendaService,
-    private readonly habits: HabitRepository,
+    private readonly links: {
+      habits: HabitRepository;
+      goals: GoalRepository;
+      projects: ProjectRepository;
+    },
   ) {}
 
   /** Todas las que no están archivadas. */
@@ -75,24 +81,33 @@ export class TaskService {
    * El área que una tarea hereda de su módulo (la de su ruta) o, si no, de su proyecto.
    * Es el nombre del área de arriba del todo, que es el que usan las tareas.
    */
-  inheritedArea(links: { module?: string; project?: string }): string | undefined {
+  inheritedArea(links: { module?: string; projectId?: number }): string | undefined {
     const topic = this.linked(this.linked(this.named(links.module), "roadmap"), "area");
-    const area =
-      (topic && (this.store.rootArea(topic) ?? topic)) ??
-      this.linked(this.named(links.project), "area");
-    return area && String(area.data.name ?? area.name);
+    const area = topic && (this.store.rootArea(topic) ?? topic);
+    if (area) return String(area.data.name ?? area.name);
+    return this.links.projects.get(links.projectId)?.area;
   }
 
   /**
-   * El objetivo al que empuja una tarea: el de su hábito o, si no tiene,
-   * el del hábito de la ruta de su módulo. Es el título de la nota del objetivo.
+   * El objetivo al que empuja una tarea: el de su proyecto, el de su hábito o el de la ruta de
+   * su módulo (por la propia ruta o por su hábito). Es el título del objetivo.
    */
-  goalOf(links: { module?: string; habit?: string }): string | undefined {
+  goalOf(links: { module?: string; habit?: string; projectId?: number }): string | undefined {
+    const { goals, habits, projects } = this.links;
     const roadmap = this.linked(this.named(links.module), "roadmap");
     const key = links.habit ?? roadmap?.data.habit;
-    const habit = typeof key === "string" ? this.habits.get(key) : undefined;
-    const goal = this.named(habit?.goal);
-    return goal && String(goal.data.title ?? goal.name);
+    const goalId =
+      projects.get(links.projectId)?.goalId ??
+      (typeof key === "string" ? habits.get(key)?.goalId : undefined);
+    const goal =
+      goals.get(goalId) ??
+      goals.all().find((stored) => roadmap && stored.roadmaps.includes(roadmap.name));
+    return goal?.goal.title;
+  }
+
+  /** Las tareas de un proyecto, hechas o no. */
+  forProject(projectId: number): Task[] {
+    return this.all().filter((task) => task.projectId === projectId);
   }
 
   setDone(task: Task, done: boolean): Promise<void> {

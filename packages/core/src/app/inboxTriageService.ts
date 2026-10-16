@@ -6,13 +6,26 @@ import {
   type TriageContext,
   type TriageProposal,
 } from "../domain/inboxTriage";
+import type { GoalInput } from "../domain/goals";
+import type { ProjectInput } from "../domain/projects";
 import type { Task } from "../domain/tasks";
 import type { AiProvider } from "../ports";
-import { newNoteSource } from "../vault/frontmatter";
 import type { DailyService } from "./dailyService";
+import type { GoalService } from "./goalService";
 import type { IdeaService } from "./ideaService";
+import type { ProjectService } from "./projectService";
 import type { TaskService } from "./taskService";
 import type { VaultStore } from "./vaultStore";
+
+// Lo que la IA propone es solo el título y el área: el resto se completa después.
+const EMPTY_PROJECT: ProjectInput = {
+  title: "",
+  outcome: "",
+  status: "active",
+  links: [],
+  milestones: [],
+};
+const EMPTY_GOAL: GoalInput = { title: "", why: "", obstacle: "", plans: [] };
 
 export interface TriageSuggestion {
   task: Task;
@@ -26,6 +39,8 @@ export class InboxTriageService {
     private readonly daily: DailyService,
     private readonly tasks: TaskService,
     private readonly ideas: IdeaService,
+    private readonly goals: GoalService,
+    private readonly projects: ProjectService,
   ) {}
 
   /** Una propuesta por tarea sin procesar. No escribe nada. */
@@ -58,8 +73,14 @@ export class InboxTriageService {
       case "idea":
         return this.ideas.fromTask(current);
       case "project":
+        await this.projects.create({
+          ...EMPTY_PROJECT,
+          title: proposal.title,
+          area: proposal.area,
+        });
+        return this.tasks.remove(current);
       case "goal":
-        await this.createNote(proposal);
+        await this.goals.create({ ...EMPTY_GOAL, title: proposal.title, area: proposal.area });
         return this.tasks.remove(current);
     }
   }
@@ -70,19 +91,5 @@ export class InboxTriageService {
       .filter((note) => this.store.rootArea(note) === note)
       .map((note) => String(note.data.name ?? note.name));
     return { today: this.daily.today(), areas };
-  }
-
-  /** La nota del proyecto o del objetivo, activa y con su área si la tiene. */
-  private async createNote(proposal: TriageProposal): Promise<void> {
-    const { folders } = this.store.config;
-    const folder = proposal.kind === "goal" ? folders.goals : folders.projects;
-    const fields = {
-      type: proposal.kind,
-      title: proposal.title,
-      area: proposal.area && `[[${proposal.area}]]`,
-      status: "active",
-    };
-    const path = await this.store.freePath(folder, proposal.title);
-    await this.store.write(path, newNoteSource(fields, proposal.title));
   }
 }

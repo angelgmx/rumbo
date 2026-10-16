@@ -2,6 +2,7 @@ import type { IsoDate } from "../domain/dates";
 import type { Priority, Task, TaskDraft, TaskStep } from "../domain/tasks";
 import type { SqlValue } from "../ports";
 import type { AppDatabase } from "./appDatabase";
+import { withoutUndefined } from "./rows";
 
 /** Una fila de `tareas`, tal como sale de SQLite. */
 interface TaskRow {
@@ -18,7 +19,7 @@ interface TaskRow {
   duracion_min: number | null;
   minutos_trabajados: number;
   area: string | null;
-  proyecto: string | null;
+  proyecto_id: number | null;
   modulo: string | null;
   habito: string | null;
   en_foco_el: string | null;
@@ -42,7 +43,7 @@ const COLUMNS = {
   duration: "duracion_min",
   spent: "minutos_trabajados",
   area: "area",
-  project: "proyecto",
+  projectId: "proyecto_id",
   module: "modulo",
   habit: "habito",
   focusOn: "en_foco_el",
@@ -134,7 +135,8 @@ export class TaskRepository {
     if (current) this.cache.set(id, withoutUndefined({ ...current, ...changes }) as Task);
   }
 
-  private async reload(): Promise<void> {
+  /** Vuelve a leer de la base de datos, para cuando algo la cambia por fuera del repositorio. */
+  async reload(): Promise<void> {
     const rows = await this.db.select<TaskRow>("SELECT * FROM tareas WHERE archivada = 0");
     this.cache.clear();
     for (const row of rows) this.cache.set(row.id, fromRow(row));
@@ -172,7 +174,7 @@ function fromRow(row: TaskRow): Task {
     priority: row.prioridad ? PRIORITY_FROM_ROW[row.prioridad] : undefined,
     tags: JSON.parse(row.etiquetas) as string[],
     area: row.area ?? undefined,
-    project: row.proyecto ?? undefined,
+    projectId: row.proyecto_id ?? undefined,
     module: row.modulo ?? undefined,
     habit: row.habito ?? undefined,
     duration: row.duracion_min ?? undefined,
@@ -197,10 +199,6 @@ function fromDraft(id: number, draft: TaskDraft, created: IsoDate, doneOn?: IsoD
     spent: draft.spent ?? 0,
     created,
   };
-}
-
-function withoutUndefined<T extends object>(value: T): Partial<T> {
-  return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as Partial<T>;
 }
 
 /** Lo que vale un campo que el cambio vacía: las listas y textos no se quedan sin valor. */
