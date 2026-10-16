@@ -25,7 +25,7 @@ import { RoadmapMenu } from "./RoadmapMenu";
 import { RoadmapDiagram } from "./RoadmapDiagram";
 import { RoadmapLegend } from "./RoadmapLegend";
 import { RoadmapSyllabus } from "./syllabus/RoadmapSyllabus";
-import { WeeksList } from "./TopicRoadmap";
+import { RoadmapWeeks } from "./weeks/RoadmapWeeks";
 
 type View = "diagram" | "syllabus" | "weeks";
 
@@ -156,7 +156,7 @@ function Roadmap({ topic }: { topic: TopicSummary }) {
                 )}
                 {view === "weeks" && (
                   <div className="p-4">
-                    <WeeksList topic={topic} />
+                    <RoadmapWeeks topic={topic} onOpenChallenge={setReading} />
                   </div>
                 )}
               </Card>
