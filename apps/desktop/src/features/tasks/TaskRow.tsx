@@ -1,23 +1,14 @@
-import type { Priority, Task } from "@rumbo/core";
+import type { Task } from "@rumbo/core";
 import type { ReactNode } from "react";
-import { ClockIcon, FolderKanbanIcon, InboxIcon, RepeatIcon } from "lucide-react";
+import { InboxIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { formatDayMonth, formatShortDay } from "@/lib/format";
+import { formatDayMonth } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { AreaDot } from "./AreaDot";
-import { StepsChip } from "./StepsChip";
-import { areaOf, projectOf } from "./taskFilters";
-import { PRIORITY_LABEL } from "./taskLabels";
-
-const PRIORITY_STYLE: Record<Priority, string> = {
-  high: "border-destructive/40 bg-destructive/10 text-destructive",
-  medium: "border-warning/40 bg-warning/10 text-warning",
-  low: "border-border text-muted-foreground",
-};
+import { TaskMeta } from "./TaskMeta";
 
 /**
- * Una tarea en la lista: casilla, título y, a la derecha, columnas alineadas
- * (proyecto, área, prioridad, fecha y contador) para leerlas de un vistazo.
+ * Una tarea en la lista: casilla, el título en una línea y, debajo, sus metadatos
+ * (proyecto, área, fecha, prioridad y pasos) con icono cada uno.
  */
 export function TaskRow({
   task,
@@ -42,16 +33,8 @@ export function TaskRow({
   /** El menú «…» de la fila. */
   menu?: ReactNode;
 }) {
-  const date = task.scheduled ?? task.due;
-  const late = !task.done && date !== undefined && date < today;
-  const area = areaOf(task);
-  const project = projectOf(task);
-  const dateLabel =
-    showDate && date ? `${task.due && !task.scheduled ? "vence " : ""}${formatShortDay(date)}` : "";
-  const when = [dateLabel, task.time].filter(Boolean).join(" ");
-
   return (
-    <div className="group flex items-center gap-3 px-4 py-3 transition-colors duration-(--dur-fast) hover:bg-muted/40">
+    <div className="group flex items-center gap-3 min-h-14 px-4 py-2.5 transition-colors duration-(--dur-fast) hover:bg-muted/40">
       <Checkbox
         checked={task.done}
         onCheckedChange={(checked) => onToggle(checked === true)}
@@ -60,11 +43,18 @@ export function TaskRow({
       <button
         type="button"
         onClick={onOpen}
-        className="flex min-w-0 flex-1 flex-col gap-0.5 text-left"
+        className="flex min-w-0 flex-1 flex-col gap-1 text-left"
       >
-        <span className={cn("truncate", task.done && "text-muted-foreground line-through")}>
+        <span
+          title={task.text}
+          className={cn(
+            "truncate text-sm font-medium",
+            task.done && "font-normal text-muted-foreground line-through",
+          )}
+        >
           {task.text}
         </span>
+        <TaskMeta task={task} today={today} showDate={showDate} />
         {showCaptured && (
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <InboxIcon className="size-3" />
@@ -73,40 +63,6 @@ export function TaskRow({
         )}
       </button>
 
-      <div className="flex shrink-0 items-center gap-4 text-sm text-muted-foreground">
-        {project && (
-          <span className="flex w-36 items-center gap-1.5 truncate">
-            <FolderKanbanIcon className="size-3.5 shrink-0" />
-            <span className="truncate">{project}</span>
-          </span>
-        )}
-        {area && (
-          <span className="flex w-28 items-center gap-1.5 truncate">
-            <AreaDot area={area} />
-            <span className="truncate">{area}</span>
-          </span>
-        )}
-        {task.priority && (
-          <span
-            className={cn("rounded-md border px-1.5 py-0.5 text-xs", PRIORITY_STYLE[task.priority])}
-          >
-            {PRIORITY_LABEL[task.priority]}
-          </span>
-        )}
-        {task.recurrence && <RepeatIcon className="size-3.5" aria-label={task.recurrence} />}
-        {when && (
-          <span
-            className={cn(
-              "flex items-center gap-1.5 font-mono text-xs",
-              late && "text-destructive",
-            )}
-          >
-            <ClockIcon className="size-3.5" />
-            {when}
-          </span>
-        )}
-        <StepsChip steps={task.steps} />
-      </div>
       {aside}
       {menu}
     </div>

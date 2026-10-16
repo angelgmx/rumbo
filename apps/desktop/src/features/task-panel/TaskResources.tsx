@@ -1,5 +1,5 @@
 import type { Resource } from "@rumbo/core";
-import { ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon, LinkIcon } from "lucide-react";
 import { ResourceIcon } from "@/features/roadmaps/ResourceIcon";
 import { openUrl } from "@/platform/openUrl";
 import { PanelSection } from "@/components/panel/PanelSection";
@@ -7,7 +7,7 @@ import { PanelSection } from "@/components/panel/PanelSection";
 /** Lo que usas para hacer la tarea: los enlaces de sus notas y los recursos de su módulo. */
 export function TaskResources({ resources }: { resources: Resource[] }) {
   return (
-    <PanelSection title="Recursos">
+    <PanelSection title="Recursos" icon={LinkIcon}>
       {resources.map((resource) => (
         <button
           key={`${resource.title}:${resource.url}`}

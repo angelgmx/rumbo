@@ -1,6 +1,7 @@
 import type { TaskDraft } from "@rumbo/core";
 import { DateRow } from "@/components/panel/DateRow";
-import { PropertyGroup } from "@/components/panel/PropertyGroup";
+import { CalendarIcon } from "lucide-react";
+import { PanelSection } from "@/components/panel/PanelSection";
 import { OptionProperty } from "./OptionProperty";
 import { REPEATS } from "./taskChoices";
 import { TimeProperty } from "./TimeProperty";
@@ -14,7 +15,7 @@ export function WhenGroup({
   onChange: (changes: Partial<TaskDraft>) => void;
 }) {
   return (
-    <PropertyGroup title="Cuándo">
+    <PanelSection title="Cuándo" icon={CalendarIcon}>
       <DateRow
         label="Empieza"
         empty="Añadir fecha"
@@ -38,6 +39,6 @@ export function WhenGroup({
         options={REPEATS}
         onChange={(recurrence) => onChange({ recurrence })}
       />
-    </PropertyGroup>
+    </PanelSection>
   );
 }

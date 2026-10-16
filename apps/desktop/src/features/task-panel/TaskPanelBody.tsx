@@ -1,4 +1,5 @@
 import { resourcesInText, type TaskDraft } from "@rumbo/core";
+import { TextAlignStartIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { PanelSection } from "@/components/panel/PanelSection";
 import { TaskNotes } from "./TaskNotes";
@@ -16,19 +17,25 @@ export function TaskPanelBody({
   draft,
   context,
   status,
+  taskId,
   creating,
   banner,
   onPatch,
+  onFlush,
   onTitleChange,
   onTitleBlur,
 }: {
   draft: TaskDraft;
   context: TaskContext;
   status: TaskStatus | undefined;
+  /** La tarea que se edita; al crear no hay y la hora no puede chocar consigo misma. */
+  taskId?: number;
   creating: boolean;
   /** Algo que va justo bajo el título, como la propuesta de la IA. */
   banner?: ReactNode;
   onPatch: (changes: Partial<TaskDraft>) => void;
+  /** Manda ya al vault lo escrito, al salir de la descripción. */
+  onFlush?: () => void;
   onTitleChange: (title: string) => void;
   onTitleBlur?: () => void;
 }) {
@@ -37,7 +44,7 @@ export function TaskPanelBody({
   const resources = [...resourcesInText(draft.notes ?? ""), ...context.resources];
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 pb-6">
+    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 pb-8">
       <TaskTitle
         value={draft.text}
         done={status?.done}
@@ -47,11 +54,16 @@ export function TaskPanelBody({
         onToggleDone={(done) => status?.onChange(done)}
       />
       {banner}
-      <PanelSection title="Descripción">
-        <TaskNotes value={draft.notes ?? ""} onChange={(notes) => onPatch({ notes })} />
+      <PanelSection title="Descripción" icon={TextAlignStartIcon}>
+        <TaskNotes
+          value={draft.notes ?? ""}
+          onChange={(notes) => onPatch({ notes })}
+          onBlur={onFlush}
+        />
       </PanelSection>
       <TaskProperties
         draft={draft}
+        taskId={taskId}
         context={context}
         inheritance={inheritance}
         options={options}

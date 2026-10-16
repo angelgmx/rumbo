@@ -37,6 +37,18 @@ export function PropertyRow({
   );
 }
 
+/** La misma fila para un campo que se escribe en el sitio y puede ocupar varias líneas. */
+export function FieldRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex gap-2 py-0.5">
+      <span className="flex h-8 w-36 shrink-0 items-center truncate text-sm text-muted-foreground">
+        {label}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-2 px-2">{children}</div>
+    </div>
+  );
+}
+
 /** La misma fila, para un valor que viene de otra parte y no se cambia aquí. */
 export function ReadOnlyRow({ label, children }: { label: string; children: ReactNode }) {
   return (
