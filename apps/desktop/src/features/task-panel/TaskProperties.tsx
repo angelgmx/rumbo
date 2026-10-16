@@ -8,7 +8,6 @@ import { OptionProperty } from "./OptionProperty";
 import { SectionLabel } from "@/components/panel/SectionLabel";
 import { REPEATS } from "./taskChoices";
 import { TagsProperty } from "./TagsProperty";
-import { TimeProperty } from "./TimeProperty";
 import type { Inheritance } from "./useInheritance";
 import type { TaskContext } from "./useTaskContext";
 import type { TaskOptions } from "./useTaskOptions";
@@ -60,10 +59,12 @@ export function TaskProperties({
         />
       )}
       {context.goal && <GoalProperty goal={context.goal} />}
-      <DatesProperty scheduled={draft.scheduled} due={draft.due} onChange={onChange} />
-      {draft.scheduled && (
-        <TimeProperty value={draft.time} onChange={(time) => onChange({ time })} />
-      )}
+      <DatesProperty
+        scheduled={draft.scheduled}
+        due={draft.due}
+        time={draft.time}
+        onChange={onChange}
+      />
       <OptionProperty
         label="Repite"
         clearLabel="No se repite"

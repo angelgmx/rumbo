@@ -1,9 +1,9 @@
 import { addMinutesToTime } from "@rumbo/core";
+import { TimeWheels } from "@/components/date-time-picker/TimeWheels";
 import { DaysField } from "@/components/panel/DaysField";
 import { OptionList } from "@/components/panel/OptionList";
 import { PropertyRow, ReadOnlyRow } from "@/components/panel/PropertyRow";
 import { SectionLabel } from "@/components/panel/SectionLabel";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { AreaDot } from "@/features/tasks/AreaDot";
 import { useAreaNames } from "@/hooks/useAreaNames";
@@ -49,15 +49,7 @@ export function RoutineProperties({
         }
         width="w-auto p-2"
       >
-        {() => (
-          <Input
-            type="time"
-            aria-label="Hora de inicio"
-            className="w-32"
-            value={draft.start}
-            onChange={(event) => event.target.value && onChange({ start: event.target.value })}
-          />
-        )}
+        {() => <TimeWheels value={draft.start} onChange={(start) => onChange({ start })} />}
       </PropertyRow>
       <ValidityProperty from={draft.from} until={draft.until} onChange={onChange} />
       <GoalProperty goalId={draft.goalId} onChange={(goalId) => onChange({ goalId })} />

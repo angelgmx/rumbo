@@ -1,6 +1,7 @@
 import { periodChoices, periodHorizon, type GoalInput, type IsoDate } from "@rumbo/core";
 import { useRumbo } from "@/app/RumboContext";
-import { DateRangePicker } from "@/components/DateRangePicker";
+import { DateRangeTimePicker } from "@/components/date-time-picker/DateRangeTimePicker";
+import { dayShortcuts } from "@/components/date-time-picker/shortcuts";
 import { OptionList } from "@/components/panel/OptionList";
 import { PropertyRow } from "@/components/panel/PropertyRow";
 import { AreaDot } from "@/features/tasks/AreaDot";
@@ -82,11 +83,14 @@ export function DateRow({
   date: IsoDate | undefined;
   onChange: (date: IsoDate | undefined) => void;
 }) {
+  const today = useRumbo().daily.today();
+
   return (
     <PropertyRow label={label} empty={empty} value={date && formatLongDay(date)} width="w-auto p-1">
       {(close) => (
-        <DateRangePicker
-          single
+        <DateRangeTimePicker
+          mode="day"
+          shortcuts={dayShortcuts(today)}
           value={{ start: date }}
           onChange={({ start }) => onChange(start)}
           onDone={close}

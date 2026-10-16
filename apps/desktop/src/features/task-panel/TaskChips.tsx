@@ -1,6 +1,7 @@
 import type { Priority, TaskDraft } from "@rumbo/core";
 import { useRumbo } from "@/app/RumboContext";
-import { DateRangePicker } from "@/components/DateRangePicker";
+import { DateRangeTimePicker } from "@/components/date-time-picker/DateRangeTimePicker";
+import { scheduleShortcuts } from "@/components/date-time-picker/shortcuts";
 import { PRIORITY_LABEL } from "@/features/tasks/taskLabels";
 import { formatRelativeDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -111,9 +112,12 @@ function DateChip({
       }
     >
       {(close) => (
-        <DateRangePicker
-          value={{ start: draft.scheduled, end: draft.due }}
-          onChange={({ start, end }) => onChange({ scheduled: start, due: end })}
+        <DateRangeTimePicker
+          mode="range"
+          withTime
+          shortcuts={scheduleShortcuts(today)}
+          value={{ start: draft.scheduled, end: draft.due, time: draft.time }}
+          onChange={(next) => onChange({ scheduled: next.start, due: next.end, time: next.time })}
           onDone={close}
         />
       )}
