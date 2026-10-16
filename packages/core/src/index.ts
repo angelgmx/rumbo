@@ -15,14 +15,17 @@ export type {
   TopicSummary,
 } from "./app/learningService";
 export { exerciseMinutes, type StudySlot } from "./domain/planner";
+export { capacityUntil, trimToFit, type Pace, type PaceState } from "./domain/pace";
+export type { RoadmapStatus, Track } from "./domain/roadmaps";
 export type { ReviewCard } from "./app/reviewService";
 export type { ReviewRating } from "./domain/review";
 export {
   exerciseCode,
+  exerciseLanguage,
   type Exercise,
   type ExerciseLevel,
-  type ModuleStatus,
-} from "./domain/learning";
+} from "./domain/exercises";
+export type { ModuleStatus } from "./domain/learning";
 export { linkTarget } from "./domain/links";
 export { guessFromUrl, RESOURCE_KINDS, type Resource, type ResourceKind } from "./domain/resources";
 export type { VaultStore } from "./app/vaultStore";
@@ -43,6 +46,7 @@ export {
 } from "./domain/agenda";
 export {
   addDays,
+  daysBetween,
   startOfWeek,
   toIsoDate,
   weekdayOf,

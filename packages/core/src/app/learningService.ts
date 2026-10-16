@@ -1,19 +1,32 @@
 import { z } from "zod";
 import { WEEKDAYS, type IsoDate } from "../domain/dates";
 import {
-  addPracticeEntry,
+  exerciseLanguage,
   parseExercises,
+  setExerciseSolution,
+  type Exercise,
+} from "../domain/exercises";
+import {
+  addPracticeEntry,
   parseModule,
   readStatus,
   statusWord,
-  type Exercise,
   type ModuleContent,
   type ModuleStatus,
 } from "../domain/learning";
 import { challengeName, parseChallenge, type ChallengeContent } from "../domain/challenges";
 import { linkTarget, linkTargets } from "../domain/links";
-import { planModules, weeklyMinutes, type StudySlot } from "../domain/planner";
+import { pace, type Pace } from "../domain/pace";
+import { pendingMinutes, planModules, weeklyMinutes, type StudySlot } from "../domain/planner";
 import { readResources, resourceSchema, type Resource } from "../domain/resources";
+import {
+  readDate,
+  readRoadmapStatus,
+  readTracks,
+  trackOf,
+  type RoadmapStatus,
+  type Track,
+} from "../domain/roadmaps";
 import { setChecked } from "../domain/checkbox";
 import { setFrontmatter } from "../vault/frontmatter";
 import type { Note } from "../vault/vault";
@@ -31,8 +44,12 @@ export interface ModuleSummary extends NoteRef {
   order: number;
   status: ModuleStatus;
   roadmap?: string;
+  /** La pista de la ruta en la que va (su `key`). */
+  track: string;
   /** Horas que pone la nota del tema, si las pone. */
   estimatedHours?: number;
+  /** Lo que lleva el módulo entero, hecho y por hacer: sus horas o la estimación. */
+  estimatedMinutes: number;
   content: ModuleContent;
   /** Los apuntes del tema: las demás notas de su carpeta. */
   notes: NoteRef[];
@@ -46,6 +63,11 @@ export interface ModuleSummary extends NoteRef {
 
 export interface RoadmapSummary extends NoteRef {
   title: string;
+  status: RoadmapStatus;
+  start?: IsoDate;
+  deadline?: IsoDate;
+  /** Pistas en paralelo; siempre hay al menos una. */
+  tracks: Track[];
   /** Clave del hábito en el que se estudia esta ruta (p. ej. "programacion"). */
   habit?: string;
   /** Franjas de estudio de la ruta: "L-V de 17:00 a 19:00". */
@@ -57,6 +79,8 @@ export interface RoadmapSummary extends NoteRef {
   /** El siguiente ejercicio sin hacer del tema que toca. */
   nextExercise?: Exercise;
   plan: RoadmapPlan;
+  /** Si llegas a la fecha con tu horario. */
+  pace: Pace;
 }
 
 export interface RoadmapPlan {
@@ -68,6 +92,9 @@ export interface RoadmapPlan {
   modules: Map<string, IsoDate | undefined>;
   /** Minutos que le quedan a cada tema pendiente, por ruta de la nota. */
   minutesLeft: Map<string, number>;
+  /** Minutos de la ruta entera (sin los temas saltados) y los que quedan. */
+  totalMinutes: number;
+  remainingMinutes: number;
 }
 
 /** Una carpeta de apuntes del tema ("01 - Operadores") con sus notas. */
@@ -125,24 +152,41 @@ export class LearningService {
     return this.store
       .notesOfType("roadmap")
       .map((note) => {
+        const title = String(note.data.title ?? note.name);
+        const tracks = readTracks(note.data.tracks, title);
         const own = modules
           .filter((module) => module.roadmap === note.name)
+          .map((module) => ({ ...module, track: trackOf(module.track, tracks) }))
           .sort((a, b) => a.order - b.order);
         const current =
           own.find((module) => module.status === "learning") ??
           own.find((module) => module.status === "not-started");
         const schedule = scheduleSchema.parse(note.data.schedule ?? []);
+        const plan = this.plan(own, schedule);
+        const deadline = readDate(note.data.deadline);
         return {
           path: note.path,
           name: note.name,
-          title: String(note.data.title ?? note.name),
+          title,
+          status: readRoadmapStatus(note.data.status),
+          start: readDate(note.data.start),
+          deadline,
+          tracks,
           habit: typeof note.data.habit === "string" ? note.data.habit : undefined,
           schedule,
           modules: own,
           mastered: own.filter((module) => module.status === "mastered").length,
           current,
           nextExercise: current?.exercises.find((exercise) => !exercise.done),
-          plan: this.plan(own, schedule),
+          plan,
+          pace: pace({
+            totalMinutes: plan.totalMinutes,
+            remainingMinutes: plan.remainingMinutes,
+            weeklyMinutes: plan.weeklyMinutes,
+            today: this.daily.today(),
+            deadline,
+            projectedFinish: plan.finishes,
+          }),
         };
       })
       .sort((a, b) => a.title.localeCompare(b.title));
@@ -193,6 +237,28 @@ export class LearningService {
       ? [...new Set([...current, exerciseId])].sort()
       : current.filter((id) => id !== exerciseId);
     await this.store.write(module.exercisesPath, setFrontmatter(source, ["done"], next));
+  }
+
+  /** Guarda tu solución dentro del ejercicio, en «#### Mi solución». */
+  async saveSolution(module: ModuleSummary, exercise: Exercise, code: string): Promise<void> {
+    if (!module.exercisesPath) return;
+    const source = await this.store.read(module.exercisesPath);
+    const language = exerciseLanguage(exercise.statement);
+    await this.store.write(
+      module.exercisesPath,
+      setExerciseSolution(source, exercise.id, code, language),
+    );
+  }
+
+  /** Mueve la fecha objetivo de la ruta (o la quita). */
+  async setDeadline(roadmap: RoadmapSummary, deadline: IsoDate | undefined): Promise<void> {
+    const source = await this.store.read(roadmap.path);
+    await this.store.write(roadmap.path, setFrontmatter(source, ["deadline"], deadline));
+  }
+
+  /** Reducir el alcance: los módulos pasan a «saltado» y dejan de contar para la fecha. */
+  async skipModules(modules: ModuleSummary[]): Promise<void> {
+    for (const module of modules) await this.setStatus(module, "skipped");
   }
 
   // Los recursos se guardan en la nota de un módulo o, si son de todo el tema, en la del tema.
@@ -293,6 +359,10 @@ export class LearningService {
       finishes: planned.at(-1)?.finishes,
       modules: new Map(planned.map((item) => [item.id, item.finishes])),
       minutesLeft: new Map(planned.map((item) => [item.id, item.minutes])),
+      totalMinutes: modules
+        .filter((module) => module.status !== "skipped")
+        .reduce((sum, module) => sum + module.estimatedMinutes, 0),
+      remainingMinutes: planned.reduce((sum, item) => sum + item.minutes, 0),
     };
   }
 
@@ -372,6 +442,12 @@ export class LearningService {
     const folder = parentOf(note.path);
     const title = String(note.data.title ?? note.name);
     const exercisesNote = this.findExercisesNote(note.path, title);
+    const exercises = exercisesNote
+      ? parseExercises(exercisesNote.source, doneIds(exercisesNote))
+      : [];
+    const content = parseModule(note.source);
+    const estimatedHours =
+      typeof note.data.estimated_hours === "number" ? note.data.estimated_hours : undefined;
 
     return {
       path: note.path,
@@ -380,12 +456,19 @@ export class LearningService {
       order: Number(note.data.order ?? 0),
       status: readStatus(note.data.status),
       roadmap: linkTarget(note.data.roadmap),
-      estimatedHours:
-        typeof note.data.estimated_hours === "number" ? note.data.estimated_hours : undefined,
-      content: parseModule(note.source),
+      // La pista de verdad se decide con las de la ruta (ver roadmaps()).
+      track: typeof note.data.track === "string" ? note.data.track : "",
+      estimatedHours,
+      estimatedMinutes: pendingMinutes({
+        id: note.path,
+        concepts: content.concepts.length,
+        exercises: exercises.map((exercise) => exercise.level),
+        estimatedHours,
+      }),
+      content,
       notes: [...this.notesIn(folder)].filter((other) => other.path !== note.path),
       exercisesPath: exercisesNote?.path,
-      exercises: exercisesNote ? parseExercises(exercisesNote.source, doneIds(exercisesNote)) : [],
+      exercises,
       challenges: this.challengesLinkedFrom(note),
       resources: readResources(note.data.resources),
     };

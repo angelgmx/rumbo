@@ -1,5 +1,13 @@
 import { z } from "zod";
-import { addDays, startOfWeek, WEEKDAYS, weekdayOf, type IsoDate, type Weekday } from "./dates";
+import {
+  addDays,
+  daysBetween,
+  startOfWeek,
+  WEEKDAYS,
+  weekdayOf,
+  type IsoDate,
+  type Weekday,
+} from "./dates";
 
 export const scheduleSchema = z.union([
   z.literal("daily"),
@@ -271,11 +279,4 @@ export function habitStats(habit: Habit, history: HabitHistory): HabitStats {
 
   const best = [...byWeekday].sort((a, b) => b[1] - a[1])[0];
   return { doneDays, amount, bestWeekday: best?.[0] };
-}
-
-function daysBetween(from: IsoDate, to: IsoDate): number {
-  const [y1, m1, d1] = from.split("-").map(Number);
-  const [y2, m2, d2] = to.split("-").map(Number);
-  // Date.UTC evita que el cambio de hora cuente un día de más o de menos.
-  return Math.round((Date.UTC(y2!, m2! - 1, d2!) - Date.UTC(y1!, m1! - 1, d1!)) / 86_400_000);
 }
