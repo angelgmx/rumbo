@@ -97,7 +97,8 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] **Ideas** (GTD): captura con conmutador Tarea | Idea y aviso con «Ver», vista Ideas en Tareas con «Convertir en tarea» y «Borrar», y «Es una idea» al procesar el inbox. Se guardan como viñetas con `[created:: fecha]` en `folders.ideas`
 - [ ] Registro de sesiones y estimado vs real (necesitan guardar el tiempo de cada sesión)
 - [x] Foco v2: botón único «Empezar» (rutina en curso, foco, racha en riesgo, siguiente paso), «Solo 5 minutos», día malo (2 al mes), racha en riesgo con versión mínima y rutinas como grupo en «Tu día»
-- [ ] Foco v2: cerrar el día y modo enfoque
+- [x] Modo enfoque: la sesión a pantalla completa con anillo, rondas de pomodoro, paso de ahora, progreso y lo siguiente del día
+- [ ] Foco v2: cerrar el día
 
 **Nombres de la especificación (16 oct):**
 

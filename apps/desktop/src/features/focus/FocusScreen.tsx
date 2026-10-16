@@ -13,7 +13,7 @@ import { ScreenHeader } from "@/layout/ScreenHeader";
 import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { useSession } from "@/features/session/SessionProvider";
 import { choiceRequest, focusNumber, QUICK_MINUTES, type FocusChoice } from "./choice";
-import { dayEntries, nextEntryTitle, routineOfHabits } from "./dayEntries";
+import { dayEntries, nextEntry, routineOfHabits } from "./dayEntries";
 import { DayPlanCard } from "./DayPlanCard";
 import { FocusHeader } from "./FocusHeader";
 import { NowCard } from "./NowCard";
@@ -110,7 +110,7 @@ export function FocusScreen() {
               <NowCard
                 choice={choice}
                 focusNumber={focusNumber(choice, day.focus)}
-                next={nextEntryTitle(entries, time)}
+                next={nextEntry(entries, time)?.title}
                 badDay={{
                   active: day.badDay,
                   used: day.badDaysUsed,

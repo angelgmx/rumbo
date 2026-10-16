@@ -55,7 +55,7 @@ export function useSessionEngine(): { session?: ActiveSession; actions: SessionA
       setState({ ...state, banked: 0, length: 0, finished: true });
       return undefined;
     }
-    setState({ ...state, banked: 0, length: rest * 60, resting: true });
+    setState({ ...state, banked: 0, length: rest * 60, resting: true, rounds: state.rounds + 1 });
     return rest;
   }
 
@@ -101,6 +101,7 @@ export function useSessionEngine(): { session?: ActiveSession; actions: SessionA
         finished: false,
         pomodoro: false,
         resting: false,
+        rounds: 0,
       });
       countdown.start(request.minutes);
     },

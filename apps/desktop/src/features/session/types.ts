@@ -24,4 +24,6 @@ export interface SessionState {
   pomodoro: boolean;
   /** La ronda en curso es un descanso: no se apunta en la tarea. */
   resting: boolean;
+  /** Rondas de trabajo de pomodoro ya terminadas. */
+  rounds: number;
 }

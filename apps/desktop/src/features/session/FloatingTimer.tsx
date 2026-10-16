@@ -25,10 +25,12 @@ export function FloatingTimer({
   session,
   actions,
   onNext,
+  onFocusMode,
 }: {
   session: ActiveSession;
   actions: SessionActions;
   onNext: (request: SessionRequest) => void;
+  onFocusMode: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [look, setLook] = useState<WidgetLook>(loadLook);
@@ -66,7 +68,12 @@ export function FloatingTimer({
           {session.finished ? (
             <DoneCard session={session} actions={actions} onNext={onNext} />
           ) : (
-            <TimerCard session={session} actions={actions} onHide={() => setHidden(true)} />
+            <TimerCard
+              session={session}
+              actions={actions}
+              onHide={() => setHidden(true)}
+              onFocusMode={onFocusMode}
+            />
           )}
         </div>
       )}

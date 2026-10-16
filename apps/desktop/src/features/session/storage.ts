@@ -24,7 +24,8 @@ export const DEFAULT_LOOK: WidgetLook = { corner: "bottom-right", hidden: false 
 
 export function loadSession(): StoredSession | undefined {
   const value = read(SESSION_KEY);
-  return isStoredSession(value) ? value : undefined;
+  if (!isStoredSession(value)) return undefined;
+  return { ...value, state: { ...value.state, rounds: value.state.rounds ?? 0 } };
 }
 
 export function saveSession(stored: StoredSession | undefined): void {
@@ -68,7 +69,12 @@ function isLook(value: unknown): value is WidgetLook {
   );
 }
 
-function isStoredSession(value: unknown): value is StoredSession {
+// Las sesiones guardadas antes de contar rondas no tienen `rounds`.
+type SavedSession = Omit<StoredSession, "state"> & {
+  state: Omit<SessionState, "rounds"> & { rounds?: number };
+};
+
+function isStoredSession(value: unknown): value is SavedSession {
   if (!isObject(value) || !isObject(value.state) || !isObject(value.state.request)) return false;
   const { state } = value;
   const request = state.request as Record<string, unknown>;
@@ -80,6 +86,7 @@ function isStoredSession(value: unknown): value is StoredSession {
     typeof state.finished === "boolean" &&
     typeof state.pomodoro === "boolean" &&
     typeof state.resting === "boolean" &&
+    (state.rounds === undefined || typeof state.rounds === "number") &&
     typeof request.title === "string" &&
     typeof request.minutes === "number"
   );

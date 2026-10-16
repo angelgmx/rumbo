@@ -1,5 +1,6 @@
 import {
   EyeOffIcon,
+  Maximize2Icon,
   PauseIcon,
   PlayIcon,
   PlusIcon,
@@ -17,10 +18,12 @@ export function TimerCard({
   session,
   actions,
   onHide,
+  onFocusMode,
 }: {
   session: ActiveSession;
   actions: SessionActions;
   onHide: () => void;
+  onFocusMode: () => void;
 }) {
   return (
     <>
@@ -35,6 +38,9 @@ export function TimerCard({
           className={cn("-my-1 size-6", session.pomodoro ? "text-primary-text" : "text-faint")}
         >
           <TimerIcon />
+        </IconAction>
+        <IconAction label="Modo enfoque" onClick={onFocusMode} className="-my-1 size-6">
+          <Maximize2Icon />
         </IconAction>
         <IconAction label="Ocultar" onClick={onHide} className="-my-1 -mr-1 size-6">
           <EyeOffIcon />
