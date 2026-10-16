@@ -312,6 +312,8 @@ Java/
     Reto 05 — Batalla por turnos.md      ← retos: los que enlaza el tema con [[…]]
 ```
 
+**Crear una ruta desde la app** («Nueva ruta», a mano o con IA) escribe esto en la carpeta del tema: la nota de la ruta (`status: active`, con «Por qué este orden» si lo explicó la IA) y una nota por módulo en `Apuntes/NN - Módulo/Dominio — Módulo.md`, con su criterio y sus conceptos. Si el tema es nuevo, crea también su nota `type: area`. La IA no pone enlaces de cursos: un modelo sin internet se los inventaría.
+
 **Ruta** — `type: roadmap`
 
 ```yaml

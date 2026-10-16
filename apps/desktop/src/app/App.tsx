@@ -8,6 +8,7 @@ import { CloseDayScreen } from "@/features/close-day/CloseDayScreen";
 import { ExerciseScreen } from "@/features/exercises/ExerciseScreen";
 import { ExercisesScreen } from "@/features/exercises/ExercisesScreen";
 import { HabitsScreen } from "@/features/habits/HabitsScreen";
+import { NewRoadmapScreen } from "@/features/roadmaps/new/NewRoadmapScreen";
 import { RoadmapsScreen } from "@/features/roadmaps/RoadmapsScreen";
 import { RoutineEditorScreen } from "@/features/routines/editor/RoutineEditorScreen";
 import { RoutinesScreen } from "@/features/routines/RoutinesScreen";
@@ -41,6 +42,7 @@ export function App() {
                       <Route path="/cerrar-el-dia" component={CloseDayScreen} />
                       <Route path="/tareas/:view" component={TasksScreen} />
                       <Route path="/roadmaps" component={RoadmapsScreen} />
+                      <Route path="/roadmaps/nueva" component={NewRoadmapScreen} />
                       <Route path="/roadmaps/:topic" component={RoadmapScreen} />
                       <Route path="/roadmaps/:topic/:module" component={ModuleScreen} />
                       <Route path="/rutinas" component={RoutinesScreen} />

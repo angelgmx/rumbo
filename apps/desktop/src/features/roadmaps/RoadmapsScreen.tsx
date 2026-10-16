@@ -1,8 +1,9 @@
 import type { RoadmapStatus, TopicSummary } from "@rumbo/core";
-import { ArrowRightIcon, BookOpenIcon } from "lucide-react";
+import { ArrowRightIcon, BookOpenIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { AreaIcon } from "@/components/AreaIcon";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Empty,
@@ -39,7 +40,16 @@ export function RoadmapsScreen() {
 
   return (
     <>
-      <ScreenHeader title="Roadmaps" />
+      <ScreenHeader
+        title="Roadmaps"
+        newTask={false}
+        actions={
+          <Button render={<Link href="/roadmaps/nueva" />}>
+            <PlusIcon data-icon="inline-start" />
+            Nueva ruta
+          </Button>
+        }
+      />
       <main className="flex-1 overflow-y-auto p-6">
         <div className="mx-auto flex max-w-7xl flex-col gap-5">
           <div className="flex items-end justify-between gap-4">
