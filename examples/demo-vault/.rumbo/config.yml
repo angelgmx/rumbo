@@ -1,0 +1,8 @@
+folders:
+  daily: Journal
+  daily_format: YYYY/MM/YYYY-MM-DD
+  inbox: Inbox/Inbox.md
+  habits: Habits
+  goals: Goals
+  routines: Routines
+  templates: Templates
