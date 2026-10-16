@@ -1,10 +1,10 @@
 import { HashIcon, XIcon } from "lucide-react";
 import { useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { PropertyChip } from "./PropertyChip";
+import { PropertyRow } from "./PropertyRow";
 
 /** Las etiquetas de la tarea: escribe una y Enter, o elige entre las que ya usas. */
-export function TagsChip({
+export function TagsProperty({
   tags,
   known,
   onChange,
@@ -30,10 +30,10 @@ export function TagsChip({
   }
 
   return (
-    <PropertyChip
+    <PropertyRow
       icon={<HashIcon />}
-      label={tags.length > 0 ? tags.map((tag) => `#${tag}`).join(" ") : "Etiquetas"}
-      filled={tags.length > 0}
+      label="Etiquetas"
+      value={tags.length > 0 ? tags.map((tag) => `#${tag}`).join(" ") : undefined}
       width="w-64 gap-2 p-2.5"
     >
       {() => (
@@ -81,6 +81,6 @@ export function TagsChip({
           )}
         </>
       )}
-    </PropertyChip>
+    </PropertyRow>
   );
 }

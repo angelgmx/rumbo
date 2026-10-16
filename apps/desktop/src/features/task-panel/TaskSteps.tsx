@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
-/** Los pasos de la tarea: casillas pequeñas que se marcan, se escriben y se quitan. */
+/** Los pasos de la tarea: una lista de casillas que se marcan, se escriben y se quitan. */
 export function TaskSteps({
   steps,
   onChange,

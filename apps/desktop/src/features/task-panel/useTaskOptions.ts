@@ -1,16 +1,16 @@
 import { useVaultQuery } from "@/hooks/useVaultQuery";
-import type { ChipOption } from "./OptionChip";
+import type { PropertyOption } from "./OptionList";
 
 export interface TaskOptions {
-  areas: ChipOption[];
-  projects: ChipOption[];
-  modules: ChipOption[];
+  areas: PropertyOption[];
+  projects: PropertyOption[];
+  modules: PropertyOption[];
   tags: string[];
 }
 
 const NONE: TaskOptions = { areas: [], projects: [], modules: [], tags: [] };
 
-/** Lo que se puede elegir en las fichas: lo que ya existe en el vault. */
+/** Lo que se puede elegir en las propiedades: lo que ya existe en el vault. */
 export function useTaskOptions(): TaskOptions {
   return (
     useVaultQuery((rumbo) => ({

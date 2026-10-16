@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
-import { useTaskWindow } from "@/features/task-window/TaskWindowProvider";
+import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { cn } from "@/lib/utils";
 import { AreaDot } from "./AreaDot";
 import type { TaskFilter } from "./taskFilters";
@@ -35,7 +35,7 @@ export function TasksSidebar({
   onOpenSavedView,
   onRemoveSavedView,
 }: TasksSidebarProps) {
-  const { create } = useTaskWindow();
+  const { create } = useTaskPanel();
   const toggle = (key: "area" | "project", value: string) =>
     onFilterChange({ ...filter, [key]: filter[key] === value ? undefined : value });
 

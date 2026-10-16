@@ -1,51 +1,51 @@
-import type { ReactNode } from "react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 /**
- * Una ficha de la ventana de tarea: el valor a la vista y, al pulsarla, su selector.
- * Sin valor sale apagada con el nombre de la propiedad.
+ * Una propiedad de la tarea: icono y nombre a la izquierda, el valor a la derecha.
+ * Al pulsar el valor se abre su selector; sin valor sale «Vacío» apagado.
  */
-export function PropertyChip({
+export function PropertyRow({
   icon,
   label,
-  filled,
-  accent = false,
+  value,
   width,
   children,
 }: {
   icon: ReactNode;
   label: string;
-  filled: boolean;
-  accent?: boolean;
+  value: ReactNode | undefined;
   width?: string;
   children: (close: () => void) => ReactNode;
 }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <button
-            type="button"
-            className={cn(
-              "flex h-8 max-w-60 items-center gap-1.5 rounded-lg border px-2.5 text-sm transition-colors duration-(--dur-fast) hover:bg-muted",
-              !filled && "text-muted-foreground",
-              accent &&
-                filled &&
-                "border-primary/60 bg-primary-soft text-primary-text hover:bg-primary-soft",
-            )}
-          />
-        }
-      >
-        <span className="shrink-0 [&_svg]:size-3.5">{icon}</span>
+    <div className="flex min-h-8 items-center gap-2">
+      <div className="flex w-36 shrink-0 items-center gap-2 text-sm text-muted-foreground [&_svg]:size-4">
+        {icon}
         <span className="truncate">{label}</span>
-      </PopoverTrigger>
-      <PopoverContent align="start" className={cn("gap-1 p-1.5", width)}>
-        {children(() => setOpen(false))}
-      </PopoverContent>
-    </Popover>
+      </div>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          render={
+            <button
+              type="button"
+              aria-label={label}
+              className={cn(
+                "flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-left text-sm transition-colors duration-(--dur-fast) outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 data-popup-open:bg-muted",
+                value === undefined && "text-muted-foreground/60",
+              )}
+            />
+          }
+        >
+          {value ?? "Vacío"}
+        </PopoverTrigger>
+        <PopoverContent align="start" className={cn("gap-1 p-1.5", width)}>
+          {children(() => setOpen(false))}
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }

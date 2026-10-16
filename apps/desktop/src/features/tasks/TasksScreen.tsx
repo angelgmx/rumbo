@@ -12,7 +12,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Kbd } from "@/components/ui/kbd";
-import { useTaskWindow } from "@/features/task-window/TaskWindowProvider";
+import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { formatDay } from "@/lib/format";
@@ -32,7 +32,7 @@ export function TasksScreen() {
   const inboxPath = rumbo.store.config.folders.inbox;
   const current = findView(useParams<{ view: string }>().view);
   const [filter, setFilter] = useState<TaskFilter>({});
-  const taskWindow = useTaskWindow();
+  const taskPanel = useTaskPanel();
 
   const [, navigate] = useLocation();
   const all = useVaultQuery((r) => r.tasks.all()).data ?? [];
@@ -56,7 +56,7 @@ export function TasksScreen() {
     today,
     showSource: current.view === "inbox",
     onToggle: (task: Task, done: boolean) => rumbo.tasks.setDone(task, done),
-    onOpen: taskWindow.edit,
+    onOpen: taskPanel.edit,
   };
 
   return (

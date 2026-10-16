@@ -1,44 +1,23 @@
-import { taskToDraft, type Task, type TaskDraft } from "@rumbo/core";
+import type { TaskDraft } from "@rumbo/core";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
-import { applyTitle, changesFrom, EMPTY_DRAFT } from "./taskDraft";
+import { applyTitle, EMPTY_DRAFT } from "./taskDraft";
 
-export interface Inheritance {
-  area: string;
-  from: "módulo" | "proyecto";
-}
-
-export interface TaskForm {
+export interface NewTask {
   draft: TaskDraft;
-  /** El área que la tarea toma de su módulo o proyecto mientras no tenga una propia. */
-  inheritance?: Inheritance;
-  canSave: boolean;
+  canCreate: boolean;
   patch: (changes: Partial<TaskDraft>) => void;
   typeTitle: (text: string) => void;
   finishTitle: () => void;
-  save: () => Promise<void>;
+  create: () => Promise<void>;
 }
 
-/** El borrador de la ventana de tarea: nueva (sin `task`) o la que se edita. */
-export function useTaskForm(task: Task | undefined, onSaved: () => void): TaskForm {
+/** El borrador de una tarea nueva: se rellena a mano o escribiendo el título en lenguaje natural. */
+export function useNewTask(onCreated: () => void): NewTask {
   const rumbo = useRumbo();
   const today = rumbo.daily.today();
-  const [draft, setDraft] = useState<TaskDraft>(task ? taskToDraft(task) : EMPTY_DRAFT);
-
-  const inherited = rumbo.tasks.inheritedArea(draft);
-  const inheritance: Inheritance | undefined =
-    draft.area === undefined && inherited
-      ? {
-          area: inherited,
-          from: rumbo.tasks.inheritedArea({ module: draft.module }) ? "módulo" : "proyecto",
-        }
-      : undefined;
-
-  // El título de una tarea que ya existe solo se lee si lo has tocado: «Comprar hoy» puede ser el nombre.
-  const settle = (current: TaskDraft) =>
-    current.text === task?.text ? current : applyTitle(current, today, true);
-  const hasTitle = settle(draft).text.trim() !== "";
+  const [draft, setDraft] = useState<TaskDraft>(EMPTY_DRAFT);
 
   const patch = (changes: Partial<TaskDraft>) => setDraft((old) => ({ ...old, ...changes }));
 
@@ -49,23 +28,33 @@ export function useTaskForm(task: Task | undefined, onSaved: () => void): TaskFo
       return /\s$/.test(text) ? applyTitle(next, today, false) : next;
     });
 
-  const finishTitle = () => setDraft(settle);
+  const finishTitle = () => setDraft((old) => applyTitle(old, today, true));
 
-  async function save() {
-    const finished = settle(draft);
+  async function create() {
+    const finished = applyTitle(draft, today, true);
     const text = finished.text.trim();
     if (!text) return;
 
-    const ready = { ...finished, text, area: finished.area ?? inherited };
-    if (!task) {
-      await rumbo.tasks.create(ready);
-      toast.success("Tarea creada en el inbox");
-    } else {
-      const changes = changesFrom(task, ready);
-      if (Object.keys(changes).length > 0) await rumbo.tasks.update(task, changes);
+    try {
+      await rumbo.tasks.create({
+        ...finished,
+        text,
+        area: finished.area ?? rumbo.tasks.inheritedArea(finished),
+      });
+    } catch {
+      toast.error("No se ha podido crear la tarea");
+      return;
     }
-    onSaved();
+    toast.success("Tarea creada en el inbox");
+    onCreated();
   }
 
-  return { draft, inheritance, canSave: hasTitle, patch, typeTitle, finishTitle, save };
+  return {
+    draft,
+    canCreate: applyTitle(draft, today, true).text.trim() !== "",
+    patch,
+    typeTitle,
+    finishTitle,
+    create,
+  };
 }

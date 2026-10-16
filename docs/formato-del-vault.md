@@ -151,7 +151,7 @@ Casillas en el formato del plugin **Tasks**, así funcionan igual en Obsidian:
 
 Sin el campo, la tarea no tiene contador: se marca hecha y ya. Llegar al objetivo **no** marca la tarea; eso lo decides tú. Al cambiar el contador solo se reescribe su campo, y si la tarea no lo tenía se pone antes de los emojis de Tasks (que los lee desde el final de la línea).
 
-`project` y `module` llevan un enlace a la nota: `[project:: [[Rumbo]]]`, `[module:: [[Dominio — Strings]]]`. Si la tarea no tiene `area`, la ventana de tarea le pone la del módulo (la de su ruta) o, si no, la del proyecto.
+`project` y `module` llevan un enlace a la nota: `[project:: [[Rumbo]]]`, `[module:: [[Dominio — Strings]]]`. Si la tarea no tiene `area`, el panel de tarea le pone la del módulo (la de su ruta) o, si no, la del proyecto.
 
 **Pasos y notas.** Lo que cuelga de una tarea con más sangría, hasta la primera línea en blanco, es suyo: las casillas son sus **pasos** (no cuentan como tareas aparte) y el resto de líneas, sus **notas**.
 
@@ -202,7 +202,7 @@ Lo que escribes en la captura rápida se interpreta así:
 
 Palabras de fecha: `hoy`, `mañana`, `pasado mañana`, el nombre de un día (`lunes`… `domingo`) y `día/mes`.
 
-El título de la **ventana de tarea** (`Ctrl N`) se lee parecido, pero una tarea no lleva hora: `ejercicios strings hoy 45m !alta #java` pone la fecha, la duración, la prioridad (`!alta`, `!media`, `!baja`) y la etiqueta en sus fichas y deja «ejercicios strings» como título. Las palabras se leen al terminar de escribirlas.
+El título de la **panel de tarea** (`Ctrl N`) se lee parecido, pero una tarea no lleva hora: `ejercicios strings hoy 45m !alta #java` pone la fecha, la duración, la prioridad (`!alta`, `!media`, `!baja`) y la etiqueta en sus propiedades y deja «ejercicios strings» como título. Las palabras se leen al terminar de escribirlas.
 
 ### Área — `type: area`
 

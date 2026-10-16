@@ -1,9 +1,9 @@
-import { parseTaskTitle, taskToDraft, type IsoDate, type Task, type TaskDraft } from "@rumbo/core";
+import { parseTaskTitle, type IsoDate, type TaskDraft } from "@rumbo/core";
 
 export const EMPTY_DRAFT: TaskDraft = { text: "", steps: [] };
 
 /**
- * Pasa a las fichas lo que el título trae escrito («hoy», «45m», «!alta», «#java»).
+ * Pasa a las propiedades lo que el título trae escrito («hoy», «45m», «!alta», «#java»).
  * Con `finished` falso el título sigue en edición: se respeta el espacio de después.
  */
 export function applyTitle(draft: TaskDraft, today: IsoDate, finished: boolean): TaskDraft {
@@ -24,16 +24,4 @@ export function applyTitle(draft: TaskDraft, today: IsoDate, finished: boolean):
     priority: title.priority ?? draft.priority,
     tags: [...new Set([...(draft.tags ?? []), ...title.tags])],
   };
-}
-
-/** Solo lo que ha cambiado respecto a la tarea, para no pisar nada más en el vault. */
-export function changesFrom(task: Task, draft: TaskDraft): Partial<TaskDraft> {
-  const before: Record<string, unknown> = { ...taskToDraft(task) };
-  const after: Record<string, unknown> = { ...draft };
-  const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
-  return Object.fromEntries(
-    [...keys]
-      .filter((key) => JSON.stringify(before[key]) !== JSON.stringify(after[key]))
-      .map((key) => [key, after[key]]),
-  );
 }

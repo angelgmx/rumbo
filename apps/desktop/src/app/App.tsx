@@ -13,7 +13,7 @@ import { RoutinesScreen } from "@/features/routines/RoutinesScreen";
 import { ModuleScreen } from "@/features/roadmaps/ModuleScreen";
 import { RoadmapScreen } from "@/features/roadmaps/RoadmapScreen";
 import { TopicScreen } from "@/features/roadmaps/TopicScreen";
-import { TaskWindowProvider } from "@/features/task-window/TaskWindowProvider";
+import { TaskPanelProvider } from "@/features/task-panel/TaskPanelProvider";
 import { TasksScreen } from "@/features/tasks/TasksScreen";
 import { FocusScreen } from "@/features/focus/FocusScreen";
 import { AppShell } from "@/layout/AppShell";
@@ -27,7 +27,7 @@ export function App() {
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         <TooltipProvider>
           <VaultGate>
-            <TaskWindowProvider>
+            <TaskPanelProvider>
               {/* Rutas con "#": en la app empaquetada no hay servidor que entienda otras URLs.
                 wouter pide el hook como valor, por eso se pasa sin llamarlo. */}
               {/* oxlint-disable-next-line react/hooks */}
@@ -53,7 +53,7 @@ export function App() {
                   </AppShell>
                 </SidebarProvider>
               </Router>
-            </TaskWindowProvider>
+            </TaskPanelProvider>
           </VaultGate>
           <Toaster position="bottom-right" />
         </TooltipProvider>

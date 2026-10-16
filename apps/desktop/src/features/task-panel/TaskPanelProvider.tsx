@@ -1,22 +1,22 @@
 import type { Task } from "@rumbo/core";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { Dialog } from "@/components/ui/dialog";
-import { TaskWindow } from "./TaskWindow";
+import { Sheet } from "@/components/ui/sheet";
+import { TaskPanel } from "./TaskPanel";
 
-interface TaskWindowApi {
+interface TaskPanelApi {
   create: () => void;
   edit: (task: Task) => void;
 }
 
-const TaskWindowContext = createContext<TaskWindowApi>({ create: () => {}, edit: () => {} });
+const TaskPanelContext = createContext<TaskPanelApi>({ create: () => {}, edit: () => {} });
 
-export function useTaskWindow(): TaskWindowApi {
-  return useContext(TaskWindowContext);
+export function useTaskPanel(): TaskPanelApi {
+  return useContext(TaskPanelContext);
 }
 
-/** Guarda la ventana de tarea para toda la app: se abre con Ctrl N o desde cualquier botón. */
-export function TaskWindowProvider({ children }: { children: ReactNode }) {
-  // `undefined` es cerrada; `{}` es una tarea nueva; `{ task }`, editar esa.
+/** Guarda el panel de tarea para toda la app: se abre con Ctrl N o desde cualquier botón. */
+export function TaskPanelProvider({ children }: { children: ReactNode }) {
+  // `undefined` es cerrado; `{}` es una tarea nueva; `{ task }`, editar esa.
   const [target, setTarget] = useState<{ task?: Task }>();
 
   useEffect(() => {
@@ -30,12 +30,21 @@ export function TaskWindowProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  const edit = (task: Task) => setTarget({ task });
+
   return (
-    <TaskWindowContext value={{ create: () => setTarget({}), edit: (task) => setTarget({ task }) }}>
+    <TaskPanelContext value={{ create: () => setTarget({}), edit }}>
       {children}
-      <Dialog open={target !== undefined} onOpenChange={(open) => !open && setTarget(undefined)}>
-        {target && <TaskWindow task={target.task} onClose={() => setTarget(undefined)} />}
-      </Dialog>
-    </TaskWindowContext>
+      <Sheet open={target !== undefined} onOpenChange={(open) => !open && setTarget(undefined)}>
+        {target && (
+          <TaskPanel
+            key={target.task ? `${target.task.path}:${target.task.line}` : "new"}
+            task={target.task}
+            onClose={() => setTarget(undefined)}
+            onOpen={edit}
+          />
+        )}
+      </Sheet>
+    </TaskPanelContext>
   );
 }

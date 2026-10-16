@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 import { Separator } from "@/components/ui/separator";
-import { useTaskWindow } from "@/features/task-window/TaskWindowProvider";
+import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { useSidebar } from "./SidebarState";
 
 /**
@@ -19,7 +19,7 @@ export function ScreenHeader({
   actions?: ReactNode;
   newTask?: boolean;
 }) {
-  const { create } = useTaskWindow();
+  const { create } = useTaskPanel();
   const sidebar = useSidebar();
 
   return (

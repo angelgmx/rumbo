@@ -1,113 +1,149 @@
 import type { TaskDraft } from "@rumbo/core";
 import {
   BookOpenIcon,
+  CalendarCheckIcon,
+  CalendarClockIcon,
+  CircleCheckIcon,
+  CircleDashedIcon,
   ClockIcon,
   FlagIcon,
   FolderKanbanIcon,
-  LayersIcon,
   RepeatIcon,
 } from "lucide-react";
-import { AreaDot } from "@/features/tasks/AreaDot";
 import { PRIORITY_LABEL } from "@/features/tasks/taskLabels";
 import { formatMinutes } from "@/lib/format";
-import { OptionChip, type ChipOption } from "./OptionChip";
-import { TagsChip } from "./TagsChip";
+import { AreaProperty } from "./AreaProperty";
+import { CounterProperty } from "./CounterProperty";
+import { DateProperty } from "./DateProperty";
+import type { PropertyOption } from "./OptionList";
+import { OptionProperty } from "./OptionProperty";
+import { TagsProperty } from "./TagsProperty";
+import type { Inheritance } from "./useInheritance";
 import type { TaskOptions } from "./useTaskOptions";
-import { WhenChip } from "./WhenChip";
 
 const DURATIONS = [15, 30, 45, 60, 90, 120];
 
-const REPEATS: ChipOption[] = [
+const REPEATS: PropertyOption[] = [
   { value: "every day", label: "Cada día" },
   { value: "every week", label: "Cada semana" },
   { value: "every month", label: "Cada mes" },
 ];
 
-const PRIORITIES: ChipOption[] = (["high", "medium", "low"] as const).map((value) => ({
+const PRIORITIES: PropertyOption[] = (["high", "medium", "low"] as const).map((value) => ({
   value,
   label: PRIORITY_LABEL[value],
 }));
 
-/** Las fichas de la tarea: cuándo, módulo, duración, prioridad, repetición, proyecto, área y etiquetas. */
-export function PropertyChips({
+const STATUSES: PropertyOption[] = [
+  { value: "pending", label: "Pendiente" },
+  { value: "done", label: "Hecha" },
+];
+
+export interface TaskStatus {
+  done: boolean;
+  onChange: (done: boolean) => void;
+}
+
+/** Las propiedades de la tarea, una fila cada una. «Estado» solo existe en una tarea que ya existe. */
+export function TaskProperties({
   draft,
-  area,
+  status,
+  inheritance,
   options,
   onChange,
 }: {
   draft: TaskDraft;
-  /** El área que se enseña: la de la tarea o la que hereda. */
-  area: string | undefined;
+  status: TaskStatus | undefined;
+  inheritance: Inheritance | undefined;
   options: TaskOptions;
   onChange: (changes: Partial<TaskDraft>) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      <WhenChip scheduled={draft.scheduled} due={draft.due} onChange={onChange} />
-      {options.modules.length > 0 && (
-        <OptionChip
-          icon={<BookOpenIcon />}
-          placeholder="Módulo"
-          clearLabel="Sin módulo"
-          value={draft.module}
-          options={options.modules}
-          onChange={(module) => onChange({ module })}
+    <div className="flex flex-col">
+      {status && (
+        <OptionProperty
+          icon={status.done ? <CircleCheckIcon /> : <CircleDashedIcon />}
+          label="Estado"
+          value={status.done ? "done" : "pending"}
+          options={STATUSES}
+          onChange={(value) => status.onChange(value === "done")}
         />
       )}
-      <OptionChip
+      <DateProperty
+        icon={<CalendarCheckIcon />}
+        label="Cuándo"
+        value={draft.scheduled}
+        onChange={(scheduled) => onChange({ scheduled })}
+      />
+      <DateProperty
+        icon={<CalendarClockIcon />}
+        label="Fecha límite"
+        value={draft.due}
+        onChange={(due) => onChange({ due })}
+      />
+      <OptionProperty
         icon={<ClockIcon />}
-        placeholder="Duración"
+        label="Duración"
         clearLabel="Sin duración"
         value={draft.duration?.toString()}
         options={durationOptions(draft.duration)}
         onChange={(value) => onChange({ duration: value ? Number(value) : undefined })}
       />
-      <OptionChip
+      <OptionProperty
         icon={<FlagIcon />}
-        placeholder="Prioridad"
+        label="Prioridad"
         clearLabel="Sin prioridad"
         value={draft.priority}
         options={PRIORITIES}
         onChange={(priority) => onChange({ priority: priority as TaskDraft["priority"] })}
       />
-      <OptionChip
+      <OptionProperty
         icon={<RepeatIcon />}
-        placeholder="No se repite"
+        label="Repetir"
         clearLabel="No se repite"
         value={draft.recurrence}
         options={REPEATS}
         onChange={(recurrence) => onChange({ recurrence })}
       />
+      {options.areas.length > 0 && (
+        <AreaProperty
+          value={draft.area}
+          inherited={inheritance}
+          options={options.areas}
+          onChange={(area) => onChange({ area })}
+        />
+      )}
       {options.projects.length > 0 && (
-        <OptionChip
+        <OptionProperty
           icon={<FolderKanbanIcon />}
-          placeholder="Proyecto"
+          label="Proyecto"
           clearLabel="Sin proyecto"
           value={draft.project}
           options={options.projects}
           onChange={(project) => onChange({ project })}
         />
       )}
-      {options.areas.length > 0 && (
-        <OptionChip
-          icon={area ? <AreaDot area={area} className="size-3.5" /> : <LayersIcon />}
-          placeholder="Área"
-          clearLabel="Sin área"
-          value={area}
-          options={options.areas}
-          onChange={(next) => onChange({ area: next })}
+      {options.modules.length > 0 && (
+        <OptionProperty
+          icon={<BookOpenIcon />}
+          label="Roadmap / Módulo"
+          clearLabel="Sin módulo"
+          value={draft.module}
+          options={options.modules}
+          onChange={(module) => onChange({ module })}
         />
       )}
-      <TagsChip
+      <TagsProperty
         tags={draft.tags ?? []}
         known={options.tags}
         onChange={(tags) => onChange({ tags })}
       />
+      <CounterProperty value={draft.counter} onChange={(counter) => onChange({ counter })} />
     </div>
   );
 }
 
-function durationOptions(current: number | undefined): ChipOption[] {
+function durationOptions(current: number | undefined): PropertyOption[] {
   const minutes =
     current && !DURATIONS.includes(current)
       ? [...DURATIONS, current].sort((a, b) => a - b)
