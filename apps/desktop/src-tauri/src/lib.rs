@@ -11,6 +11,7 @@ pub fn run() {
         // Para abrir en el navegador los recursos de los temas (cursos, vídeos, documentación…).
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_sql::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             keychain::ai_key_get,
             keychain::ai_key_set

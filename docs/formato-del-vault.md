@@ -23,7 +23,7 @@ folders:
   daily: 04 - Diario # carpeta de las dailies
   daily_format: YYYY/MM/YYYY-MM-DD # subcarpetas y nombre de cada daily
   inbox: 00 - Inbox/Inbox.md # fichero donde caen las capturas
-  ideas: 00 - Inbox/Ideas.md # opcional; por defecto, junto al inbox
+  ideas: 00 - Inbox/Ideas.md # solo para importar las ideas antiguas una vez
   archive: 00 - Inbox/Archivo de tareas.md # opcional; por defecto, junto al inbox
   habits: Hábitos
   goals: Objetivos
@@ -199,13 +199,7 @@ Una tarea sale del inbox en cuanto tiene fecha, área o proyecto. Al procesar, l
 
 ### Ideas
 
-Las ideas viven en una sola nota, `folders.ideas` (por defecto `Ideas.md`, junto a la nota del inbox: con `inbox: 00 - Inbox/Inbox.md` es `00 - Inbox/Ideas.md`). Cada idea es una viñeta, no una casilla, con la fecha en que se apuntó:
-
-```markdown
-- App de recetas con lista de la compra [created:: 2026-10-16]
-```
-
-Una idea se puede editar en su sitio (conserva su fecha). Convertir una idea en tarea la añade al inbox y quita la viñeta; «Es una idea» en Procesar inbox hace lo contrario. El resto de líneas de la nota (títulos, texto) no se tocan.
+Las ideas viven en la base de datos de la app (tabla `ideas`, ver [Modelo de datos](modelo-de-datos.md)). La nota `folders.ideas` (una viñeta por idea, `- App de recetas [created:: 2026-10-16]`) solo se lee una vez, para importarla; después no se toca.
 
 ### Captura rápida
 

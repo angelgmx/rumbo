@@ -116,3 +116,17 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] Puerto `AiProvider` en `core`: Claude (por defecto) y compatible con OpenAI (Ollama, LM Studio, Groq, Gemini, OpenRouter, OpenAI)
 - [x] Ajustes › Inteligencia artificial: proveedor, URL, modelo, clave en el llavero del sistema y «Probar»
 - [x] Organizar el Inbox con IA: propone si es tarea, idea, proyecto u objetivo, con área y fecha, y tú decides
+
+## Base de datos (ADR-0013)
+
+Lo que organiza tu día pasa del vault a SQLite, una entidad por PR. Ver [Modelo de datos](modelo-de-datos.md).
+
+- [x] Infraestructura: puerto `Database`, esquema por versiones, canal de cambios e importación única
+- [x] Ideas
+- [ ] Tareas y pasos
+- [ ] Hábitos y registros
+- [ ] Rutinas y bloques
+- [ ] Objetivos y planes si… entonces
+- [ ] Proyectos e hitos
+- [ ] Sesiones, cierres del día y agenda
+- [ ] Exportar a Markdown y copia de seguridad en Ajustes

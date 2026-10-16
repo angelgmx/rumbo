@@ -39,7 +39,7 @@ export function IdeasPane() {
           <AnimatePresence initial={false}>
             {ideas.map((idea) => (
               <motion.div
-                key={`${idea.line}:${idea.text}`}
+                key={idea.id}
                 {...listItem}
                 className="overflow-hidden border-b last:border-0"
               >

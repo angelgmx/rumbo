@@ -14,13 +14,16 @@
 │   app/     casos de uso (servicios)           │
 │   vault/   leer, indexar y escribir notas     │
 │   domain/  reglas puras (rachas, tareas…)     │
+│   db/      base de datos: esquema y tablas    │
 │   ai/      adaptadores de IA                  │
 │   ports.ts interfaces hacia fuera             │
 └──────────────────────┬────────────────────────┘
                        │ lee y escribe
-               ┌───────▼────────┐
-               │ Vault Obsidian │  (ficheros .md)
-               └────────────────┘
+          ┌────────────┴────────────┐
+  ┌───────▼────────┐        ┌───────▼────────┐
+  │ Vault Obsidian │        │   rumbo.db     │
+  │ conocimiento   │        │  organización  │
+  └────────────────┘        └────────────────┘
 ```
 
 ## La app de escritorio
@@ -35,13 +38,14 @@
 
 Cada capa solo usa las de debajo. Nunca al revés.
 
-| Capa         | Carpeta        | Qué hace                                                                                                                | Puede usar       |
-| ------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| Dominio      | `src/domain`   | Reglas puras: entra un dato, sale otro. Sin disco, sin reloj, sin efectos. Aquí está la lógica que más hay que testear. | nada             |
-| Vault        | `src/vault`    | Leer el frontmatter, cambiarlo sin romper el resto del fichero, cargar la config e indexar el vault.                    | dominio, puertos |
-| Casos de uso | `src/app`      | Lo que hace el usuario: marcar un hábito, capturar una tarea, añadir un bloque a la agenda. Juntan dominio y vault.     | todo lo anterior |
-| Puertos      | `src/ports.ts` | Interfaces `FileSystem`, `Clock` y `AiProvider`. La app les pasa la implementación real.                                | —                |
-| IA           | `src/ai`       | Adaptadores del puerto `AiProvider`. Reciben `fetch` desde fuera.                                                       | puertos          |
+| Capa          | Carpeta        | Qué hace                                                                                                                | Puede usar       |
+| ------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| Dominio       | `src/domain`   | Reglas puras: entra un dato, sale otro. Sin disco, sin reloj, sin efectos. Aquí está la lógica que más hay que testear. | nada             |
+| Vault         | `src/vault`    | Leer el frontmatter, cambiarlo sin romper el resto del fichero, cargar la config e indexar el vault.                    | dominio, puertos |
+| Casos de uso  | `src/app`      | Lo que hace el usuario: marcar un hábito, capturar una tarea, añadir un bloque a la agenda. Juntan dominio y vault.     | todo lo anterior |
+| Base de datos | `src/db`       | El esquema por versiones y un repositorio por tabla. Cada escritura avisa a la UI.                                      | dominio, puertos |
+| Puertos       | `src/ports.ts` | Interfaces `FileSystem`, `Database`, `Clock` y `AiProvider`. La app les pasa la implementación real.                    | —                |
+| IA            | `src/ai`       | Adaptadores del puerto `AiProvider`. Reciben `fetch` desde fuera.                                                       | puertos          |
 
 ### Por qué así
 
@@ -110,6 +114,16 @@ Cada capa solo usa las de debajo. Nunca al revés.
 | `aiError.ts`          | `AiError` con el motivo del fallo (no responde, clave mala, no encuentra el modelo, límite o error). |
 
 La app guarda proveedor, URL y modelo en sus ajustes y la clave en el llavero del sistema. Ver [ADR-0012](adr/0012-ia-con-un-puerto-y-proveedores-compatibles.md).
+
+### `db/`
+
+| Fichero             | Responsabilidad                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| `migrations.ts`     | El esquema en castellano, por versiones (ver [Modelo de datos](modelo-de-datos.md)).  |
+| `appDatabase.ts`    | Abre la base de datos, la sube a la última versión y avisa a la UI en cada escritura. |
+| `ideaRepository.ts` | Las ideas: listar, añadir, editar y borrar.                                           |
+
+`changeFeed.ts` (en la raíz de `core`) es el canal de cambios común: el vault y la base de datos avisan por él y la UI repinta. `app/vaultImport.ts` copia una vez a la base de datos lo que antes vivía en notas.
 
 ## Flujo de un cambio
 

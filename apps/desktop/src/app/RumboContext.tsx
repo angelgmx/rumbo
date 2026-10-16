@@ -13,11 +13,11 @@ export function useRumbo(): Rumbo {
   return rumbo;
 }
 
-/** Número que cambia cada vez que cambia algo en el vault. */
+/** Número que cambia cada vez que cambia algo, en el vault o en la base de datos. */
 export function useVaultVersion(): number {
-  const { store } = useRumbo();
+  const { changes } = useRumbo();
   return useSyncExternalStore(
-    (listener) => store.subscribe(listener),
-    () => store.version,
+    (listener) => changes.subscribe(listener),
+    () => changes.version,
   );
 }
