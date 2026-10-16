@@ -48,6 +48,13 @@ export class VaultStore {
       .sort((a, b) => a.path.split("/").length - b.path.split("/").length)[0];
   }
 
+  /** Los nombres de las áreas de más afuera, que son las que usan las tareas. */
+  areaNames(): string[] {
+    return this.notesOfType("area")
+      .filter((note) => this.rootArea(note) === note)
+      .map((note) => String(note.data.name ?? note.name));
+  }
+
   findByName(name: string): Note | undefined {
     return [...this.index.values()].find((note) => note.name === name);
   }

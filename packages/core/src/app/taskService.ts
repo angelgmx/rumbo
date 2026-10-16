@@ -22,7 +22,9 @@ import type { VaultStore } from "./vaultStore";
 /** Máximo de tareas en el foco del día: más de 3 deja de ser foco. */
 const MAX_FOCUS = 3;
 
-export type CaptureResult = { kind: "task"; date?: IsoDate } | { kind: "agenda"; date: IsoDate };
+export type CaptureResult =
+  | { kind: "task"; date?: IsoDate; task?: Task }
+  | { kind: "agenda"; date: IsoDate };
 
 /** Las tareas: verlas por vistas, crearlas, cambiarlas y borrarlas. Viven en la base de datos. */
 export class TaskService {
@@ -125,8 +127,10 @@ export class TaskService {
     return this.tasks.setDone(task.id, done ? this.daily.today() : undefined);
   }
 
+  /** Cambia la tarea. Sin fecha no hay hora: quitar la fecha quita también la hora. */
   update(task: Task, changes: TaskChanges): Promise<void> {
-    return this.tasks.update(task.id, changes);
+    const unscheduled = "scheduled" in changes && changes.scheduled === undefined;
+    return this.tasks.update(task.id, unscheduled ? { ...changes, time: undefined } : changes);
   }
 
   /** Apunta los minutos de una sesión de trabajo en la tarea. */
@@ -181,14 +185,14 @@ export class TaskService {
     }
 
     const title = parseTaskTitle(input, this.daily.today());
-    await this.create({
+    const task = await this.create({
       text: title.text,
       scheduled: title.date,
       duration: title.duration,
       priority: title.priority,
       tags: title.tags,
     });
-    return { kind: "task", date: title.date };
+    return { kind: "task", date: title.date, task };
   }
 
   private named(name: string | undefined): Note | undefined {

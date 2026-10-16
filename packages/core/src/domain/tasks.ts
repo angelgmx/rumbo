@@ -7,6 +7,8 @@ export interface Task {
   done: boolean;
   due?: IsoDate;
   scheduled?: IsoDate;
+  /** La hora «HH:MM» a la que toca el día programado. */
+  time?: string;
   doneOn?: IsoDate;
   recurrence?: string;
   priority?: Priority;
@@ -44,6 +46,7 @@ export type Priority = "high" | "medium" | "low";
 export interface TaskDraft {
   text: string;
   scheduled?: IsoDate;
+  time?: string;
   due?: IsoDate;
   duration?: number;
   priority?: Priority;
@@ -97,6 +100,7 @@ export function taskToDraft(task: Task): TaskDraft {
   return {
     text: task.text,
     scheduled: task.scheduled,
+    time: task.time,
     due: task.due,
     duration: task.duration,
     priority: task.priority,

@@ -5,6 +5,7 @@ import { GoalRepository } from "../db/goalRepository";
 import { IdeaRepository } from "../db/ideaRepository";
 import { ProjectRepository } from "../db/projectRepository";
 import { RoutineRepository } from "../db/routineRepository";
+import { TaskOrganizationRepository } from "../db/taskOrganizationRepository";
 import { TaskRepository } from "../db/taskRepository";
 import { systemClock, type Clock, type Database, type FileSystem } from "../ports";
 import { AgendaService } from "./agendaService";
@@ -22,6 +23,7 @@ import { RoadmapEditService } from "./roadmapEditService";
 import { ReviewService } from "./reviewService";
 import { RoutineService } from "./routineService";
 import { SavedViewService } from "./savedViewService";
+import { TaskOrganizerService } from "./taskOrganizerService";
 import { TaskService } from "./taskService";
 import { VaultImport } from "./vaultImport";
 import { VaultStore } from "./vaultStore";
@@ -36,6 +38,7 @@ export interface Rumbo {
   tasks: TaskService;
   ideas: IdeaService;
   triage: InboxTriageService;
+  organizer: TaskOrganizerService;
   progress: ProgressService;
   views: SavedViewService;
   dayPlan: DayPlanService;
@@ -101,6 +104,15 @@ async function open({ fs, database, clock = systemClock }: RumboSources): Promis
   const routines = new RoutineService(routineRepository, daily, habits, tasks, learning);
   const projects = new ProjectService(projectRepository, tasks, daily, goalRepository);
   const goals = new GoalService(store, goalRepository, projects, habits, learning, daily, tasks);
+  const dayPlan = new DayPlanService(agenda, habits);
+  const organizer = new TaskOrganizerService(
+    store,
+    daily,
+    tasks,
+    dayPlan,
+    routines,
+    new TaskOrganizationRepository(db),
+  );
 
   return {
     changes,
@@ -112,10 +124,11 @@ async function open({ fs, database, clock = systemClock }: RumboSources): Promis
     ideas,
     goals,
     projects,
+    organizer,
     triage: new InboxTriageService(store, daily, tasks, ideas, goals, projects),
     progress: new ProgressService(habits, agenda),
     views: new SavedViewService(store),
-    dayPlan: new DayPlanService(agenda, habits),
+    dayPlan,
     learning,
     review: new ReviewService(store, learning, daily),
     routines,

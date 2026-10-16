@@ -93,10 +93,6 @@ export class InboxTriageService {
   }
 
   private context(): TriageContext {
-    const areas = this.store
-      .notesOfType("area")
-      .filter((note) => this.store.rootArea(note) === note)
-      .map((note) => String(note.data.name ?? note.name));
-    return { today: this.daily.today(), areas };
+    return { today: this.daily.today(), areas: this.store.areaNames() };
   }
 }

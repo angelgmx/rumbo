@@ -167,6 +167,15 @@ describe("editing tasks", () => {
     });
   });
 
+  it("keeps the time of a task and drops it with the date", async () => {
+    const [task] = rumbo.tasks.list("inbox");
+    await rumbo.tasks.update(task!, { scheduled: "2026-10-16", time: "18:30" });
+    expect(rumbo.tasks.get(task!.id)).toMatchObject({ scheduled: "2026-10-16", time: "18:30" });
+
+    await rumbo.tasks.update(task!, { scheduled: undefined });
+    expect(rumbo.tasks.get(task!.id)!.time).toBeUndefined();
+  });
+
   it("survives closing and opening the app", async () => {
     const database = memoryDatabase();
     const open = () => createRumbo({ fs: memoryFileSystem(files), database, clock });
