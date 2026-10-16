@@ -3,10 +3,8 @@ import { useRumbo } from "@/app/RumboContext";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import type { CountedTask } from "./countedTask";
+import { MAX_DOTS } from "./CounterBar";
 import { Segments } from "./Segments";
-
-// Más casillas que esto ya no se leen de un vistazo: mejor una barra.
-const MAX_DOTS = 12;
 
 /** Contar a mano (vasos, páginas) o avanzar partes de un total (ejercicios 3 de 5). */
 export function StepCounter({ task }: { task: CountedTask }) {

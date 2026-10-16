@@ -1,19 +1,30 @@
-import { XIcon } from "lucide-react";
+import { PanelRightCloseIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { SheetClose, SheetTitle } from "@/components/ui/sheet";
+import { TaskCrumbs } from "./TaskCrumbs";
+import type { TaskContext } from "./useTaskContext";
 
-/** Cabecera del panel: qué es, las acciones de la tarea y cerrar. */
-export function TaskPanelHeader({ title, children }: { title: string; children?: ReactNode }) {
+/** Cabecera del panel: dónde está la tarea, sus acciones (`children`) y plegar el panel. */
+export function TaskPanelHeader({
+  context,
+  last,
+  onClose,
+  children,
+}: {
+  context: TaskContext;
+  last: string | undefined;
+  onClose: () => void;
+  children?: ReactNode;
+}) {
   return (
-    <header className="flex h-14 shrink-0 items-center gap-1 px-4">
-      <SheetTitle className="mr-auto pl-2 text-sm font-normal text-muted-foreground">
-        {title}
-      </SheetTitle>
+    <header className="flex h-14 shrink-0 items-center gap-2 px-6">
+      <div className="mr-auto min-w-0">
+        <TaskCrumbs context={context} last={last} />
+      </div>
       {children}
-      <SheetClose render={<Button variant="ghost" size="icon-sm" aria-label="Cerrar" />}>
-        <XIcon />
-      </SheetClose>
+      <Button variant="outline" size="icon" aria-label="Cerrar panel" onClick={onClose}>
+        <PanelRightCloseIcon />
+      </Button>
     </header>
   );
 }

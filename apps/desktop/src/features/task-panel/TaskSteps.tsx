@@ -4,6 +4,7 @@ import type { KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { SectionLabel } from "./SectionLabel";
 
 /** Los pasos de la tarea: una lista de casillas que se marcan, se escriben y se quitan. */
 export function TaskSteps({
@@ -25,7 +26,22 @@ export function TaskSteps({
 
   return (
     <section className="flex flex-col gap-1">
-      <h3 className="mb-1 text-sm font-medium">Pasos</h3>
+      <div className="mb-1 flex items-center justify-between">
+        <SectionLabel>
+          Pasos
+          {steps.length > 0 && ` · ${steps.filter((step) => step.done).length} de ${steps.length}`}
+        </SectionLabel>
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          className="text-muted-foreground"
+          onClick={add}
+        >
+          <PlusIcon data-icon="inline-start" />
+          Añadir
+        </Button>
+      </div>
       {steps.map((step, index) => (
         <div key={index} className="group flex items-center gap-3 py-0.5">
           <Checkbox
@@ -56,16 +72,6 @@ export function TaskSteps({
           </Button>
         </div>
       ))}
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="w-fit text-muted-foreground"
-        onClick={add}
-      >
-        <PlusIcon data-icon="inline-start" />
-        Añadir paso
-      </Button>
     </section>
   );
 }

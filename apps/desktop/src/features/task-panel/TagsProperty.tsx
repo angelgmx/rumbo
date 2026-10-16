@@ -1,4 +1,4 @@
-import { HashIcon, XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 import { useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { PropertyRow } from "./PropertyRow";
@@ -31,9 +31,8 @@ export function TagsProperty({
 
   return (
     <PropertyRow
-      icon={<HashIcon />}
       label="Etiquetas"
-      value={tags.length > 0 ? tags.map((tag) => `#${tag}`).join(" ") : undefined}
+      value={tags.length > 0 ? <TagList tags={tags} /> : undefined}
       width="w-64 gap-2 p-2.5"
     >
       {() => (
@@ -82,5 +81,17 @@ export function TagsProperty({
         </>
       )}
     </PropertyRow>
+  );
+}
+
+function TagList({ tags }: { tags: string[] }) {
+  return (
+    <span className="flex flex-wrap gap-1.5">
+      {tags.map((tag) => (
+        <span key={tag} className="rounded-md bg-muted px-2 py-0.5 text-xs">
+          #{tag}
+        </span>
+      ))}
+    </span>
   );
 }

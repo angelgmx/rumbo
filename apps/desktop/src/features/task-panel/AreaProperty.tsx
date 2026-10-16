@@ -1,4 +1,3 @@
-import { LayersIcon } from "lucide-react";
 import { AreaDot } from "@/features/tasks/AreaDot";
 import { OptionList, type PropertyOption } from "./OptionList";
 import { PropertyRow } from "./PropertyRow";
@@ -20,7 +19,6 @@ export function AreaProperty({
 
   return (
     <PropertyRow
-      icon={<LayersIcon />}
       label="Área"
       value={
         shown && (

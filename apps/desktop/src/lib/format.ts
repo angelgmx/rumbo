@@ -67,3 +67,14 @@ export function formatDayRange(from: IsoDate, to: IsoDate): string {
     start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
   return `${sameMonth ? start.getDate() : formatDayMonth(from)} – ${formatDayMonth(to)}`;
 }
+
+const longDayFormat = new Intl.DateTimeFormat("es", {
+  weekday: "long",
+  day: "numeric",
+  month: "short",
+});
+
+/** "jueves 16 oct" */
+export function formatLongDay(date: IsoDate): string {
+  return longDayFormat.format(toDate(date)).replace(",", "").replace(".", "");
+}

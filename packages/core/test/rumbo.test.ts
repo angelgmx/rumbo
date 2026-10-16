@@ -113,6 +113,33 @@ describe("inherited area", () => {
   });
 });
 
+describe("goal of a task", () => {
+  beforeEach(async () => {
+    files.set(
+      "Habits/Habit — Python.md",
+      '---\ntype: habit\nkey: python\ngoal: "[[Learn Python]]"\n---\n',
+    );
+    await rumbo.store.refresh("Habits/Habit — Python.md");
+  });
+
+  it("comes from the habit of the task", () => {
+    expect(rumbo.tasks.goalOf({ habit: "python" })).toBe("Learn Python");
+  });
+
+  it("comes from the habit of the roadmap of the module", async () => {
+    const path = "Areas/Python/Python basics.md";
+    files.set(path, files.get(path)!.replace("---\n", "---\nhabit: python\n"));
+    await rumbo.store.refresh(path);
+    expect(rumbo.tasks.goalOf({ module: "Mastery — Variables" })).toBe("Learn Python");
+  });
+
+  it("is nothing when no habit leads to a goal", () => {
+    expect(rumbo.tasks.goalOf({})).toBeUndefined();
+    expect(rumbo.tasks.goalOf({ module: "Mastery — Variables" })).toBeUndefined();
+    expect(rumbo.tasks.goalOf({ habit: "reading" })).toBeUndefined();
+  });
+});
+
 describe("agenda", () => {
   it("ticks a block of today's agenda", async () => {
     const [block] = await rumbo.agenda.blocks("2026-10-15");

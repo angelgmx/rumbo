@@ -15,6 +15,8 @@ export interface CounterKindInfo {
   icon: LucideIcon;
   /** Cómo se llama el objetivo al configurarlo. */
   targetLabel: string;
+  /** Lo que se cuenta, detrás del objetivo: «/ 30 min». */
+  unit: string;
   defaultTarget: number;
 }
 
@@ -24,6 +26,7 @@ export const COUNTER_INFO: Record<CounterKind, CounterKindInfo> = {
     hint: "cronómetro",
     icon: ClockIcon,
     targetLabel: "Minutos",
+    unit: "min",
     defaultTarget: 30,
   },
   pomodoro: {
@@ -31,6 +34,7 @@ export const COUNTER_INFO: Record<CounterKind, CounterKindInfo> = {
     hint: "ciclos",
     icon: TimerIcon,
     targetLabel: "Ciclos",
+    unit: "ciclos",
     defaultTarget: 4,
   },
   count: {
@@ -38,6 +42,7 @@ export const COUNTER_INFO: Record<CounterKind, CounterKindInfo> = {
     hint: "+1 / −1",
     icon: Tally5Icon,
     targetLabel: "Objetivo",
+    unit: "",
     defaultTarget: 8,
   },
   progress: {
@@ -45,6 +50,7 @@ export const COUNTER_INFO: Record<CounterKind, CounterKindInfo> = {
     hint: "partes",
     icon: ToggleLeftIcon,
     targetLabel: "Partes",
+    unit: "partes",
     defaultTarget: 3,
   },
 };

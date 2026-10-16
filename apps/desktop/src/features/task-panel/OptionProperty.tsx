@@ -2,19 +2,23 @@ import type { ReactNode } from "react";
 import { OptionList, type PropertyOption } from "./OptionList";
 import { PropertyRow } from "./PropertyRow";
 
-/** Una propiedad que se elige de una lista (prioridad, proyecto, duración…). */
+/** Una propiedad que se elige de una lista (proyecto, módulo, repetición…). */
 export function OptionProperty({
   icon,
   label,
   clearLabel,
+  empty,
   value,
   options,
   onChange,
 }: {
-  icon: ReactNode;
+  /** Va delante del valor elegido. */
+  icon?: ReactNode;
   label: string;
   /** Texto de la fila que quita el valor; sin él, la propiedad siempre tiene uno. */
   clearLabel?: string;
+  /** Lo que se lee cuando no hay valor. */
+  empty?: string;
   value: string | undefined;
   options: PropertyOption[];
   onChange: (value: string | undefined) => void;
@@ -28,9 +32,19 @@ export function OptionProperty({
 
   return (
     <PropertyRow
-      icon={icon}
       label={label}
-      value={selected && <OptionLabel option={selected} />}
+      empty={empty}
+      value={
+        selected && (
+          <>
+            {icon}
+            <span className="truncate">
+              {selected.label}
+              {selected.hint && ` · ${selected.hint}`}
+            </span>
+          </>
+        )
+      }
       width="w-64"
     >
       {(close) => (
@@ -45,14 +59,5 @@ export function OptionProperty({
         />
       )}
     </PropertyRow>
-  );
-}
-
-function OptionLabel({ option }: { option: PropertyOption }) {
-  return (
-    <>
-      <span className="truncate">{option.label}</span>
-      {option.hint && <span className="truncate text-xs text-muted-foreground">{option.hint}</span>}
-    </>
   );
 }

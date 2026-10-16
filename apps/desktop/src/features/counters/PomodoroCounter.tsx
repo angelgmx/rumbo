@@ -1,6 +1,6 @@
 import { isCounterComplete } from "@rumbo/core";
 import { PauseIcon, PlayIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
 import { ProgressRing } from "@/components/ProgressRing";
@@ -12,14 +12,19 @@ type Phase = "work" | "rest";
 
 /**
  * Ciclos de trabajo y descanso. Cada ciclo de trabajo terminado suma uno al
- * contador; el descanso no se guarda, solo se cuenta en pantalla.
+ * contador; el descanso no se guarda, solo se cuenta en pantalla. Con `autoStart` arranca al montarse.
  */
-export function PomodoroCounter({ task }: { task: CountedTask }) {
+export function PomodoroCounter({ task, autoStart }: { task: CountedTask; autoStart?: boolean }) {
   const rumbo = useRumbo();
   const { work, rest } = rumbo.store.config.pomodoro;
   const [phase, setPhase] = useState<Phase>("work");
   const countdown = useCountdown(work, finishPhase);
   const { counter } = task;
+
+  const begin = useEffectEvent(() => countdown.start(work));
+  useEffect(() => {
+    if (autoStart) begin();
+  }, [autoStart]);
 
   function finishPhase() {
     if (phase === "rest") {
