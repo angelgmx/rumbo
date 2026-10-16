@@ -38,6 +38,7 @@ const context: OrganizeContext = { areas: ["Python", "Negocio"], slots, deadline
 
 describe("isIncomplete", () => {
   const complete = task({
+    notes: "Reunir los papeles",
     steps: [{ text: "Uno", done: false }],
     priority: "low",
     area: "Python",
@@ -53,6 +54,7 @@ describe("isIncomplete", () => {
     expect(isIncomplete({ ...complete, projectId: undefined, module: "Variables" })).toBe(false);
     expect(isIncomplete({ ...complete, projectId: undefined })).toBe(true);
     expect(isIncomplete({ ...complete, steps: [] })).toBe(true);
+    expect(isIncomplete({ ...complete, notes: "  " })).toBe(true);
     expect(isIncomplete({ ...complete, time: undefined, done: true })).toBe(false);
   });
 });
@@ -234,6 +236,36 @@ describe("parseOrganization", () => {
   });
 });
 
+describe("task description", () => {
+  const read = (item: object, only = task()) =>
+    parseOrganization(JSON.stringify({ items: [item] }), [only], context)!.proposals.get(0)!;
+
+  it("asks for it only when the task has none", () => {
+    const rule = "- notes: descripción de 2 o 3 líneas";
+
+    expect(organizeMessages([task()], context)[0]!.content).toContain(rule);
+    expect(organizeMessages([task({ notes: "Ya escrita" })], context)[0]!.content).not.toContain(
+      rule,
+    );
+  });
+
+  it("reads it trimmed and ignores it when it is empty or not text", () => {
+    expect(read({ index: 0, notes: "  Declarar el IVA.\nEmpezar por las facturas.  " }).notes).toBe(
+      "Declarar el IVA.\nEmpezar por las facturas.",
+    );
+    expect(read({ index: 0, notes: "   " }).notes).toBeUndefined();
+    expect(read({ index: 0, notes: 7 }).notes).toBeUndefined();
+  });
+
+  it("never replaces a description the task already has", () => {
+    const proposal: OrganizeProposal = { notes: "Otra", priority: "low" };
+
+    expect(fillGaps(task({ notes: "Mía" }), proposal).notes).toBeUndefined();
+    expect(fillGaps(task({ notes: " " }), proposal).notes).toBe("Otra");
+    expect(organizeChanges({ notes: "Otra" })).toEqual({ notes: "Otra" });
+  });
+});
+
 describe("fillGaps and organizeChanges", () => {
   it("does not propose what the task already has", () => {
     const proposal: OrganizeProposal = {
@@ -320,6 +352,7 @@ describe("TaskOrganizerService", () => {
 
   const answer = {
     index: 0,
+    notes: "Comprar un cuaderno para las notas del curso.\nEmpezar mirando tres precios.",
     steps: ["Buscar tres precios", "Comparar", "Comprar"],
     priority: "high",
     duration: 30,
@@ -388,6 +421,7 @@ describe("TaskOrganizerService", () => {
     const id = await rumbo.organizer.accept(suggestion!);
 
     expect(rumbo.tasks.get(created.id)).toMatchObject({
+      notes: "Comprar un cuaderno para las notas del curso.\nEmpezar mirando tres precios.",
       priority: "high",
       duration: 30,
       scheduled: "2026-10-17",
@@ -402,7 +436,7 @@ describe("TaskOrganizerService", () => {
     await rumbo.organizer.undo(id!);
 
     const back = rumbo.tasks.get(created.id)!;
-    expect(back).toMatchObject({ steps: [], text: "Comprar un cuaderno" });
+    expect(back).toMatchObject({ steps: [], notes: "", text: "Comprar un cuaderno" });
     expect(back.priority).toBeUndefined();
     expect(back.scheduled).toBeUndefined();
     expect(back.time).toBeUndefined();
@@ -480,6 +514,7 @@ describe("completing a task", () => {
 
   it("only asks for what the task is missing", () => {
     const full = task({
+      notes: "Reunir los papeles",
       steps: [{ text: "Uno", done: false }],
       priority: "low",
       area: "Python",
@@ -491,6 +526,7 @@ describe("completing a task", () => {
 
     expect(openGaps(full, withLinks)).toEqual([]);
     expect(openGaps(task({ priority: "low", module: "Variables" }), withLinks)).toEqual([
+      "notes",
       "steps",
       "area",
       "duration",

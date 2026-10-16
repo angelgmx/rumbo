@@ -44,6 +44,7 @@ export interface OrganizeContext {
 }
 
 export interface OrganizeProposal {
+  notes?: string;
   steps?: string[];
   priority?: Priority;
   area?: string;
@@ -66,6 +67,7 @@ const DAY_START = "08:00";
 const DAY_END = "21:00";
 const MIN_SLOT_MINUTES = 30;
 const DEFAULT_MINUTES = 30;
+const MAX_NOTES_LENGTH = 400;
 const MIN_STEPS = 2;
 const MAX_STEPS = 5;
 const MIN_DURATION = 5;
@@ -116,6 +118,8 @@ function gaps(from: number, to: number, busy: Interval[]): [number, number][] {
 }
 
 const RULES = {
+  notes:
+    "- notes: descripción de 2 o 3 líneas, en castellano y sin relleno: qué es la tarea, para qué sirve y cómo empezar.",
   steps: "- steps: de 2 a 5 pasos concretos, cada uno una acción corta.",
   priority: "- priority: high, medium o low.",
   duration: "- duration: minutos que llevará, de 5 a 240.",
@@ -133,6 +137,7 @@ export function organizeMessages(tasks: Task[], context: OrganizeContext): AiMes
   const { projects = [], modules = [], goals = [] } = context.links ?? {};
   const system = [
     "Completas tareas de una app de productividad personal con lo que les falta. Para cada una propones:",
+    ...(open.has("notes") ? [RULES.notes] : []),
     ...(open.has("steps") ? [RULES.steps] : []),
     ...(open.has("priority") ? [RULES.priority] : []),
     ...(open.has("area") ? [`- area: ${context.areas.join(", ")}. Usa una solo si encaja.`] : []),
@@ -146,7 +151,7 @@ export function organizeMessages(tasks: Task[], context: OrganizeContext): AiMes
     ...(open.has("duration") ? [RULES.duration] : []),
     ...(open.has("slot") ? [RULES.slot, "Huecos libres:", ...slotLines(context.slots)] : []),
     ...deadlineLines(context.deadlines),
-    'Responde solo con JSON: {"items":[{"index":0,"steps":["…"],"priority":"high","area":"…","project":"…","module":"…","goal":"…","duration":30,"date":"…","time":"…"}]}. Deja fuera los campos que no te pido.',
+    'Responde solo con JSON: {"items":[{"index":0,"notes":"…","steps":["…"],"priority":"high","area":"…","project":"…","module":"…","goal":"…","duration":30,"date":"…","time":"…"}]}. Deja fuera los campos que no te pido.',
   ].join("\n");
   const user = tasks.map((task, index) => describeTask(task, index)).join("\n");
   return [
@@ -192,6 +197,7 @@ const answerSchema = z.object({ items: z.array(z.unknown()) });
 // Cada campo se lee por separado: uno mal escrito se pierde, pero no estropea los demás.
 const itemSchema = z.object({
   index: z.number().int().nonnegative(),
+  notes: z.string().nullish().catch(undefined),
   steps: z.array(z.string()).nullish().catch(undefined),
   priority: z.enum(PRIORITIES).nullish().catch(undefined),
   area: z.string().nullish().catch(undefined),
@@ -245,6 +251,7 @@ function readProposal(
   const duration = validDuration(item.duration);
   const minutes = minutesFor({ duration }, task);
   return {
+    notes: validNotes(item.notes),
     steps: validSteps(item.steps),
     priority: item.priority ?? undefined,
     area: knownArea(item.area, context.areas),
@@ -265,6 +272,11 @@ function knownLink(
 }
 
 const numberOf = (value: string | undefined) => (value === undefined ? undefined : Number(value));
+
+function validNotes(notes: string | null | undefined): string | undefined {
+  const clean = notes?.trim();
+  return clean ? clean.slice(0, MAX_NOTES_LENGTH) : undefined;
+}
 
 function validSteps(steps: string[] | null | undefined): string[] | undefined {
   const clean = [...new Set((steps ?? []).map((step) => step.trim()).filter(Boolean))];
@@ -321,6 +333,7 @@ export function fillGaps(task: Task, proposal: OrganizeProposal): OrganizePropos
   const linked = Boolean(task.projectId || task.module || proposal.projectId || proposal.module);
   const late = Boolean(task.due && proposal.date && proposal.date > task.due);
   return {
+    notes: task.notes.trim() ? undefined : proposal.notes,
     steps: task.steps.length > 0 ? undefined : proposal.steps,
     priority: task.priority ? undefined : proposal.priority,
     area: task.area ? undefined : proposal.area,
@@ -339,8 +352,10 @@ export function hasProposal(proposal: OrganizeProposal): boolean {
 
 /** Lo que cambia en la tarea al aceptar la propuesta. */
 export function organizeChanges(proposal: OrganizeProposal): TaskChanges {
-  const { steps, priority, area, projectId, module, goalId, duration, date, time } = proposal;
+  const { notes, steps, priority, area, projectId, module, goalId, duration, date, time } =
+    proposal;
   return {
+    ...(notes && { notes }),
     ...(steps && { steps: steps.map((text) => ({ text, done: false })) }),
     ...(priority && { priority }),
     ...(area && { area }),

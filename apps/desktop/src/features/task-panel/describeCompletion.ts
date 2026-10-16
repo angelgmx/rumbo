@@ -19,11 +19,23 @@ const nameOf = (options: PropertyOption[], value: string) =>
 
 /** Lo que añadiría la propuesta de la IA, campo a campo y en el orden del panel. */
 export function describeCompletion(
-  { steps, priority, area, projectId, module, goalId, duration, date, time }: OrganizeProposal,
+  {
+    notes,
+    steps,
+    priority,
+    area,
+    projectId,
+    module,
+    goalId,
+    duration,
+    date,
+    time,
+  }: OrganizeProposal,
   names: Names,
   today: string,
 ): CompletionEntry[] {
   const entries: [string, string[] | string | undefined][] = [
+    ["Descripción", notes?.split("\n").filter(Boolean)],
     ["Pasos", steps],
     ["Prioridad", priority && PRIORITY_LABEL[priority]],
     ["Área", area],
