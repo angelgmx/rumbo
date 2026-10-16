@@ -60,7 +60,8 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] Planificador: repartir la ruta en el horario y fechas estimadas
 - [ ] Checkpoints con proyecto y pistas en paralelo
 - [x] Recursos de cualquier plataforma en cada tema (cursos, vídeos, repos, certificaciones)
-- [ ] Crear rutas y temas desde la app
+- [x] Editar rutas desde la app: renombrar, añadir, renombrar y eliminar módulos, y eliminar la ruta (los apuntes se quedan)
+- [ ] Crear rutas y temas desde la app (después de Objetivos y Proyectos, con el panel de IA)
 
 **Tanda 3 — pantallas de la UI v4 (hecha):**
 

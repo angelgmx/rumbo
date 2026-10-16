@@ -205,7 +205,7 @@ Las ideas viven en una sola nota, `folders.ideas` (por defecto `Ideas.md`, junto
 - App de recetas con lista de la compra [created:: 2026-10-16]
 ```
 
-Convertir una idea en tarea la añade al inbox y quita la viñeta; «Es una idea» en Procesar inbox hace lo contrario. El resto de líneas de la nota (títulos, texto) no se tocan.
+Una idea se puede editar en su sitio (conserva su fecha). Convertir una idea en tarea la añade al inbox y quita la viñeta; «Es una idea» en Procesar inbox hace lo contrario. El resto de líneas de la nota (títulos, texto) no se tocan.
 
 ### Captura rápida
 

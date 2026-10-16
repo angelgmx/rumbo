@@ -74,11 +74,13 @@ Cada capa solo usa las de debajo. Nunca al revés.
 
 ### `vault/`
 
-| Fichero          | Responsabilidad                                                                                                 |
-| ---------------- | --------------------------------------------------------------------------------------------------------------- |
-| `frontmatter.ts` | `parseNote` lee el frontmatter. `setFrontmatter` cambia un valor y deja el resto del fichero igual byte a byte. |
-| `config.ts`      | Carga `.rumbo/config.yml` (validado con Zod) y aplica los alias de claves (`estado` → `status`).                |
-| `vault.ts`       | Recorre el vault, lee cada nota y monta el índice en memoria (`Map<ruta, Nota>`).                               |
+| Fichero           | Responsabilidad                                                                                                 |
+| ----------------- | --------------------------------------------------------------------------------------------------------------- |
+| `paths.ts`        | Nombres de fichero válidos y rutas de carpeta.                                                                  |
+| `roadmapNotes.ts` | La nota de un módulo nuevo de una ruta.                                                                         |
+| `frontmatter.ts`  | `parseNote` lee el frontmatter. `setFrontmatter` cambia un valor y deja el resto del fichero igual byte a byte. |
+| `config.ts`       | Carga `.rumbo/config.yml` (validado con Zod) y aplica los alias de claves (`estado` → `status`).                |
+| `vault.ts`        | Recorre el vault, lee cada nota y monta el índice en memoria (`Map<ruta, Nota>`).                               |
 
 ### `app/`
 
