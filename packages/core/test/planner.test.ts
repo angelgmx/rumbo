@@ -3,6 +3,8 @@ import {
   minutesPerWeekday,
   pendingMinutes,
   planModules,
+  sessionStart,
+  weekSessions,
   weeklyMinutes,
   type StudySlot,
 } from "../src/domain/planner";
@@ -67,5 +69,45 @@ describe("planModules", () => {
     expect(
       planModules([{ id: "a", concepts: 1, exercises: [] }], [], "2026-10-15")[0]!.finishes,
     ).toBeUndefined();
+  });
+});
+
+describe("sessions", () => {
+  it("lists the study days each module takes", () => {
+    // 3 horas: jueves 2 h y viernes 1 h; el siguiente módulo sigue el viernes.
+    const plan = planModules(
+      [
+        { id: "a", concepts: 12, exercises: [] },
+        { id: "b", concepts: 8, exercises: [] },
+      ],
+      weekdays,
+      "2026-10-15",
+    );
+    expect(plan.map((item) => item.sessions)).toEqual([
+      ["2026-10-15", "2026-10-16"],
+      ["2026-10-16", "2026-10-19"],
+    ]);
+  });
+
+  it("has no sessions for a finished module", () => {
+    const [plan] = planModules([{ id: "a", concepts: 0, exercises: [] }], weekdays, "2026-10-15");
+    expect(plan!.sessions).toEqual([]);
+  });
+
+  it("starts the day at the first slot that includes it", () => {
+    const slots: StudySlot[] = [
+      { days: ["mon"], from: "19:00", to: "20:00" },
+      { days: ["mon", "tue"], from: "08:00", to: "09:00" },
+    ];
+    expect(sessionStart(slots, "2026-10-19")).toBe("08:00");
+    expect(sessionStart(slots, "2026-10-21")).toBeUndefined();
+  });
+
+  it("counts the sessions of each module in the week of a day", () => {
+    const sessions = new Map([
+      ["a", ["2026-10-15", "2026-10-16", "2026-10-19"]],
+      ["b", ["2026-10-19", "2026-10-20"]],
+    ]);
+    expect(weekSessions(sessions, "2026-10-15")).toEqual([{ id: "a", count: 2 }]);
   });
 });

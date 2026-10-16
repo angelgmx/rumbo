@@ -50,3 +50,13 @@ const weekdayFormat = new Intl.DateTimeFormat("es", { weekday: "short" });
 export function formatShortWeekday(date: IsoDate): string {
   return weekdayFormat.format(toDate(date)).replace(".", "");
 }
+
+/** "19 – 22 oct", "28 oct – 2 nov" o "19 oct" */
+export function formatDayRange(from: IsoDate, to: IsoDate): string {
+  if (from === to) return formatDayMonth(from);
+  const start = toDate(from);
+  const end = toDate(to);
+  const sameMonth =
+    start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+  return `${sameMonth ? start.getDate() : formatDayMonth(from)} – ${formatDayMonth(to)}`;
+}

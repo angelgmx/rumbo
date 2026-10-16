@@ -120,7 +120,7 @@ function Roadmap({ topic }: { topic: TopicSummary }) {
                   <RoadmapDiagram
                     topic={topic}
                     selected={selected?.path}
-                    className="h-[720px]"
+                    className="h-[calc(100dvh-14rem)] min-h-[540px]"
                     onSelectModule={(module) => setSelectedPath(module.path)}
                     onOpenChallenge={setReading}
                   />

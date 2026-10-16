@@ -1,4 +1,4 @@
-import { Panel, useReactFlow, useStore } from "@xyflow/react";
+import { useReactFlow, useStore } from "@xyflow/react";
 import { MaximizeIcon, MinusIcon, PlusIcon } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -21,23 +21,17 @@ function IconButton({
   );
 }
 
-/** Barra de zoom: alejar, porcentaje, acercar y encajar. `offset` deja sitio al minimapa. */
-export function ZoomControls({ offset }: { offset: number }) {
+/** Alejar, porcentaje, acercar y encajar. */
+export function ZoomControls() {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   const zoom = useStore((state) => state.transform[2]);
 
   return (
-    <Panel position="bottom-right" style={{ marginRight: offset }}>
-      <div className="flex h-9 w-[150px] items-center justify-around rounded-[10px] border bg-popover px-1 shadow-card">
-        <IconButton label="Alejar" icon={MinusIcon} onClick={() => zoomOut()} />
-        <span className="font-mono text-[11px]">{Math.round(zoom * 100)} %</span>
-        <IconButton label="Acercar" icon={PlusIcon} onClick={() => zoomIn()} />
-        <IconButton
-          label="Encajar"
-          icon={MaximizeIcon}
-          onClick={() => fitView({ duration: 200 })}
-        />
-      </div>
-    </Panel>
+    <div className="flex items-center gap-1">
+      <IconButton label="Alejar" icon={MinusIcon} onClick={() => zoomOut()} />
+      <span className="w-10 text-center font-mono text-[11px]">{Math.round(zoom * 100)} %</span>
+      <IconButton label="Acercar" icon={PlusIcon} onClick={() => zoomIn()} />
+      <IconButton label="Encajar" icon={MaximizeIcon} onClick={() => fitView({ duration: 200 })} />
+    </div>
   );
 }

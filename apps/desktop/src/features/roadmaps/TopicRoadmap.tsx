@@ -34,12 +34,14 @@ export function TopicRoadmap({ topic }: { topic: TopicSummary }) {
         </ToggleGroup>
       </div>
       {view === "diagram" ? (
-        <RoadmapDiagram
-          topic={topic}
-          className="h-[640px] overflow-hidden rounded-xl border"
-          onSelectModule={(module) => navigate(moduleHref(topic.path, module.name))}
-          onOpenChallenge={setReading}
-        />
+        <Card className="gap-0 overflow-hidden py-0">
+          <RoadmapDiagram
+            topic={topic}
+            className="h-[640px]"
+            onSelectModule={(module) => navigate(moduleHref(topic.path, module.name))}
+            onOpenChallenge={setReading}
+          />
+        </Card>
       ) : (
         <WeeksList topic={topic} />
       )}

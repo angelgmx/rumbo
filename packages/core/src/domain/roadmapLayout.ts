@@ -1,6 +1,8 @@
-// Reparto del diagrama de una ruta en una rejilla de celdas. Cada pista es una banda y las
-// pistas que se solapan en el orden de la ruta comparten banda, una columna por pista. Los
-// retos cuelgan de su módulo; los que cierran una banda en paralelo van en una banda final.
+// Reparto del diagrama de una ruta en una rejilla. Cada pista lleva su cabecera y, después, sus
+// módulos con cada checkpoint justo detrás del módulo del que cuelga. Una pista sola se coloca en
+// serpiente (filas de izquierda a derecha y de vuelta) para que la ruta entera se lea de un vistazo;
+// las pistas que se solapan en el orden de la ruta van lado a lado, en columnas. Los grupos se
+// apilan y el final de uno se une a la cabecera de las del siguiente.
 
 export interface LayoutModule {
   id: string;
@@ -21,91 +23,76 @@ export interface LayoutInput {
   checkpoints: LayoutCheckpoint[];
 }
 
-export type LayoutSide = "top" | "right" | "bottom" | "left";
-
-export interface LayoutBand {
-  kind: "track" | "final";
-  /** Pistas que lleva, de izquierda a derecha. */
-  tracks: string[];
-  rows: number;
-}
-
 export interface LayoutItem {
   id: string;
-  kind: "module" | "checkpoint";
-  band: number;
+  kind: "track" | "module" | "checkpoint";
+  track: string;
   column: number;
   row: number;
-  span: number;
 }
+
+export type LinkSide = "top" | "right" | "bottom" | "left";
 
 export interface LayoutLink {
   from: string;
   to: string;
-  fromSide: LayoutSide;
-  toSide: LayoutSide;
+  /** Por dónde sale y por dónde entra el tramo, según dónde está cada extremo. */
+  fromSide: LinkSide;
+  toSide: LinkSide;
 }
+
+/** Elementos por fila cuando una pista va sola en serpiente. */
+export const SNAKE_WIDTH = 4;
 
 export interface RoadmapLayout {
   columns: number;
-  bands: LayoutBand[];
+  rows: number;
   items: LayoutItem[];
   links: LayoutLink[];
 }
 
-const MIN_COLUMNS = 3;
-
-type Entry = { id: string; kind: LayoutItem["kind"] };
 type Chain = LayoutItem[];
 
 export function layoutRoadmap(input: LayoutInput): RoadmapLayout {
   const modules = [...input.modules].sort((a, b) => a.order - b.order);
-  const groups = groupTracks(input.tracks, modules);
-  const columns = Math.max(MIN_COLUMNS, ...groups.map((group) => group.length));
   const hangs = hangingCheckpoints(input.checkpoints, modules);
-  const lastId = modules.at(-1)?.id ?? "";
-  const closing = groups.at(-1)!.length > 1 ? (hangs.get(lastId) ?? []) : [];
-  hangs.delete(closing.length ? lastId : "");
+  const groups = groupTracks(input.tracks, modules);
 
-  const bands: LayoutBand[] = [];
   const items: LayoutItem[] = [];
   const links: LayoutLink[] = [];
   let previousTails: Chain = [];
+  let row = 0;
 
-  const addBand = (band: LayoutBand, chains: Chain[]) => {
-    const heads = chains.flatMap((chain) => chain.slice(0, 1));
-    for (const from of previousTails) for (const to of heads) links.push(link(from, to));
+  for (const group of groups) {
+    const chains =
+      group.length === 1
+        ? [snakeOf(modules, hangs, group[0]!, row)]
+        : group.map((track, column) => columnOf(modules, hangs, track, column, row));
+    for (const from of previousTails) {
+      for (const chain of chains) links.push(link(from, chain[0]!));
+    }
     for (const chain of chains) {
       chain.slice(1).forEach((item, index) => links.push(link(chain[index]!, item)));
       items.push(...chain);
     }
-    previousTails = chains.flatMap((chain) => chain.slice(-1));
-    bands.push(band);
+    previousTails = chains.map((chain) => chain.at(-1)!);
+    row = Math.max(...chains.flat().map((item) => item.row)) + 1;
+  }
+
+  const columns = Math.max(0, ...items.map((item) => item.column + 1));
+  return { columns, rows: row, items, links };
+}
+
+/** En la misma fila el tramo va de lado; si cambia de fila, sale por abajo y entra por arriba. */
+function link(from: LayoutItem, to: LayoutItem): LayoutLink {
+  if (from.row !== to.row) return { from: from.id, to: to.id, fromSide: "bottom", toSide: "top" };
+  const rightwards = to.column > from.column;
+  return {
+    from: from.id,
+    to: to.id,
+    fromSide: rightwards ? "right" : "left",
+    toSide: rightwards ? "left" : "right",
   };
-
-  for (const group of groups) {
-    const entries = group.map((track) => entriesOf(modules, hangs, track));
-    const chains =
-      group.length > 1
-        ? parallel(entries, bands.length, columns, hangs)
-        : snake(entries[0] ?? [], bands.length, columns);
-    addBand({ kind: "track", tracks: group, rows: rowsOf(chains.flat()) }, chains);
-  }
-
-  if (closing.length) {
-    const span = Math.max(1, columns - 1);
-    const chain = closing.map<LayoutItem>((id, row) => ({
-      id,
-      kind: "checkpoint",
-      band: bands.length,
-      column: (columns - span) / 2,
-      row,
-      span,
-    }));
-    addBand({ kind: "final", tracks: [], rows: closing.length }, [chain]);
-  }
-
-  return { columns, bands, items, links };
 }
 
 /** Las pistas con módulos por orden de aparición; las que se solapan van juntas. */
@@ -129,7 +116,7 @@ function groupTracks(declared: string[], modules: LayoutModule[]): string[][] {
     else groups.push([key]);
     reach = Math.max(reach, last);
   }
-  return groups.length ? groups : [[]];
+  return groups;
 }
 
 function hangingCheckpoints(
@@ -144,72 +131,49 @@ function hangingCheckpoints(
   return hangs;
 }
 
+type Entry = Pick<LayoutItem, "id" | "kind">;
+
+/** La cabecera de la pista y sus módulos, cada uno seguido de los checkpoints que cuelgan de él. */
 function entriesOf(modules: LayoutModule[], hangs: Map<string, string[]>, track: string): Entry[] {
-  return modules
+  const entries = modules
     .filter((module) => module.track === track)
     .flatMap((module) => [
       { id: module.id, kind: "module" as const },
       ...(hangs.get(module.id) ?? []).map((id) => ({ id, kind: "checkpoint" as const })),
     ]);
+  return [{ id: `track:${track}`, kind: "track" as const }, ...entries];
 }
 
-/** En zigzag: una fila va de izquierda a derecha y la siguiente, al revés. */
-function snake(entries: Entry[], band: number, columns: number): Chain[] {
-  const chain = entries.map<LayoutItem>(({ id, kind }, index) => {
-    const row = Math.floor(index / columns);
-    const slot = index % columns;
-    const isLast = index === entries.length - 1;
-    const span = kind === "checkpoint" && isLast ? columns - slot : 1;
-    const column = row % 2 === 1 ? columns - slot - span : slot;
-    return { id, kind, band, column, row, span };
-  });
-  return [chain];
-}
-
-/** Una columna por pista, a la derecha; el hueco de la izquierda es para los retos. */
-function parallel(
-  entries: Entry[][],
-  band: number,
-  columns: number,
+/** Todo en una columna, de arriba abajo: para las pistas que van en paralelo. */
+function columnOf(
+  modules: LayoutModule[],
   hangs: Map<string, string[]>,
-): Chain[] {
-  const free = columns - entries.length;
-  const takenLeft = new Set<number>();
-  const owner = new Map(
-    [...hangs].flatMap(([module, ids]) => ids.map((id) => [id, module] as const)),
-  );
+  track: string,
+  column: number,
+  firstRow: number,
+): Chain {
+  return entriesOf(modules, hangs, track).map((entry, index) => ({
+    ...entry,
+    track,
+    column,
+    row: firstRow + index,
+  }));
+}
 
-  return entries.map((track, offset) => {
-    const chain: Chain = [];
-    const rowOf = new Map<string, number>();
-    let cursor = 0;
-    for (const { id, kind } of track) {
-      const row = rowOf.get(owner.get(id) ?? "");
-      if (kind === "checkpoint" && free > 0 && row !== undefined && !takenLeft.has(row)) {
-        takenLeft.add(row);
-        chain.push({ id, kind, band, column: 0, row, span: free });
-        continue;
-      }
-      rowOf.set(id, cursor);
-      chain.push({ id, kind, band, column: free + offset, row: cursor++, span: 1 });
-    }
-    return chain;
+/** La cabecera arriba y el resto en filas que van y vuelven, como una serpiente. */
+function snakeOf(
+  modules: LayoutModule[],
+  hangs: Map<string, string[]>,
+  track: string,
+  firstRow: number,
+): Chain {
+  const [header, ...rest] = entriesOf(modules, hangs, track);
+  const chain: Chain = [{ ...header!, track, column: 0, row: firstRow }];
+  rest.forEach((entry, index) => {
+    const line = Math.floor(index / SNAKE_WIDTH);
+    const step = index % SNAKE_WIDTH;
+    const column = line % 2 === 0 ? step : SNAKE_WIDTH - 1 - step;
+    chain.push({ ...entry, track, column, row: firstRow + 1 + line });
   });
-}
-
-function rowsOf(items: LayoutItem[]): number {
-  return Math.max(0, ...items.map((item) => item.row + 1));
-}
-
-function link(from: LayoutItem, to: LayoutItem): LayoutLink {
-  if (from.band === to.band && from.row === to.row) {
-    const forward = to.column > from.column;
-    return {
-      from: from.id,
-      to: to.id,
-      fromSide: forward ? "right" : "left",
-      toSide: forward ? "left" : "right",
-    };
-  }
-  return { from: from.id, to: to.id, fromSide: "bottom", toSide: "top" };
+  return chain;
 }

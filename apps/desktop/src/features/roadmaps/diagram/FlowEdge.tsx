@@ -1,23 +1,12 @@
-import { Position, type EdgeProps } from "@xyflow/react";
-import { cn } from "@/lib/utils";
-import { curvePath } from "./geometry";
+import { BaseEdge, getSmoothStepPath, type EdgeProps } from "@xyflow/react";
 import type { DiagramEdge } from "./types";
 
-const DOT_RADIUS = 4;
+const CORNER_RADIUS = 14;
 
-function Joint({ x, y, className }: { x: number; y: number; className: string }) {
-  return (
-    <circle
-      cx={x}
-      cy={y}
-      r={DOT_RADIUS}
-      strokeWidth={1.6}
-      className={cn("fill-background", className)}
-    />
-  );
-}
-
-/** Tramo recorrido: degradado de verde a bermellón con halo. Pendiente: discontinuo y neutro. */
+/**
+ * Tramo recorrido: línea sólida verde. Pendiente: discontinua y neutra.
+ * El grosor no escala con el zoom, así la ruta se sigue leyendo aunque se vea entera.
+ */
 export function FlowEdge({
   id,
   sourceX,
@@ -25,55 +14,32 @@ export function FlowEdge({
   targetX,
   targetY,
   sourcePosition,
+  targetPosition,
+  markerEnd,
   data,
 }: EdgeProps<DiagramEdge>) {
+  const [path] = getSmoothStepPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+    borderRadius: CORNER_RADIUS,
+  });
   const traveled = data?.traveled ?? false;
-  const vertical = sourcePosition === Position.Top || sourcePosition === Position.Bottom;
-  const from = { x: sourceX, y: sourceY };
-  const to = { x: targetX, y: targetY };
-  const path = curvePath(from, to, vertical);
-  const gradient = `edge-${id}`;
 
   return (
-    <g>
-      {traveled ? (
-        <>
-          <defs>
-            <linearGradient
-              id={gradient}
-              gradientUnits="userSpaceOnUse"
-              x1={sourceX}
-              y1={sourceY}
-              x2={targetX}
-              y2={targetY}
-            >
-              <stop offset="0" stopColor="var(--success)" />
-              <stop offset="1" stopColor="var(--primary)" />
-            </linearGradient>
-          </defs>
-          <path d={path} fill="none" strokeWidth={8} className="stroke-primary/10" />
-          <path d={path} fill="none" strokeWidth={2.6} stroke={`url(#${gradient})`} />
-        </>
-      ) : (
-        <path
-          d={path}
-          fill="none"
-          strokeWidth={1.8}
-          strokeDasharray="6 5"
-          strokeLinecap="round"
-          className="stroke-muted-foreground/55"
-        />
-      )}
-      <Joint
-        x={from.x}
-        y={from.y}
-        className={traveled ? "stroke-success" : "stroke-muted-foreground"}
-      />
-      <Joint
-        x={to.x}
-        y={to.y}
-        className={traveled ? "stroke-primary" : "stroke-muted-foreground"}
-      />
-    </g>
+    <BaseEdge
+      id={id}
+      path={path}
+      markerEnd={markerEnd}
+      style={{
+        strokeWidth: 2,
+        vectorEffect: "non-scaling-stroke",
+        strokeDasharray: traveled ? undefined : "6 5",
+        stroke: traveled ? "var(--success)" : "var(--muted-foreground)",
+      }}
+    />
   );
 }

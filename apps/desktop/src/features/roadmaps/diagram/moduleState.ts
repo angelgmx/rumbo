@@ -12,7 +12,3 @@ export function moduleProgress(module: ModuleSummary): number {
   const concepts = module.content.concepts;
   return concepts.length ? concepts.filter((concept) => concept.done).length / concepts.length : 0;
 }
-
-export function isPending(module: ModuleSummary): boolean {
-  return module.status === "learning" || module.status === "not-started";
-}

@@ -403,6 +403,17 @@ describe("roadmap pace and scope", () => {
     expect(roadmap!.pace.state).toBe("no-deadline");
   });
 
+  it("plans the study days of the pending modules from the schedule of the demo vault", () => {
+    const roadmap = rumbo.learning.roadmaps()[0]!;
+    const { sessions, modules } = roadmap.plan;
+    for (const module of roadmap.modules.filter((candidate) => candidate.status !== "mastered")) {
+      const days = sessions.get(module.path)!;
+      expect(days.length).toBeGreaterThan(0);
+      expect(days.at(-1)).toBe(modules.get(module.path));
+      expect(days[0]! >= "2026-10-15").toBe(true);
+    }
+  });
+
   it("compares the schedule with the deadline and lets you move it", async () => {
     await editRoadmap((source) =>
       source.replace("mode: classic", "mode: classic\ndeadline: 2026-10-16"),
@@ -517,5 +528,18 @@ describe("module resources", () => {
     await rumbo.learning.removeResource(module(), 0);
     expect(module().resources).toEqual([]);
     expect(files.get(path)).not.toContain("resources:");
+  });
+});
+
+describe("vault refresh", () => {
+  it("does not repaint when a note is saved again without changes", async () => {
+    const path = "Areas/Python/Python basics.md";
+    const before = rumbo.store.version;
+    await rumbo.store.refresh(path);
+    expect(rumbo.store.version).toBe(before);
+
+    files.set(path, `${files.get(path)!}\nUna línea nueva.`);
+    await rumbo.store.refresh(path);
+    expect(rumbo.store.version).toBe(before + 1);
   });
 });

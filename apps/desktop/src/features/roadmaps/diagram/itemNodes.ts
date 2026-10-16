@@ -1,58 +1,49 @@
-import { formatDayMonth, formatList, formatMinutes } from "@/lib/format";
-import { isUnlocked } from "../checkpoints";
+import type { LayoutItem } from "@rumbo/core";
+import { formatMinutes } from "@/lib/format";
+import { itemPosition, itemSize } from "./geometry";
 import type { GraphContext } from "./graphContext";
-import { itemBox } from "./geometry";
-import { moduleProgress, moduleState } from "./moduleState";
-import type { CheckpointFlowNode, ModuleFlowNode } from "./types";
+import { checkpointData, moduleData } from "./nodeData";
+import type { DiagramNode, TrackFlowNode } from "./types";
 
-/** Los módulos y los checkpoints, cada uno en su celda. */
-export function itemNodes(
-  context: GraphContext,
-  selectedPath?: string,
-): (ModuleFlowNode | CheckpointFlowNode)[] {
-  const { roadmap, layout, tops } = context;
-
-  return layout.items.map((item) => {
-    const box = itemBox(item, tops[item.band]!);
-    const base = {
-      id: item.id,
-      position: { x: box.x, y: box.y },
-      width: box.width,
-      height: box.height,
-    };
+/** Una cabecera de pista, un módulo o un checkpoint por elemento del reparto. */
+export function itemNodes(context: GraphContext, selectedPath?: string): DiagramNode[] {
+  return context.layout.items.map((item) => {
+    const base = { id: item.id, position: itemPosition(item), ...itemSize(item) };
+    if (item.kind === "track") return trackNode(context, item, base);
 
     const module = context.modules.get(item.id);
     if (module) {
-      const exercises = module.exercises.length ? ` · ${module.exercises.length} ej.` : "";
       return {
         ...base,
         type: "module" as const,
         selected: item.id === selectedPath,
-        data: {
-          module,
-          state: moduleState(module, roadmap.current),
-          progress: moduleProgress(module),
-          meta: formatMinutes(module.estimatedMinutes) + exercises,
-        },
+        data: moduleData(context, module),
       };
     }
-
-    const { checkpoint, number } = context.checkpoints.get(item.id)!;
-    const { challenge, date } = checkpoint;
-    const detail = [
-      date && `≈ ${formatDayMonth(date)}`,
-      challenge.modules.length && formatList(challenge.modules.map((required) => required.title)),
-    ];
-    return {
-      ...base,
-      type: "checkpoint" as const,
-      data: {
-        challenge,
-        heading: layout.bands[item.band]!.kind === "final" ? "FINAL" : `CHECKPOINT ${number}`,
-        detail: detail.filter(Boolean).join(" · "),
-        unlocked: isUnlocked(challenge),
-        narrow: item.span === 1,
-      },
-    };
+    return { ...base, type: "checkpoint" as const, data: checkpointData(context, item.id) };
   });
+}
+
+function trackNode(
+  context: GraphContext,
+  item: LayoutItem,
+  base: Pick<TrackFlowNode, "id" | "position" | "width" | "height">,
+): TrackFlowNode {
+  const own = context.roadmap.modules.filter((module) => module.track === item.track);
+  const minutes = own.reduce((sum, module) => sum + module.estimatedMinutes, 0);
+  const mastered = own.filter((module) => module.status === "mastered").length;
+  const progress = own.length ? mastered / own.length : 0;
+
+  return {
+    ...base,
+    type: "track",
+    draggable: false,
+    selectable: false,
+    focusable: false,
+    data: {
+      label: context.roadmap.tracks.find((track) => track.key === item.track)?.label ?? item.track,
+      meta: `${formatMinutes(minutes)} · ${Math.round(progress * 100)} %`,
+      progress,
+    },
+  };
 }

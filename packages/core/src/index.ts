@@ -14,7 +14,13 @@ export type {
   RoadmapSummary,
   TopicSummary,
 } from "./app/learningService";
-export { exerciseMinutes, type StudySlot } from "./domain/planner";
+export {
+  exerciseMinutes,
+  sessionStart,
+  weekSessions,
+  type StudySlot,
+  type WeekSessions,
+} from "./domain/planner";
 export { capacityUntil, trimToFit, type Pace, type PaceState } from "./domain/pace";
 export type { RoadmapStatus, Track } from "./domain/roadmaps";
 export type { ReviewCard } from "./app/reviewService";
@@ -29,10 +35,9 @@ export type { ModuleStatus } from "./domain/learning";
 export { linkTarget } from "./domain/links";
 export {
   layoutRoadmap,
-  type LayoutBand,
   type LayoutItem,
   type LayoutLink,
-  type LayoutSide,
+  type LinkSide,
   type RoadmapLayout,
 } from "./domain/roadmapLayout";
 export { guessFromUrl, RESOURCE_KINDS, type Resource, type ResourceKind } from "./domain/resources";

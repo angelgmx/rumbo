@@ -81,9 +81,14 @@ export class VaultStore {
     if (!path.endsWith(".md") || noteName(path).startsWith(".") || isTemplate(path, this.config))
       return;
 
-    if (await this.fs.exists(path))
-      this.index.set(path, readNote(path, await this.fs.read(path), this.config));
-    else this.index.delete(path);
+    if (!(await this.fs.exists(path))) {
+      if (this.index.delete(path)) this.notify();
+      return;
+    }
+    const source = await this.fs.read(path);
+    // Obsidian vuelve a guardar notas sin cambiarlas: si el contenido es el mismo, no se repinta nada.
+    if (this.index.get(path)?.source === source) return;
+    this.index.set(path, readNote(path, source, this.config));
     this.notify();
   }
 

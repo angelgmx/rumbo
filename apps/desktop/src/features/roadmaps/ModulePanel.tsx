@@ -9,8 +9,6 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "wouter";
-import { toast } from "sonner";
-import { useRumbo } from "@/app/RumboContext";
 import { AreaIcon } from "@/components/AreaIcon";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,6 +19,7 @@ import { moduleHref } from "./links";
 import { STATUS_LABEL, STATUS_STYLE } from "./moduleStatus";
 import { ResourceIcon } from "./ResourceIcon";
 import { Tag } from "./Tag";
+import { useAddToToday } from "./useAddToToday";
 
 interface ModulePanelProps {
   topic: TopicSummary;
@@ -183,12 +182,7 @@ function PanelActions({
   module: ModuleSummary;
   isCurrent: boolean;
 }) {
-  const rumbo = useRumbo();
-
-  async function addToToday() {
-    const text = await rumbo.learning.planToday(topic.roadmap!);
-    if (text) toast.success("Añadido a hoy", { description: text });
-  }
+  const addToToday = useAddToToday(topic.roadmap!);
 
   return (
     <div className="mt-auto flex items-center justify-between border-t px-5 py-4">
