@@ -66,6 +66,12 @@ export class TaskService {
     );
   }
 
+  /** La tarea tal como está ahora, aunque otra línea de su nota haya cambiado de sitio. */
+  locate(ref: Pick<Task, "path" | "line" | "text">): Task | undefined {
+    const same = this.all().filter(({ path, text }) => path === ref.path && text === ref.text);
+    return same.find(({ line }) => line === ref.line) ?? same[0];
+  }
+
   /** Las tareas de "## Foco de hoy" en la daily de hoy. */
   focus(): Task[] {
     const path = this.daily.pathFor(this.daily.today());
@@ -109,9 +115,7 @@ export class TaskService {
 
   /** Apunta los minutos de una sesión de trabajo en la tarea, buscándola donde esté ahora. */
   async recordSession(ref: Pick<Task, "path" | "line" | "text">, minutes: number): Promise<void> {
-    const task = this.all().find(
-      ({ path, line, text }) => path === ref.path && line === ref.line && text === ref.text,
-    );
+    const task = this.locate(ref);
     if (!task) return;
     await this.update(task, { spent: creditSession(taskToDraft(task).spent, minutes) });
   }

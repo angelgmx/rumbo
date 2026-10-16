@@ -14,6 +14,7 @@ const rawSchema = z.object({
       archive: z.string().optional(),
       habits: z.string().default("Habits"),
       goals: z.string().default("Goals"),
+      projects: z.string().default("Projects"),
       routines: z.string().default("Routines"),
       templates: z.string().optional(),
     })

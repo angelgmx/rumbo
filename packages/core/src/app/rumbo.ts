@@ -4,6 +4,7 @@ import { DailyService } from "./dailyService";
 import { DayPlanService } from "./dayPlanService";
 import { HabitService } from "./habitService";
 import { IdeaService } from "./ideaService";
+import { InboxTriageService } from "./inboxTriageService";
 import { LearningService } from "./learningService";
 import { ProgressService } from "./progressService";
 import { ReviewService } from "./reviewService";
@@ -19,6 +20,7 @@ export interface Rumbo {
   agenda: AgendaService;
   tasks: TaskService;
   ideas: IdeaService;
+  triage: InboxTriageService;
   progress: ProgressService;
   views: SavedViewService;
   dayPlan: DayPlanService;
@@ -35,6 +37,7 @@ export async function createRumbo(fs: FileSystem, clock: Clock = systemClock): P
   const tasks = new TaskService(store, daily, agenda);
   const habits = new HabitService(store, daily, tasks);
   const learning = new LearningService(store, daily, tasks);
+  const ideas = new IdeaService(store, daily, tasks);
 
   return {
     store,
@@ -42,7 +45,8 @@ export async function createRumbo(fs: FileSystem, clock: Clock = systemClock): P
     agenda,
     habits,
     tasks,
-    ideas: new IdeaService(store, daily, tasks),
+    ideas,
+    triage: new InboxTriageService(store, daily, tasks, ideas),
     progress: new ProgressService(habits, agenda),
     views: new SavedViewService(store),
     dayPlan: new DayPlanService(agenda, habits),

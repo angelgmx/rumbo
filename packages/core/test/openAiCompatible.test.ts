@@ -31,6 +31,14 @@ describe("openAiCompatible", () => {
     expect(calls[0]!.body).toEqual({ model: "llama3.2", messages, stream: false });
   });
 
+  it("asks for a JSON answer when told to", async () => {
+    const calls: Call[] = [];
+    const ai = openAiCompatible({ baseUrl: "u", model: "m", fetch: fakeFetch(200, answer, calls) });
+    await ai.complete(messages, { json: true });
+
+    expect(calls[0]!.body).toMatchObject({ response_format: { type: "json_object" } });
+  });
+
   it("sends the key as a bearer token only when there is one", async () => {
     const calls: Call[] = [];
     const options = { baseUrl: "https://api.groq.com/openai/v1", model: "m" };

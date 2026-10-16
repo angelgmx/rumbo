@@ -28,8 +28,8 @@ export interface AiMessage {
 
 /** Un modelo de IA. Core no sabe cuál es ni dónde está: se lo pasa la app. */
 export interface AiProvider {
-  /** Lo que responde el modelo a la conversación. */
-  complete(messages: AiMessage[]): Promise<string>;
+  /** Lo que responde el modelo a la conversación. Con `json`, se le pide que responda solo JSON. */
+  complete(messages: AiMessage[], options?: { json?: boolean }): Promise<string>;
 }
 
 /** Lo que core necesita de `fetch`: así vale el del navegador, el de Tauri o uno de prueba. */

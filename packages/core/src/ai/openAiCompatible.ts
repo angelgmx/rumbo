@@ -19,8 +19,13 @@ const completionSchema = z.object({
 
 export function openAiCompatible(options: OpenAiCompatibleOptions): AiProvider {
   return {
-    async complete(messages: AiMessage[]): Promise<string> {
-      const response = await send(options, { model: options.model, messages, stream: false });
+    async complete(messages: AiMessage[], { json = false } = {}): Promise<string> {
+      const response = await send(options, {
+        model: options.model,
+        messages,
+        stream: false,
+        ...(json && { response_format: { type: "json_object" } }),
+      });
       const parsed = completionSchema.safeParse(await response.json());
       if (!parsed.success) throw new AiError("failed", "Respuesta inesperada del modelo");
       return parsed.data.choices[0]!.message.content;
