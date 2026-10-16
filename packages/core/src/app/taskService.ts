@@ -1,5 +1,5 @@
 import { parseCapture } from "../domain/capture";
-import { stepCounter, type Counter } from "../domain/counters";
+import { creditSession, stepCounter, type Counter } from "../domain/counters";
 import type { IsoDate } from "../domain/dates";
 import { linkTarget } from "../domain/links";
 import { sectionLines } from "../domain/sections";
@@ -114,6 +114,20 @@ export class TaskService {
   async stepCounter(task: Task, delta: number): Promise<void> {
     if (!task.counter) return;
     await this.setCounter(task, stepCounter(task.counter, delta));
+  }
+
+  /** Apunta una sesión de trabajo en el contador de la tarea, buscándola donde esté ahora. */
+  async recordSession(
+    ref: Pick<Task, "path" | "line" | "text">,
+    minutes: number,
+    completed: boolean,
+  ): Promise<void> {
+    const task = this.all().find(
+      ({ path, line, text }) => path === ref.path && line === ref.line && text === ref.text,
+    );
+    if (!task?.counter) return;
+    const counter = creditSession(task.counter, minutes, completed);
+    if (counter !== task.counter) await this.setCounter(task, counter);
   }
 
   async remove(task: Task): Promise<void> {

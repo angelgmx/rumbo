@@ -214,6 +214,15 @@ export class LearningService {
     return note?.data.type === "module" ? this.toModule(note) : undefined;
   }
 
+  /** El módulo con ese nombre y el tema de su ruta. */
+  findModule(name: string): { topic: TopicSummary; module: ModuleSummary } | undefined {
+    for (const topic of this.topics()) {
+      const module = topic.roadmap?.modules.find((candidate) => candidate.name === name);
+      if (module) return { topic, module };
+    }
+    return undefined;
+  }
+
   async setStatus(module: ModuleSummary, status: ModuleStatus): Promise<void> {
     const source = await this.store.read(module.path);
     // Se escribe en la clave que ya usa la nota ("estado" o "status") y en su idioma.

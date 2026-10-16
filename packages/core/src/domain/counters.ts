@@ -49,3 +49,13 @@ export function setCounterMinutes(counter: Counter, minutes: number): Counter {
 export function isCounterComplete(counter: Counter): boolean {
   return counter.current >= counter.target;
 }
+
+/**
+ * Lo que apunta una sesión terminada o cerrada: los minutos trabajados en un contador de
+ * minutos, o un ciclo en uno de pomodoros si el tiempo se completó. Otros contadores no cambian.
+ */
+export function creditSession(counter: Counter, minutes: number, completed: boolean): Counter {
+  if (counter.kind === "minutes") return stepCounter(counter, Math.round(minutes));
+  if (counter.kind === "pomodoro" && completed) return stepCounter(counter, 1);
+  return counter;
+}

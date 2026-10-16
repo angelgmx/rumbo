@@ -52,6 +52,14 @@ export type {
   RoutineSummary,
 } from "./app/routineService";
 export { MAX_BAD_DAYS_PER_MONTH } from "./domain/badDays";
+export {
+  DEFAULT_SESSION_MINUTES,
+  nextStudyStep,
+  sessionMinutes,
+  type StudyModule,
+  type StudyPlace,
+  type StudyStep,
+} from "./domain/session";
 export { chooseStart, type StartChoice } from "./domain/focus";
 export type { PomodoroSettings } from "./vault/config";
 
@@ -107,6 +115,7 @@ export {
   formatCounter,
   isCounterComplete,
   parseCounter,
+  creditSession,
   setCounterMinutes,
   stepCounter,
   type Counter,
