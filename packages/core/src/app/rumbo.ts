@@ -8,6 +8,7 @@ import { IdeaService } from "./ideaService";
 import { InboxTriageService } from "./inboxTriageService";
 import { LearningService } from "./learningService";
 import { ProgressService } from "./progressService";
+import { RoadmapEditService } from "./roadmapEditService";
 import { ReviewService } from "./reviewService";
 import { RoutineService } from "./routineService";
 import { SavedViewService } from "./savedViewService";
@@ -29,6 +30,7 @@ export interface Rumbo {
   review: ReviewService;
   routines: RoutineService;
   closeDay: CloseDayService;
+  roadmaps: RoadmapEditService;
 }
 
 /** Abre un vault y monta todos los servicios de la app sobre él. */
@@ -57,5 +59,6 @@ export async function createRumbo(fs: FileSystem, clock: Clock = systemClock): P
     review: new ReviewService(store, learning, daily),
     routines,
     closeDay: new CloseDayService(store, daily, habits, tasks, routines),
+    roadmaps: new RoadmapEditService(store),
   };
 }

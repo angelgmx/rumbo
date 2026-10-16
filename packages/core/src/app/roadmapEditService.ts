@@ -1,4 +1,3 @@
-import { emptyModule } from "../domain/roadmapDraft";
 import { linkTarget } from "../domain/links";
 import { setFrontmatter } from "../vault/frontmatter";
 import { joinPath, parentOf } from "../vault/paths";
@@ -25,12 +24,7 @@ export class RoadmapEditService {
   /** Añade un módulo al final, junto a los apuntes de los demás. */
   async addModule(roadmap: RoadmapSummary, title: string): Promise<string> {
     const order = Math.max(0, ...roadmap.modules.map((module) => module.order)) + 1;
-    const note = moduleNote(
-      { ...emptyModule(), title: title.trim() },
-      order,
-      this.notesFolderOf(roadmap),
-      roadmap.name,
-    );
+    const note = moduleNote(title, order, this.notesFolderOf(roadmap), roadmap.name);
     await this.store.write(note.path, note.content);
     return note.path;
   }
