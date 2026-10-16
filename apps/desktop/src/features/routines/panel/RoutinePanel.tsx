@@ -75,7 +75,7 @@ function RoutinePanelContent({ from, onClose }: { from: Start; onClose: () => vo
               autoFocus
               value={draft.title}
               onChange={(event) => patch({ title: event.target.value })}
-              placeholder="Estudio, Mañana, Gym…"
+              placeholder="Ponle el nombre que quieras"
               aria-label="Nombre de la rutina"
               className="min-w-0 flex-1 bg-transparent text-2xl leading-10 font-semibold tracking-tight outline-none placeholder:text-muted-foreground/50"
             />
@@ -86,9 +86,9 @@ function RoutinePanelContent({ from, onClose }: { from: Start; onClose: () => vo
         </div>
 
         <section className="flex flex-col gap-3">
-          <SectionLabel>Empieza con</SectionLabel>
+          <SectionLabel>Bloques para empezar</SectionLabel>
           <SegmentedControl
-            label="Empieza con"
+            label="Bloques para empezar"
             options={STARTS}
             value={draft.from}
             onChange={choose}

@@ -22,7 +22,7 @@ export interface RoutineDraft {
 
 const BLANK: RoutineDraft = { title: "", from: "blank", days: "daily", start: "18:00" };
 
-/** Lo que se rellena al crear una rutina; elegir una plantilla trae sus días, hora y bloques. */
+/** Lo que se rellena al crear una rutina; una plantilla trae sus bloques, días y hora. */
 export function useRoutineDraft(initial: Start) {
   const [draft, setDraft] = useState<RoutineDraft>(() => withTemplate(BLANK, initial));
   const patch = (changes: Partial<RoutineDraft>) =>
@@ -45,20 +45,9 @@ export function routineInput(draft: RoutineDraft): RoutineInput {
 
 function withTemplate(draft: RoutineDraft, from: Start): RoutineDraft {
   if (from === "blank") return { ...draft, from };
+  // La plantilla trae bloques, días y hora; el nombre siempre es el tuyo.
   const template = ROUTINE_TEMPLATES[from];
-  // El nombre de la plantilla solo se pone si aún no has escrito uno tuyo.
-  const ownTitle = draft.title && !isTemplateTitle(draft.title);
-  return {
-    ...draft,
-    from,
-    title: ownTitle ? draft.title : template.title,
-    days: template.days ?? "daily",
-    start: template.start,
-  };
-}
-
-function isTemplateTitle(title: string): boolean {
-  return Object.values(ROUTINE_TEMPLATES).some((template) => template.title === title);
+  return { ...draft, from, days: template.days ?? "daily", start: template.start };
 }
 
 function blocksOf(draft: RoutineDraft): RoutineBlock[] {
