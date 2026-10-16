@@ -98,7 +98,7 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [ ] Registro de sesiones y estimado vs real (necesitan guardar el tiempo de cada sesión)
 - [x] Foco v2: botón único «Empezar» (rutina en curso, foco, racha en riesgo, siguiente paso), «Solo 5 minutos», día malo (2 al mes), racha en riesgo con versión mínima y rutinas como grupo en «Tu día»
 - [x] Modo enfoque: la sesión a pantalla completa con anillo, rondas de pomodoro, paso de ahora, progreso y lo siguiente del día
-- [ ] Foco v2: cerrar el día
+- [x] Cerrar el día: hábitos que falten, energía, lo que salió bien (con tus datos, editable) y la hora y la micro-tarea de mañana
 
 **Nombres de la especificación (16 oct):**
 

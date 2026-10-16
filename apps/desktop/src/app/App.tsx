@@ -4,6 +4,7 @@ import { Route, Router, Switch } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { CloseDayScreen } from "@/features/close-day/CloseDayScreen";
 import { ExerciseScreen } from "@/features/exercises/ExerciseScreen";
 import { ExercisesScreen } from "@/features/exercises/ExercisesScreen";
 import { HabitsScreen } from "@/features/habits/HabitsScreen";
@@ -37,6 +38,7 @@ export function App() {
                   <AppShell>
                     <Switch>
                       <Route path="/" component={FocusScreen} />
+                      <Route path="/cerrar-el-dia" component={CloseDayScreen} />
                       <Route path="/tareas/:view" component={TasksScreen} />
                       <Route path="/roadmaps" component={RoadmapsScreen} />
                       <Route path="/roadmaps/:topic" component={RoadmapScreen} />

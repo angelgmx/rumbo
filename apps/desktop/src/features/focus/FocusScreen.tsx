@@ -7,12 +7,16 @@ import {
   type RoutineStep,
   type Task,
 } from "@rumbo/core";
+import { CheckIcon } from "lucide-react";
+import { Link } from "wouter";
 import { useRumbo } from "@/app/RumboContext";
+import { Button } from "@/components/ui/button";
 import { timeOf, useNow } from "@/hooks/useNow";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { useSession } from "@/features/session/SessionProvider";
 import { choiceRequest, focusNumber, QUICK_MINUTES, type FocusChoice } from "./choice";
+import { dayCount, untimedTasks } from "./dayCount";
 import { dayEntries, nextEntry, routineOfHabits } from "./dayEntries";
 import { DayPlanCard } from "./DayPlanCard";
 import { FocusHeader } from "./FocusHeader";
@@ -41,17 +45,8 @@ export function FocusScreen() {
   const around = blocksAround(day.plan, time);
   const entries = dayEntries(day.plan, day.groups);
 
-  // Una tarea del foco con fecha de hoy saldría dos veces.
-  const otherTasks = day.todayTasks.filter(
-    (task) =>
-      // Las de un hábito ya salen dentro de su hábito.
-      !task.fields.habit && !day.focus.some((f) => f.path === task.path && f.line === task.line),
-  );
-  const blocks = day.plan.filter((item) => item.kind === "agenda");
-  const items = [...blocks, ...day.focus, ...otherTasks];
-  const doneCount =
-    items.filter((item) => item.done).length + day.habits.filter((h) => h.doneToday).length;
-  const total = items.length + day.habits.length;
+  const otherTasks = untimedTasks(day);
+  const { done: doneCount, total } = dayCount(day);
 
   async function start(quick = false) {
     if (!choice) return;
@@ -78,7 +73,15 @@ export function FocusScreen() {
 
   return (
     <>
-      <ScreenHeader title="Foco" />
+      <ScreenHeader
+        title="Foco"
+        actions={
+          <Button variant="outline" render={<Link href="/cerrar-el-dia" />}>
+            <CheckIcon data-icon="inline-start" />
+            Cerrar el día
+          </Button>
+        }
+      />
       <main className="flex-1 overflow-y-auto p-6">
         <div className="flex flex-col gap-6">
           <FocusHeader

@@ -96,6 +96,7 @@ Cada capa solo usa las de debajo. Nunca al revés.
 | `learningService.ts`    | Temas y rutas de aprendizaje tal como están en el vault (apuntes por carpeta, módulos, ejercicios, retos y recursos); estado, conceptos, ejercicios hechos, registro de práctica y la tarea de hoy. |
 | `reviewService.ts`      | Repaso espaciado de los conceptos que ya sabes (FSRS).                                                                                                                                              |
 | `routineService.ts`     | Rutinas: listar, las de hoy, activar, crear desde plantilla, reordenar bloques, crear las tareas de un bloque y terminar un bloque.                                                                 |
+| `closeDayService.ts`    | Cerrar el día: lo que salió bien según los datos, la energía y el primer bloque de mañana.                                                                                                          |
 | `inboxTriageService.ts` | Propuestas de la IA para el Inbox (tarea, idea, proyecto u objetivo) y aplicar solo las aceptadas.                                                                                                  |
 | `rumbo.ts`              | `createRumbo(fs, clock)`: abre el vault y monta todos los servicios.                                                                                                                                |
 

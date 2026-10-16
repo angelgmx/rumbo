@@ -97,6 +97,7 @@ Una nota por día con los hechos de ese día. Un fichero por día evita conflict
 type: daily
 date: 2026-10-15
 bad_day: true # opcional: día malo
+energy: medium # opcional: low | medium | high, al cerrar el día
 habits:
   gym: true
   ingles: 35
@@ -113,11 +114,16 @@ habits:
 - [ ] 17:00 - 19:00 Java · Bucles
 
 ## Notas del día
+
+## Lo que salió bien
+
+- Terminaste 2 tareas.
 ```
 
 - **Foco de hoy:** como mucho 3 tareas.
 - **Día malo:** con `bad_day: true` ese día los hábitos no rompen la racha (se salta, y si hiciste algo, cuenta). Como mucho 2 al mes: Foco no deja marcar más. Se quita borrando la línea.
 - **Agenda:** bloques con hora en el formato del plugin Day Planner (`HH:MM - HH:MM texto`). Se muestran ordenados por hora.
+- **Cerrar el día:** guarda la energía (`energy`) y «Lo que salió bien» en la daily de hoy. La hora de mañana y lo primero que harás van como un bloque de la agenda de la daily de mañana (`- [ ] 10:00 Abre Strings y lee 1 minuto`), así salen en Tu día y en «Ahora».
 - Si la daily no existe, la app la crea con la plantilla `Daily.md` de la carpeta de plantillas (rellenando las fechas de Templater) o con una por defecto.
 
 ### Tareas

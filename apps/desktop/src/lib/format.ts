@@ -58,6 +58,13 @@ export function formatShortWeekday(date: IsoDate): string {
   return weekdayFormat.format(toDate(date)).replace(".", "");
 }
 
+const longWeekdayFormat = new Intl.DateTimeFormat("es", { weekday: "long" });
+
+/** "viernes" */
+export function formatWeekday(date: IsoDate): string {
+  return longWeekdayFormat.format(toDate(date));
+}
+
 /** "19 – 22 oct", "28 oct – 2 nov" o "19 oct" */
 export function formatDayRange(from: IsoDate, to: IsoDate): string {
   if (from === to) return formatDayMonth(from);
