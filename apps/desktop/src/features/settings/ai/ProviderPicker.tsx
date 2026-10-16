@@ -11,7 +11,7 @@ export function ProviderPicker({ value, onChange }: ProviderPickerProps) {
   const kinds = Object.keys(AI_PROVIDERS) as AiProviderKind[];
 
   return (
-    <div role="radiogroup" aria-label="Proveedor" className="grid grid-cols-2 gap-3">
+    <div role="radiogroup" aria-label="Proveedor" className="grid grid-cols-3 gap-3">
       {kinds.map((kind) => (
         <ProviderCard
           key={kind}

@@ -1,4 +1,4 @@
-export type AiProviderKind = "openai" | "local";
+export type AiProviderKind = "anthropic" | "openai" | "local";
 
 /** Qué IA usa la app. La clave no va aquí: vive en el llavero del sistema. */
 export interface AiSettings {
@@ -14,7 +14,14 @@ export interface AiProviderInfo {
   needsKey: boolean;
 }
 
+// En el orden de la lámina; Claude es el proveedor por defecto.
 export const AI_PROVIDERS: Record<AiProviderKind, AiProviderInfo> = {
+  anthropic: {
+    label: "Claude (Anthropic)",
+    description: "Recomendado · mejor para planificar y corregir",
+    baseUrl: "https://api.anthropic.com/v1",
+    needsKey: true,
+  },
   openai: {
     label: "Compatible con OpenAI",
     description: "OpenAI, Groq, Gemini, OpenRouter…",
@@ -30,8 +37,8 @@ export const AI_PROVIDERS: Record<AiProviderKind, AiProviderInfo> = {
 };
 
 export const DEFAULT_AI_SETTINGS: AiSettings = {
-  provider: "local",
-  baseUrl: AI_PROVIDERS.local.baseUrl,
+  provider: "anthropic",
+  baseUrl: AI_PROVIDERS.anthropic.baseUrl,
   model: "",
 };
 

@@ -110,6 +110,6 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 
 ## Fase 7 adelantada: base de la IA
 
-- [x] Puerto `AiProvider` en `core` y adaptador compatible con OpenAI (Ollama, LM Studio, Groq, Gemini, OpenRouter, OpenAI)
+- [x] Puerto `AiProvider` en `core`: Claude (por defecto) y compatible con OpenAI (Ollama, LM Studio, Groq, Gemini, OpenRouter, OpenAI)
 - [x] Ajustes › Inteligencia artificial: proveedor, URL, modelo, clave en el llavero del sistema y «Probar»
 - [ ] Organizar el Inbox con IA: propone qué es cada cosa y tú decides
