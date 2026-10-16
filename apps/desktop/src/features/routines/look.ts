@@ -1,4 +1,4 @@
-import { linkTarget, type BlockKind, type Routine, type RoutineTemplate } from "@rumbo/core";
+import { type BlockKind, type Routine, type RoutineTemplate } from "@rumbo/core";
 import {
   BookOpenIcon,
   CheckIcon,
@@ -33,9 +33,9 @@ export function useRoutineLook(routine: Routine): AreaLook {
 
 /** Color de un bloque: el del área de su hábito; los demás, el de la rutina o neutro. */
 export function useBlockColor(kind: BlockKind, ref: string | undefined, routineColor: string) {
-  const { store } = useRumbo();
-  const habitArea = store.findByName(linkTarget(ref) ?? "")?.data.area;
-  const area = useArea(typeof habitArea === "string" ? habitArea : undefined);
+  const { routines } = useRumbo();
+  const habitArea = kind === "habit" ? routines.habitOf(ref)?.area : undefined;
+  const area = useArea(habitArea);
 
   if (kind === "habit") return habitArea ? area.color : routineColor;
   if (kind === "module" || kind === "task") return routineColor;

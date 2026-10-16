@@ -133,12 +133,12 @@ function useLibraryItems(summary: RoutineSummary, tab: LibraryTab): LibraryItem[
     useVaultQuery(
       (rumbo): LibraryItem[] => {
         if (tab === "habits") {
-          return rumbo.habits.list().habits.map(({ habit, path }) => {
-            const ref = `[[${noteName(path)}]]`;
+          return rumbo.habits.list().map(({ habit }) => {
+            const ref = habit.key;
             const minutes =
               habit.kind === "duration" && habit.target ? habit.target : DEFAULT_MINUTES;
             return {
-              id: path,
+              id: `habit:${habit.key}`,
               title: habit.name,
               detail: habit.target ? `${habit.target} ${habit.unit ?? ""}`.trim() : undefined,
               block: { kind: "habit", ref, minutes },
@@ -186,8 +186,4 @@ function useLibraryItems(summary: RoutineSummary, tab: LibraryTab): LibraryItem[
       [tab, summary],
     ).data ?? []
   );
-}
-
-function noteName(path: string): string {
-  return path.split("/").at(-1)!.replace(/\.md$/, "");
 }

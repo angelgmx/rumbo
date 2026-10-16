@@ -20,9 +20,9 @@ beforeEach(async () => {
 });
 
 describe("habits", () => {
-  it("lists the habits with today's value and their streaks", () => {
-    const { habits, invalid } = rumbo.habits.list();
-    expect(invalid).toEqual([]);
+  it("imports the habit notes once, with what the dailies say", () => {
+    const habits = rumbo.habits.list();
+    expect(habits.map((summary) => summary.habit.key)).toEqual(["reading", "running"]);
 
     const reading = habits.find((summary) => summary.habit.key === "reading")!;
     expect(reading.today).toBe(5);
@@ -30,21 +30,30 @@ describe("habits", () => {
     expect(reading.streak.count).toBe(2);
   });
 
-  it("saves today's value in today's daily note", async () => {
+  it("saves today's value in the database, not in the daily note", async () => {
+    const before = files.get("Journal/2026/10/2026-10-15.md");
     await rumbo.habits.setValue("reading", 25);
-    const daily = parseNote(files.get("Journal/2026/10/2026-10-15.md")!);
-    expect(daily.data.habits).toEqual({ running: true, reading: 25 });
-    expect(rumbo.habits.list().habits.find((h) => h.habit.key === "reading")?.doneToday).toBe(true);
+    expect(files.get("Journal/2026/10/2026-10-15.md")).toBe(before);
+    expect(rumbo.habits.list().find((h) => h.habit.key === "reading")?.doneToday).toBe(true);
   });
 
-  it("creates the daily note when it doesn't exist yet", async () => {
-    await rumbo.habits.setValue("running", true, "2026-10-16");
-    const daily = parseNote(files.get("Journal/2026/10/2026-10-16.md")!);
-    expect(daily.data).toMatchObject({
-      type: "daily",
-      date: "2026-10-16",
-      habits: { running: true },
-    });
+  it("forgets a day that is set back to nothing", async () => {
+    await rumbo.habits.setValue("reading", 0);
+    const reading = rumbo.habits.list().find((h) => h.habit.key === "reading")!;
+    expect(reading.today).toBeUndefined();
+  });
+
+  it("keeps everything after reopening, without importing twice", async () => {
+    const database = memoryDatabase();
+    const first = await createRumbo({ fs: memoryFileSystem(files), database, clock });
+    await first.habits.setValue("running", true, "2026-10-16");
+    await first.habits.create({ name: "Meditar", kind: "check", schedule: "daily" });
+
+    const again = await createRumbo({ fs: memoryFileSystem(files), database, clock });
+    const keys = again.habits.list().map((summary) => summary.habit.key);
+    expect(keys).toEqual(["meditar", "reading", "running"]);
+    const running = again.habits.list().find((h) => h.habit.key === "running")!;
+    expect(running.history.get("2026-10-16")).toBe(true);
   });
 });
 
@@ -236,11 +245,12 @@ describe("inherited area", () => {
 
 describe("goal of a task", () => {
   beforeEach(async () => {
-    files.set(
-      "Habits/Habit — Python.md",
-      '---\ntype: habit\nkey: python\ngoal: "[[Learn Python]]"\n---\n',
-    );
-    await rumbo.store.refresh("Habits/Habit — Python.md");
+    await rumbo.habits.create({
+      name: "Python",
+      kind: "check",
+      schedule: "daily",
+      goal: "Learn Python",
+    });
   });
 
   it("comes from the habit of the task", () => {
@@ -307,9 +317,9 @@ describe("createNewVault", () => {
 
     const fresh = await createRumbo({ fs: fs, database: memoryDatabase(), clock: clock });
     expect(fresh.store.config.folders.inbox).toBe("Inbox.md");
-    expect(fresh.habits.list().habits.map((summary) => summary.habit.key)).toEqual(["leer"]);
+    expect(fresh.habits.list()).toEqual([]);
 
-    await fresh.habits.setValue("leer", 10);
+    await fresh.daily.ensure("2026-10-15");
     expect(empty.has("Diario/2026/10/2026-10-15.md")).toBe(true);
   });
 
@@ -339,7 +349,7 @@ describe("saved views", () => {
 });
 
 describe("editing habits", () => {
-  it("creates a habit note that shows up in the list", async () => {
+  it("creates a habit that shows up in the list", async () => {
     const key = await rumbo.habits.create({
       name: "Inglés B2",
       kind: "duration",
@@ -349,13 +359,14 @@ describe("editing habits", () => {
       area: "Python",
     });
     expect(key).toBe("ingles-b2");
-    expect(files.get("Habits/Hábito — Inglés B2.md")).toContain('area: "[[Python]]"');
 
-    const created = rumbo.habits.list().habits.find((summary) => summary.habit.key === key)!;
+    const created = rumbo.habits.list().find((summary) => summary.habit.key === key)!;
     expect(created.habit).toMatchObject({
       name: "Inglés B2",
       target: 30,
       schedule: ["mon", "wed"],
+      area: "Python",
+      started: "2026-10-15",
     });
   });
 
@@ -373,25 +384,25 @@ describe("editing habits", () => {
       unit: "páginas",
       schedule: "daily",
     });
-    const reading = rumbo.habits.list().habits.find((summary) => summary.habit.key === "reading")!;
+    const reading = rumbo.habits.list().find((summary) => summary.habit.key === "reading")!;
     expect(reading.habit).toMatchObject({ name: "Leer", target: 30 });
     expect(reading.history.size).toBe(3);
   });
 
   it("removes fields that no longer apply", async () => {
     await rumbo.habits.update("reading", { name: "Reading", kind: "check", schedule: "daily" });
-    const note = files.get("Habits/Habit — Reading.md")!;
-    expect(note).not.toContain("target:");
-    expect(note).not.toContain("unit:");
+    const { habit } = rumbo.habits.list().find((summary) => summary.habit.key === "reading")!;
+    expect(habit.target).toBeUndefined();
+    expect(habit.unit).toBeUndefined();
   });
 
   it("archives and removes habits", async () => {
     await rumbo.habits.archive("running");
-    expect(rumbo.habits.list().habits.map((summary) => summary.habit.key)).toEqual(["reading"]);
+    expect(rumbo.habits.list().map((summary) => summary.habit.key)).toEqual(["reading"]);
 
     await rumbo.habits.remove("reading");
-    expect(files.has("Habits/Habit — Reading.md")).toBe(false);
-    expect(rumbo.habits.list().habits).toEqual([]);
+    expect(rumbo.habits.get("reading")).toBeUndefined();
+    expect(rumbo.habits.list()).toEqual([]);
   });
 });
 
@@ -459,7 +470,7 @@ describe("habits with tasks", () => {
     await rumbo.tasks.create({ text: "Tema de hoy: Arrays", scheduled: "2026-10-15", habit: key });
     await rumbo.tasks.create({ text: "Ejercicios 3-5", scheduled: "2026-10-15", habit: key });
 
-    const pending = rumbo.habits.list().habits.find((summary) => summary.habit.key === key)!;
+    const pending = rumbo.habits.list().find((summary) => summary.habit.key === key)!;
     expect(pending.todayTasks.map((task) => task.text)).toEqual([
       "Tema de hoy: Arrays",
       "Ejercicios 3-5",
@@ -467,24 +478,14 @@ describe("habits with tasks", () => {
     expect(pending.doneToday).toBe(false);
 
     for (const task of pending.todayTasks) await rumbo.tasks.setDone(task, true);
-    const done = rumbo.habits.list().habits.find((summary) => summary.habit.key === key)!;
+    const done = rumbo.habits.list().find((summary) => summary.habit.key === key)!;
     expect(done.doneToday).toBe(true);
     expect(done.streak.count).toBe(1);
   });
 
   it("doesn't count as done a day without tasks", async () => {
     const key = await rumbo.habits.create({ name: "Inglés", kind: "tasks", schedule: "daily" });
-    expect(rumbo.habits.list().habits.find((summary) => summary.habit.key === key)!.doneToday).toBe(
-      false,
-    );
-  });
-
-  it("doesn't write task habits in new daily notes", async () => {
-    await rumbo.habits.create({ name: "Inglés", kind: "tasks", schedule: "daily" });
-    await rumbo.habits.setValue("running", true, "2026-10-20");
-    expect(parseNote(files.get("Journal/2026/10/2026-10-20.md")!).data.habits).not.toHaveProperty(
-      "ingles",
-    );
+    expect(rumbo.habits.list().find((summary) => summary.habit.key === key)!.doneToday).toBe(false);
   });
 });
 
@@ -573,7 +574,7 @@ describe("learning", () => {
 
     const text = await rumbo.learning.planToday(rumbo.learning.roadmaps()[0]!);
     expect(text).toBe("Python basics · Variables: ejercicio 01 — Swap two values");
-    const coding = rumbo.habits.list().habits.find((summary) => summary.habit.key === habit)!;
+    const coding = rumbo.habits.list().find((summary) => summary.habit.key === habit)!;
     expect(coding.todayTasks.map((task) => task.text)).toEqual([text]);
   });
 
@@ -760,7 +761,7 @@ describe("bad days", () => {
   });
 
   it("keep the streak of a habit alive", async () => {
-    const reading = () => rumbo.habits.list().habits.find((h) => h.habit.key === "reading")!;
+    const reading = () => rumbo.habits.list().find((h) => h.habit.key === "reading")!;
     await rumbo.habits.setValue("reading", 0, "2026-10-14");
     expect(reading().streak.count).toBe(0);
 

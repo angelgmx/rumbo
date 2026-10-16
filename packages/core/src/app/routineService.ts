@@ -1,5 +1,5 @@
 import type { IsoDate } from "../domain/dates";
-import { habitSchema, type Habit, type HabitSchedule } from "../domain/habits";
+import type { Habit, HabitSchedule } from "../domain/habits";
 import { linkTarget } from "../domain/links";
 import {
   blockTitle,
@@ -101,7 +101,7 @@ export class RoutineService {
     }
 
     // Los hábitos se leen una vez para todas: leerlos por rutina recorre las dailies de nuevo.
-    const habits = this.habits.list().habits;
+    const habits = this.habits.list();
     const routines = parsed
       .map((item) => this.summarize(item, parsed, habits))
       .sort((a, b) => a.routine.start.localeCompare(b.routine.start));
@@ -138,11 +138,18 @@ export class RoutineService {
 
   /** El hábito que se cumple con un bloque: el suyo, o el de la ruta del tema. */
   private habitKeyOf(block: RoutineBlock): string | undefined {
-    if (block.kind === "habit") {
-      const key = this.store.findByName(linkTarget(block.ref) ?? "")?.data.key;
-      return typeof key === "string" ? key : undefined;
-    }
+    if (block.kind === "habit") return this.habitOf(block.ref)?.key;
     return block.kind === "module" ? this.moduleFor(block)?.roadmap.habit : undefined;
+  }
+
+  /**
+   * El hábito de un bloque va por su clave. Las rutinas de antes lo señalan con el wikilink a
+   * su nota antigua, que sigue en el vault y guarda la clave.
+   */
+  habitOf(ref: string | undefined): Habit | undefined {
+    const name = linkTarget(ref);
+    const key = name ? this.store.findByName(name)?.data.key : ref;
+    return typeof key === "string" ? this.habits.get(key) : undefined;
   }
 
   /**
@@ -283,13 +290,11 @@ export class RoutineService {
   }
 
   private async completeHabit(block: RoutineBlock): Promise<void> {
-    const note = this.store.findByName(linkTarget(block.ref) ?? "");
-    const parsed = habitSchema.safeParse(note?.data);
+    const habit = this.habitOf(block.ref);
     // Los hábitos de tareas se cumplen terminando sus tareas: no se apuntan.
-    if (!parsed.success || parsed.data.kind === "tasks") return;
+    if (!habit || habit.kind === "tasks") return;
 
-    const habit = parsed.data;
-    const today = this.habits.list().habits.find((summary) => summary.habit.key === habit.key);
+    const today = this.habits.list().find((summary) => summary.habit.key === habit.key);
     const previous = typeof today?.today === "number" ? today.today : 0;
     await this.habits.setValue(
       habit.key,
@@ -301,16 +306,13 @@ export class RoutineService {
     const found = this.moduleFor(block);
     if (!found) return undefined;
     const { roadmap, module } = found;
-    const habitNote = this.store
-      .notesOfType("habit")
-      .find((note) => roadmap.habit !== undefined && note.data.key === roadmap.habit);
     const resource = module.resources.find((candidate) => candidate.status === "pending");
 
     return {
       roadmapTitle: roadmap.title,
       moduleTitle: module.title,
       habit: roadmap.habit,
-      area: linkTarget(habitNote?.data.area),
+      area: this.habits.get(roadmap.habit)?.area,
       pendingExercises: module.exercises.filter((exercise) => !exercise.done),
       pendingResource: resource && { title: resource.title, minutes: resource.minutes },
     };

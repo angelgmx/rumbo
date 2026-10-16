@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createRumbo, type Rumbo } from "../src";
-import { habitSchema } from "../src/domain/habits";
 import {
   blockTitle,
   insertBlock,
@@ -19,6 +18,7 @@ import {
 import { parseNote } from "../src/vault/frontmatter";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
 import { memoryDatabase } from "./memoryDatabase";
+import { makeHabit } from "./makeHabit";
 
 const routine = routineSchema.parse({
   start: "18:00",
@@ -86,7 +86,7 @@ describe("routine domain", () => {
   });
 
   it("measures how often its habits were done on its days", () => {
-    const habit = habitSchema.parse({ key: "ingles", name: "Inglés" });
+    const habit = makeHabit({ key: "ingles", name: "Inglés" });
     // Semana del lunes 12: tocaba lunes 12 y miércoles 14, se hizo uno.
     const history = new Map([
       ["2026-10-12", true],
@@ -241,11 +241,10 @@ describe("RoutineService", () => {
     expect(await rumbo.routines.planBlock(summary!, 1)).toEqual([]);
   });
 
-  it("logs the habit of a block in today's daily", async () => {
+  it("logs the habit of a block", async () => {
     const [summary] = rumbo.routines.today();
     await rumbo.routines.completeBlock(summary!, 0);
-    const daily = parseNote(files.get("Journal/2026/10/2026-10-16.md")!);
-    expect(daily.data.habits).toMatchObject({ reading: 20 });
+    expect(rumbo.habits.list().find((h) => h.habit.key === "reading")?.today).toBe(20);
   });
 
   it("starts the topic of a block that was not started", async () => {

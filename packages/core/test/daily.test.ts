@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addAgendaBlock, blocksAround, parseAgenda } from "../src/domain/agenda";
-import { dailyPath, habitHistories, newDailyNote } from "../src/domain/daily";
-import { habitSchema } from "../src/domain/habits";
+import { dailyPath, newDailyNote } from "../src/domain/daily";
 import { parseNote } from "../src/vault/frontmatter";
 import { loadConfig } from "../src/vault/config";
 import { nodeFileSystem } from "./nodeFileSystem";
@@ -17,32 +16,12 @@ describe("dailyPath", () => {
 describe("newDailyNote", () => {
   it("fills the Templater date of the vault template", () => {
     const template = '---\ndate: <% tp.date.now("YYYY-MM-DD") %>\n---\n';
-    expect(newDailyNote("2026-10-15", [], template)).toBe("---\ndate: 2026-10-15\n---\n");
+    expect(newDailyNote("2026-10-15", template)).toBe("---\ndate: 2026-10-15\n---\n");
   });
 
-  it("creates a default note with every habit at zero", () => {
-    const habits = [
-      habitSchema.parse({ key: "gym", name: "Gym" }),
-      habitSchema.parse({ key: "read", name: "Read", kind: "count", target: 20 }),
-    ];
-    const { data } = parseNote(newDailyNote("2026-10-15", habits));
-    expect(data).toEqual({ type: "daily", date: "2026-10-15", habits: { gym: false, read: 0 } });
-  });
-});
-
-describe("habitHistories", () => {
-  it("groups the habit values of all daily notes by habit", () => {
-    const histories = habitHistories([
-      { data: { date: "2026-10-14", habits: { gym: true, read: 10 } } },
-      { data: { date: "2026-10-15", habits: { gym: false } } },
-    ]);
-    expect(histories.get("gym")).toEqual(
-      new Map([
-        ["2026-10-14", true],
-        ["2026-10-15", false],
-      ]),
-    );
-    expect(histories.get("read")).toEqual(new Map([["2026-10-14", 10]]));
+  it("creates a default note without habits: they live in the database", () => {
+    const { data } = parseNote(newDailyNote("2026-10-15"));
+    expect(data).toEqual({ type: "daily", date: "2026-10-15" });
   });
 });
 
@@ -103,15 +82,5 @@ describe("blocksAround", () => {
 
   it("doesn't show a finished block as in progress", () => {
     expect(blocksAround(blocks, "07:45").now).toBeUndefined();
-  });
-});
-
-describe("new daily with task habits", () => {
-  it("leaves out task habits: they are done by finishing their tasks", () => {
-    const habits = [
-      habitSchema.parse({ key: "gym", name: "Gym" }),
-      habitSchema.parse({ key: "code", name: "Programación", kind: "tasks" }),
-    ];
-    expect(parseNote(newDailyNote("2026-10-15", habits)).data.habits).toEqual({ gym: false });
   });
 });

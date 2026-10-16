@@ -1,5 +1,6 @@
 import { ChangeFeed } from "../changeFeed";
 import { AppDatabase } from "../db/appDatabase";
+import { HabitRepository } from "../db/habitRepository";
 import { IdeaRepository } from "../db/ideaRepository";
 import { TaskRepository } from "../db/taskRepository";
 import { systemClock, type Clock, type Database, type FileSystem } from "../ports";
@@ -68,13 +69,18 @@ async function open({ fs, database, clock = systemClock }: RumboSources): Promis
   const db = await AppDatabase.open(database, changes);
   const daily = new DailyService(store, clock);
   const agenda = new AgendaService(store, daily);
-  const taskRepository = await TaskRepository.open(db);
-  const tasks = new TaskService(taskRepository, store, daily, agenda);
-  const habits = new HabitService(store, daily, tasks);
-  const learning = new LearningService(store, daily, tasks);
   const ideaRepository = new IdeaRepository(db);
+  const taskRepository = await TaskRepository.open(db);
+  const habitRepository = await HabitRepository.open(db);
+  await new VaultImport(db, store, daily, {
+    ideas: ideaRepository,
+    tasks: taskRepository,
+    habits: habitRepository,
+  }).run();
+  const tasks = new TaskService(taskRepository, store, daily, agenda, habitRepository);
+  const habits = new HabitService(habitRepository, daily, tasks);
+  const learning = new LearningService(store, daily, tasks, habitRepository);
   const ideas = new IdeaService(ideaRepository, daily, tasks);
-  await new VaultImport(db, store, daily, ideaRepository, taskRepository).run();
   const routines = new RoutineService(store, daily, habits, tasks, learning);
 
   return {

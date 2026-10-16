@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 /** El cuadradito con el color del área, como en la barra lateral y las filas. */
 export function AreaDot({ area, className }: { area: string; className?: string }) {
-  const { color } = useArea(`[[${area}]]`);
+  const { color } = useArea(area);
   return (
     <span
       aria-hidden

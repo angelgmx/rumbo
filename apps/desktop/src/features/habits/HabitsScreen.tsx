@@ -2,7 +2,6 @@ import { completionRate, startOfWeek } from "@rumbo/core";
 import { FlameIcon } from "lucide-react";
 import { useState } from "react";
 import { useRumbo } from "@/app/RumboContext";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Empty,
   EmptyDescription,
@@ -20,11 +19,10 @@ export function HabitsScreen() {
   const rumbo = useRumbo();
   const today = rumbo.daily.today();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today));
-  const list = useVaultQuery((r) => r.habits.list()).data;
+  const habits = useVaultQuery((r) => r.habits.list()).data;
 
-  if (!list) return <ScreenHeader title="Hábitos" actions={<NewHabitButton />} />;
+  if (!habits) return <ScreenHeader title="Hábitos" actions={<NewHabitButton />} />;
 
-  const { habits, invalid } = list;
   const doneToday = habits.filter((summary) => summary.doneToday).length;
   const thisWeek = average(
     habits.map(({ habit, history }) => completionRate(habit, history, startOfWeek(today), today)),
@@ -43,13 +41,6 @@ export function HabitsScreen() {
             </p>
           </div>
 
-          {invalid.length > 0 && (
-            <Alert variant="destructive">
-              <AlertTitle>Hay hábitos que no se pueden leer</AlertTitle>
-              <AlertDescription>Revisa el frontmatter de: {invalid.join(", ")}</AlertDescription>
-            </Alert>
-          )}
-
           {habits.length === 0 ? (
             <Empty>
               <EmptyHeader>
@@ -57,9 +48,7 @@ export function HabitsScreen() {
                   <FlameIcon />
                 </EmptyMedia>
                 <EmptyTitle>Todavía no tienes hábitos</EmptyTitle>
-                <EmptyDescription>
-                  Crea una nota con «type: habit» en tu vault y aparecerá aquí.
-                </EmptyDescription>
+                <EmptyDescription>Crea el primero con «Nuevo hábito».</EmptyDescription>
               </EmptyHeader>
             </Empty>
           ) : (

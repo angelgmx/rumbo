@@ -77,7 +77,7 @@ function WeekColumn({ topic }: { topic: TopicSummary }) {
   const rumbo = useRumbo();
   const roadmap = topic.roadmap!;
   const habit = useVaultQuery(
-    (r) => r.habits.list().habits.find((summary) => summary.habit.key === roadmap.habit),
+    (r) => r.habits.list().find((summary) => summary.habit.key === roadmap.habit),
     [roadmap.habit],
   ).data;
   const week = habit ? weekProgress(habit.habit, habit.history, rumbo.daily.today()) : undefined;

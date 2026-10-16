@@ -24,7 +24,7 @@ export function HabitTasks({ habit, tasks }: { habit: Habit; tasks: Task[] }) {
       text,
       scheduled: rumbo.daily.today(),
       habit: habit.key,
-      area: habit.area?.match(/\[\[([^\]|#]+)/)?.[1],
+      area: habit.area,
     });
     setText("");
   }

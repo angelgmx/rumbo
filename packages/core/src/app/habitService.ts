@@ -1,13 +1,12 @@
-import { habitHistories } from "../domain/daily";
+import type { HabitRepository } from "../db/habitRepository";
 import { addDays, type IsoDate } from "../domain/dates";
 import {
   bestStreak,
   challengeProgress,
   completionRate,
   currentStreak,
-  habitFields,
+  habitFromInput,
   habitKeyFor,
-  habitSchema,
   habitStats,
   isDone,
   isScheduledOn,
@@ -19,15 +18,12 @@ import {
   type Streak,
 } from "../domain/habits";
 import { streaksAtRisk } from "../domain/focus";
-import { newNoteSource, setFrontmatter } from "../vault/frontmatter";
 import { habitHistoryFromTasks, type Task } from "../domain/tasks";
 import type { DailyService } from "./dailyService";
 import type { TaskService } from "./taskService";
-import type { VaultStore } from "./vaultStore";
 
 export interface HabitSummary {
   habit: Habit;
-  path: string;
   today?: HabitValue;
   doneToday: boolean;
   streak: Streak;
@@ -44,64 +40,32 @@ export interface HabitSummary {
   todayTasks: Task[];
 }
 
-// Con prefijo para que "Gym" (hábito) no choque con "Gym" (área) en los wikilinks.
-const HABIT_FILE_PREFIX = "Hábito — ";
-
-interface HabitList {
-  habits: HabitSummary[];
-  /** Notas de hábito con el frontmatter mal escrito, para avisar al usuario. */
-  invalid: string[];
-}
-
+/** Los hábitos: ver cómo vas, apuntar lo de cada día, crearlos y cambiarlos. Viven en la base de datos. */
 export class HabitService {
   constructor(
-    private readonly store: VaultStore,
+    private readonly habits: HabitRepository,
     private readonly daily: DailyService,
     private readonly tasks: TaskService,
   ) {}
 
-  list(): HabitList {
+  /** Los que no están archivados, por nombre. */
+  list(): HabitSummary[] {
     const today = this.daily.today();
-    const histories = habitHistories(this.store.notesOfType("daily"));
     const badDays = this.daily.badDays();
-    const result: HabitList = { habits: [], invalid: [] };
+    return this.habits
+      .all()
+      .filter((habit) => !habit.archived)
+      .map((habit) => this.summarize(habit, today, badDays))
+      .sort((a, b) => a.habit.name.localeCompare(b.habit.name));
+  }
 
-    for (const note of this.store.notesOfType("habit")) {
-      const parsed = habitSchema.safeParse(note.data);
-      if (!parsed.success) {
-        result.invalid.push(note.path);
-        continue;
-      }
-      if (parsed.data.archived) continue;
-
-      const habit = parsed.data;
-      // Los de tareas no se apuntan: su historial sale de si se terminaron las tareas de cada día.
-      const history: Map<IsoDate, HabitValue> =
-        habit.kind === "tasks"
-          ? habitHistoryFromTasks(this.tasks.all(), habit.key)
-          : (histories.get(habit.key) ?? new Map());
-      result.habits.push({
-        habit,
-        path: note.path,
-        today: history.get(today),
-        doneToday: isDone(habit, history.get(today)),
-        streak: currentStreak(habit, history, today, badDays),
-        best: bestStreak(habit, history, today, badDays),
-        last30Days: completionRate(habit, history, addDays(today, -29), today),
-        stats: habitStats(habit, history),
-        challenge: challengeProgress(habit, today),
-        history,
-        todayTasks: habit.kind === "tasks" ? this.tasks.forHabit(habit.key, today) : [],
-      });
-    }
-
-    result.habits.sort((a, b) => a.habit.name.localeCompare(b.habit.name));
-    return result;
+  get(key: string | undefined): Habit | undefined {
+    return this.habits.get(key);
   }
 
   /** Los hábitos que tocan un día: los que lo tienen en su horario y cuyo reto no ha terminado. */
   dueOn(date: IsoDate): HabitSummary[] {
-    return this.list().habits.filter(
+    return this.list().filter(
       ({ habit, challenge }) => isScheduledOn(habit.schedule, date) && !challenge?.finished,
     );
   }
@@ -112,59 +76,59 @@ export class HabitService {
     return streaksAtRisk(this.dueOn(today), this.daily.badDays().has(today));
   }
 
-  /** Guarda el valor de un hábito en la daily de ese día (hoy si no se dice). */
-  async setValue(key: string, value: HabitValue, date = this.daily.today()): Promise<void> {
-    const path = await this.daily.ensure(date);
-    const source = await this.store.read(path);
-    await this.store.write(path, setFrontmatter(source, ["habits", key], value));
+  /** Apunta lo hecho de un hábito un día (hoy si no se dice). */
+  setValue(key: string, value: HabitValue, date = this.daily.today()): Promise<void> {
+    return this.habits.record(key, date, value);
   }
 
-  /** Crea la nota del hábito y devuelve su clave. */
+  /** Crea el hábito y devuelve su clave. */
   async create(input: HabitInput): Promise<string> {
-    const key = habitKeyFor(input.name, this.allKeys());
-    const fields = {
-      type: "habit",
-      key,
-      ...habitFields(input),
-      started: this.daily.today(),
-      archived: false,
-    };
-    const path = await this.store.freePath(
-      this.store.config.folders.habits,
-      `${HABIT_FILE_PREFIX}${input.name.trim()}`,
+    const today = this.daily.today();
+    const key = habitKeyFor(
+      input.name,
+      this.habits.all().map((habit) => habit.key),
     );
-    await this.store.write(path, newNoteSource(fields, input.name));
+    await this.habits.insert(
+      { ...habitFromInput(input), key, started: today, archived: false },
+      today,
+    );
     return key;
   }
 
-  /** Cambia los datos del hábito. La clave no cambia nunca: es lo que une el hábito con sus dailies. */
+  /** Cambia los datos del hábito. La clave no cambia nunca: es lo que lo une con tareas y rutas. */
   async update(key: string, input: HabitInput): Promise<void> {
-    const path = this.pathOf(key);
-    let source = await this.store.read(path);
-    for (const [field, value] of Object.entries(habitFields(input))) {
-      source = setFrontmatter(source, [field], value);
-    }
-    await this.store.write(path, source);
+    const habit = this.habits.get(key);
+    if (habit) await this.habits.save({ ...habit, ...habitFromInput(input) });
   }
 
-  /** Lo oculta sin borrar nada. Se puede volver a activar quitando "archived" en la nota. */
+  /** Lo oculta sin borrar nada de lo apuntado. */
   async archive(key: string): Promise<void> {
-    const path = this.pathOf(key);
-    await this.store.write(path, setFrontmatter(await this.store.read(path), ["archived"], true));
+    const habit = this.habits.get(key);
+    if (habit) await this.habits.save({ ...habit, archived: true });
   }
 
-  /** Borra la nota del hábito. Lo marcado en las dailies se queda donde está. */
-  async remove(key: string): Promise<void> {
-    await this.store.remove(this.pathOf(key));
+  /** Lo borra con todo lo apuntado. */
+  remove(key: string): Promise<void> {
+    return this.habits.remove(key);
   }
 
-  private pathOf(key: string): string {
-    const note = this.store.notesOfType("habit").find((candidate) => candidate.data.key === key);
-    if (!note) throw new Error(`No habit with key "${key}"`);
-    return note.path;
-  }
-
-  private allKeys(): string[] {
-    return this.store.notesOfType("habit").map((note) => String(note.data.key));
+  private summarize(habit: Habit, today: IsoDate, badDays: ReadonlySet<IsoDate>): HabitSummary {
+    // Los de tareas no se apuntan: su historial sale de si se terminaron las tareas de cada día.
+    const history =
+      habit.kind === "tasks"
+        ? habitHistoryFromTasks(this.tasks.all(), habit.key)
+        : this.habits.history(habit.key);
+    return {
+      habit,
+      today: history.get(today),
+      doneToday: isDone(habit, history.get(today)),
+      streak: currentStreak(habit, history, today, badDays),
+      best: bestStreak(habit, history, today, badDays),
+      last30Days: completionRate(habit, history, addDays(today, -29), today),
+      stats: habitStats(habit, history),
+      challenge: challengeProgress(habit, today),
+      history,
+      todayTasks: habit.kind === "tasks" ? this.tasks.forHabit(habit.key, today) : [],
+    };
   }
 }

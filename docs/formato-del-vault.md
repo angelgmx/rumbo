@@ -24,7 +24,6 @@ folders:
   daily_format: YYYY/MM/YYYY-MM-DD # subcarpetas y nombre de cada daily
   inbox: 00 - Inbox/Inbox.md # solo para importar las tareas antiguas una vez
   ideas: 00 - Inbox/Ideas.md # solo para importar las ideas antiguas una vez
-  habits: Hábitos
   goals: Objetivos
   projects: Proyectos # por defecto, Projects
   routines: 07 - Rutinas
@@ -44,48 +43,26 @@ Todo es opcional; si falta, se usan valores por defecto. Las notas de la carpeta
 
 ## Tipos de nota
 
-### Hábito — `type: habit`
+### Hábitos
 
-La definición del hábito. Responde a tres preguntas: **cuándo**, **cómo sé que lo he cumplido** y **para qué es** (objetivo y área).
+Los hábitos viven en la base de datos de la app (tablas `habitos` y `registros_habito`, ver [Modelo de datos](modelo-de-datos.md)). Cada uno responde a tres preguntas: **cuándo**, **cómo sé que lo he cumplido** y **para qué es** (objetivo y área).
 
-```yaml
-type: habit
-key: programacion # identificador corto que usan las dailies y las tareas (no cambia nunca)
-name: Programación
-kind: tasks # check | count | duration | tasks
-schedule: daily # daily | [mon, wed, fri] | { times_per_week: 4 }
-start: "17:00" # opcional: franja horaria
-end: "19:00"
-goal: "[[Dominar un stack backend]]"
-area: "[[Desarrollo]]"
-started: 2026-10-15
-until: 2026-12-19 # opcional: último día, si es un reto (21, 30, 66, 90 días…)
-archived: false
-```
+| Tipo     | Se cumple cuando…                 | Qué se apunta cada día          |
+| -------- | --------------------------------- | ------------------------------- |
+| Sí o no  | lo marcas                         | hecho                           |
+| Cantidad | llegas al número (`meta`)         | la cantidad (20 páginas)        |
+| Duración | llegas a los minutos (`meta`)     | los minutos                     |
+| Tareas   | terminas todas sus tareas del día | nada: se calcula con sus tareas |
 
-| `kind`     | Se cumple cuando…                 | Campos                 | Dónde se apunta                                     |
-| ---------- | --------------------------------- | ---------------------- | --------------------------------------------------- |
-| `check`    | lo marcas                         | —                      | daily: `gym: true`                                  |
-| `count`    | llegas al número                  | `target`, `unit`       | daily: `lectura: 20`                                |
-| `duration` | llegas a los minutos              | `target` (`unit: min`) | daily: `meditar: 10`                                |
-| `tasks`    | terminas todas sus tareas del día | —                      | en las propias tareas, con `[habit:: programacion]` |
-
-**Versión mínima.** En los de cantidad y tiempo, `minimum: 10` es lo mínimo que salva la racha un día flojo (si no lo pones, la mitad de `target`). El hábito sigue sin darse por cumplido, pero la racha no se rompe. Foco la ofrece cuando una racha de 3 días o más corre peligro.
-
-**Hábitos de tareas.** El hábito es el hueco fijo de tu rutina («Programación, de lunes a viernes de 17:00 a 19:00») y lo que haces dentro cambia cada día: son tareas normales con fecha y el campo `[habit:: clave]`. Ese día cuenta como hecho si tenía tareas vinculadas y estaban todas terminadas. No se guarda nada en la daily: se calcula a partir de las tareas.
-
-```markdown
-- [x] Tema de hoy: Arrays ⏳ 2026-10-15 [area:: Desarrollo] [habit:: programacion]
-- [ ] Ejercicios 3-5 de Bucles ⏳ 2026-10-15 [area:: Desarrollo] [habit:: programacion]
-```
-
-- Desde la app se crean, editan, archivan y eliminan. Una nota nueva se llama `Hábito — Nombre.md` (con prefijo para que no choque con una nota de área del mismo nombre).
-- La `key` no cambia al editar: es lo que une el hábito con las dailies y las tareas.
-- **Archivar** (`archived: true`) lo oculta sin borrar nada. **Eliminar** borra la nota; lo marcado se queda.
-- Con `until` es un **reto**: la app enseña «día 15 de 66» y, al terminar, deja de salir en tu día.
-- La app calcula racha, mejor racha, % de los últimos 30 días, total acumulado (días, páginas, minutos…) y el día de la semana en que más lo cumples. Nada de eso se guarda.
-- Los días que no tocan no rompen la racha, ni los **días malos** de la daily. Con `times_per_week` la racha se cuenta en semanas cumplidas.
-- Con `start` y `end`, el hábito sale en **Tu día** como un bloque de la rutina los días que toca (no se escribe en la agenda: se dibuja a partir de la nota). Si es de tareas, sus tareas de hoy salen dentro del bloque.
+- **Clave fija** (`ingles-b2`): no cambia al editar. La usan las tareas (`habito`), las rutas (`habit:` en su nota) y los bloques de rutina (`ref`).
+- **Versión mínima.** En los de cantidad y tiempo, `minimo` salva la racha un día flojo (si no hay, la mitad de la meta). Foco la ofrece cuando una racha de 3 días o más corre peligro.
+- **Hábitos de tareas.** El hábito es el hueco fijo («Programación, de lunes a viernes de 17:00 a 19:00») y lo que haces dentro cambia cada día: son tareas con ese hábito. El día cuenta si tenía tareas y estaban todas terminadas.
+- **Archivar** lo oculta sin borrar nada. **Eliminar** lo borra con todo lo apuntado.
+- Con fecha `hasta` es un **reto**: la app enseña «día 15 de 66» y, al terminar, deja de salir en tu día.
+- Racha, mejor racha, % de 30 días, totales y mejor día de la semana se calculan; no se guardan.
+- Los días que no tocan no rompen la racha, ni los **días malos** de la daily. Con «N veces por semana» la racha va en semanas.
+- Con hora de inicio y fin, sale en **Tu día** como un bloque los días que toca.
+- **Lo que ya tenías:** las notas `type: habit` y el campo `habits:` de las dailies se importan una vez. Las notas no se tocan; las mal escritas no se importan.
 
 ### Daily — `type: daily`
 
@@ -97,10 +74,6 @@ type: daily
 date: 2026-10-15
 bad_day: true # opcional: día malo
 energy: medium # opcional: low | medium | high, al cerrar el día
-habits:
-  gym: true
-  ingles: 35
-  lectura: 20
 ---
 
 ## Agenda
@@ -402,24 +375,24 @@ type: routine
 title: Rutina de estudio Java
 area: "[[Desarrollo]]"
 kind: study # morning, afternoon, evening, study, gym o custom
-days: [mon, tue, wed, fri] # igual que los hábitos: daily, lista de días o { times_per_week: 3 }
+days: [mon, tue, wed, fri] # daily, lista de días o { times_per_week: 3 }
 start: "18:00"
 active: true
 blocks:
   - { kind: custom, title: Repaso del tema anterior, minutes: 15 }
   - { kind: module, ref: "[[Java desde cero]]", minutes: 45 }
   - { kind: break, minutes: 10 }
-  - { kind: habit, ref: "[[Hábito — Inglés]]", minutes: 15 }
+  - { kind: habit, ref: ingles, minutes: 15 }
 ---
 ```
 
-| Bloque   | `ref`                                        | Al terminarlo                                             |
-| -------- | -------------------------------------------- | --------------------------------------------------------- |
-| `habit`  | La nota del hábito                           | Se apunta en la daily (hecho, la cantidad o suma minutos) |
-| `module` | Un tema, o su ruta (y toca el tema en curso) | Si estaba sin empezar, pasa a aprendiendo                 |
-| `task`   | Una nota con la tarea                        | Nada: las tareas se marcan una a una                      |
-| `break`  | —                                            | —                                                         |
-| `custom` | —                                            | —                                                         |
+| Bloque   | `ref`                                                 | Al terminarlo                                              |
+| -------- | ----------------------------------------------------- | ---------------------------------------------------------- |
+| `habit`  | La clave del hábito (o el wikilink a su nota antigua) | Se apunta en el hábito (hecho, la cantidad o suma minutos) |
+| `module` | Un tema, o su ruta (y toca el tema en curso)          | Si estaba sin empezar, pasa a aprendiendo                  |
+| `task`   | Una nota con la tarea                                 | Nada: las tareas se marcan una a una                       |
+| `break`  | —                                                     | —                                                          |
+| `custom` | —                                                     | —                                                          |
 
 - **La hora de cada bloque no se guarda:** empieza cuando acaba el anterior, a partir de `start`. Al reordenar, se recalcula.
 - **Bloque de un tema → tareas de hoy.** Genera el recurso pendiente que toca ver (con su duración estimada) y los siguientes ejercicios sin hacer, como mucho 3 (cada uno, un paso de la tarea). Si no queda nada, «repasar conceptos y criterio de dominado». Llevan `[habit:: …]` si la ruta tiene hábito, así cuentan para cumplirlo. Las que ya existen hoy no se repiten.

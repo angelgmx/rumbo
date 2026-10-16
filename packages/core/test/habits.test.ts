@@ -5,23 +5,23 @@ import {
   completionRate,
   currentStreak,
   habitProgress,
-  habitSchema,
   habitStats,
   minimumOf,
   weekProgress,
   type HabitHistory,
 } from "../src/domain/habits";
+import { makeHabit } from "./makeHabit";
 
 // El 2026-10-12 es lunes.
-const daily = habitSchema.parse({ key: "read", name: "Read", started: "2026-10-01" });
-const weekdays = habitSchema.parse({
+const daily = makeHabit({ key: "read", name: "Read", started: "2026-10-01" });
+const weekdays = makeHabit({
   key: "code",
   name: "Code",
   schedule: ["mon", "tue", "wed", "thu", "fri"],
   started: "2026-10-01",
 });
-const pages = habitSchema.parse({ key: "pages", name: "Pages", kind: "count", target: 20 });
-const gym = habitSchema.parse({
+const pages = makeHabit({ key: "pages", name: "Pages", kind: "count", target: 20 });
+const gym = makeHabit({
   key: "gym",
   name: "Gym",
   schedule: { times_per_week: 3 },
@@ -109,7 +109,7 @@ describe("habitProgress", () => {
 });
 
 describe("challengeProgress", () => {
-  const challenge = habitSchema.parse({
+  const challenge = makeHabit({
     key: "x",
     name: "66 días",
     started: "2026-10-01",

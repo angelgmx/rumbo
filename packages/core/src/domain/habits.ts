@@ -9,43 +9,47 @@ import {
   type Weekday,
 } from "./dates";
 
+export const HABIT_KINDS = ["check", "count", "duration", "tasks"] as const;
+export type HabitKind = (typeof HABIT_KINDS)[number];
+
+/** Cuándo toca: todos los días, unos días de la semana o N veces por semana. */
 export const scheduleSchema = z.union([
   z.literal("daily"),
   z.array(z.enum(WEEKDAYS)),
   z.object({ times_per_week: z.number().int().min(1).max(7) }),
 ]);
+export type HabitSchedule = z.infer<typeof scheduleSchema>;
 
 export const timeSchema = z.string().regex(/^\d{1,2}:\d{2}$/);
 
-export const habitSchema = z.object({
-  key: z.string(),
-  name: z.string(),
+export interface Habit {
+  /** Clave corta y fija ("ingles-b2"): la usan las tareas y las rutas para señalarlo. */
+  key: string;
+  name: string;
   /** Cómo se cumple: hecho o no, una cantidad, un tiempo, o terminando sus tareas del día. */
-  kind: z.enum(["check", "count", "duration", "tasks"]).default("check"),
-  target: z.number().positive().optional(),
+  kind: HabitKind;
+  target?: number;
   /** Lo mínimo que salva la racha en un hábito de cantidad o tiempo. Por defecto, la mitad del objetivo. */
-  minimum: z.number().positive().optional(),
-  unit: z.string().optional(),
-  schedule: scheduleSchema.default("daily"),
-  area: z.string().optional(),
-  /** El objetivo al que empuja este hábito: "[[Dominar un stack backend]]". */
-  goal: z.string().optional(),
+  minimum?: number;
+  unit?: string;
+  schedule: HabitSchedule;
+  /** El nombre de la nota del área ("Gym"). */
+  area?: string;
+  /** El objetivo al que empuja, por el nombre de su nota. */
+  goal?: string;
   /** Franja en la que lo haces ("07:00" a "08:30"). Con ella sale en tu día y en el calendario. */
-  start: timeSchema.optional(),
-  end: timeSchema.optional(),
-  started: z.coerce.string().optional(),
+  start?: string;
+  end?: string;
+  started?: IsoDate;
   /** Si es un reto con fin (30, 66, 90 días…): el último día. */
-  until: z.coerce.string().optional(),
-  archived: z.boolean().default(false),
-});
+  until?: IsoDate;
+  archived: boolean;
+}
 
-export type Habit = z.infer<typeof habitSchema>;
-export type HabitSchedule = Habit["schedule"];
-
-/** Lo que dice la daily de un hábito: hecho o no, o una cantidad. */
+/** Lo apuntado de un hábito un día: hecho o no, o una cantidad. */
 export type HabitValue = boolean | number;
 
-/** Valor del hábito por día, leído de las dailies. */
+/** Valor del hábito por día. */
 export type HabitHistory = Map<IsoDate, HabitValue>;
 
 export interface Streak {
@@ -226,7 +230,7 @@ function firstDay(habit: Habit, history: HabitHistory, today: IsoDate): IsoDate 
   return days[0] ?? today;
 }
 
-/** Lo que se rellena al crear o editar un hábito. El área va por su nombre ("Gym"). */
+/** Lo que se rellena al crear o editar un hábito. El área y el objetivo van por su nombre. */
 export interface HabitInput {
   name: string;
   kind: Habit["kind"];
@@ -242,7 +246,7 @@ export interface HabitInput {
 }
 
 /**
- * La clave corta que se usa en las dailies: "Inglés B2" → "ingles-b2".
+ * La clave corta del hábito: "Inglés B2" → "ingles-b2".
  * Si ya existe, se le añade un número para que no se mezclen historiales.
  */
 export function habitKeyFor(name: string, existing: string[]): string {
@@ -274,8 +278,8 @@ export function weekProgress(
   return { done, due };
 }
 
-/** Los campos del frontmatter que salen del formulario, en el formato de la nota. */
-export function habitFields(input: HabitInput): Record<string, unknown> {
+/** Los campos del hábito que salen del formulario, limpios: sin lo que no aplica a su tipo. */
+export function habitFromInput(input: HabitInput): Omit<Habit, "key" | "started" | "archived"> {
   const hasAmount = input.kind === "count" || input.kind === "duration";
   // Una franja sin las dos horas no sirve para dibujarla.
   const hasTime = Boolean(input.start && input.end);
@@ -285,15 +289,11 @@ export function habitFields(input: HabitInput): Record<string, unknown> {
     target: hasAmount ? input.target : undefined,
     unit: hasAmount ? input.unit?.trim() || undefined : undefined,
     schedule: input.schedule,
-    area: input.area ? `[[${input.area}]]` : undefined,
-    goal: input.goal ? `[[${input.goal}]]` : undefined,
+    area: input.area?.trim() || undefined,
+    goal: input.goal?.trim() || undefined,
     until: input.until || undefined,
     start: hasTime ? input.start : undefined,
     end: hasTime ? input.end : undefined,
-    // Quita los campos de versiones anteriores si la nota los tenía.
-    steps: undefined,
-    time: undefined,
-    duration: undefined,
   };
 }
 

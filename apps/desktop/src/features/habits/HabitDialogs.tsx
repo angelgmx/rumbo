@@ -77,7 +77,7 @@ export function HabitMenu({ summary }: { summary: HabitSummary }) {
 
   async function archive() {
     await rumbo.habits.archive(habit.key);
-    toast.success(`«${habit.name}» archivado. Su nota y su historial siguen en el vault.`);
+    toast.success(`«${habit.name}» archivado. Su historial se guarda.`);
   }
 
   async function remove() {
@@ -133,8 +133,8 @@ export function HabitMenu({ summary }: { summary: HabitSummary }) {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar «{habit.name}»?</AlertDialogTitle>
             <AlertDialogDescription>
-              Se borra la nota del hábito. Lo que marcaste en tus dailies se queda donde está. Si
-              solo quieres dejar de verlo, mejor archívalo.
+              Se borra el hábito con todo lo que apuntaste. Si solo quieres dejar de verlo, mejor
+              archívalo.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -156,9 +156,8 @@ function toInput({ habit }: HabitSummary): HabitInput {
     target: habit.target,
     unit: habit.unit,
     schedule: habit.schedule,
-    // En la nota el área es un wikilink: "[[Gym]]" → "Gym".
-    area: habit.area?.match(/\[\[([^\]|#]+)/)?.[1],
-    goal: habit.goal?.match(/\[\[([^\]|#]+)/)?.[1],
+    area: habit.area,
+    goal: habit.goal,
     start: habit.start,
     end: habit.end,
     until: habit.until,

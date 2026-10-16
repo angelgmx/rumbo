@@ -26,7 +26,7 @@ export class ProgressService {
     // Los hábitos de "N veces por semana" no tocan ningún día concreto, así que no cuentan aquí.
     const habits = this.habits
       .list()
-      .habits.filter(({ habit }) => Array.isArray(habit.schedule) || habit.schedule === "daily")
+      .filter(({ habit }) => Array.isArray(habit.schedule) || habit.schedule === "daily")
       .filter(({ habit }) => isScheduledOn(habit.schedule, date))
       // Un reto que ya terminó no cuenta como plan.
       .filter(({ challenge }) => !challenge?.finished);

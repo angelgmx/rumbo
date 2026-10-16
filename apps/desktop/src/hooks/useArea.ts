@@ -1,3 +1,4 @@
+import { linkTarget } from "@rumbo/core";
 import { useRumbo } from "@/app/RumboContext";
 
 export interface AreaLook {
@@ -8,10 +9,10 @@ export interface AreaLook {
 
 const NEUTRAL = "var(--muted-foreground)";
 
-/** Color e icono de un área a partir de su wikilink ("[[Gym]]"), leídos de la nota del área. */
-export function useArea(link: string | undefined): AreaLook {
+/** Color e icono de un área, por su nombre ("Gym") o su wikilink ("[[Gym]]"), leídos de su nota. */
+export function useArea(area: string | undefined): AreaLook {
   const { store } = useRumbo();
-  const name = link?.match(/\[\[([^\]|#]+)/)?.[1]?.trim();
+  const name = (linkTarget(area) ?? area)?.trim() || undefined;
   const note = name ? store.findByName(name) : undefined;
 
   return {

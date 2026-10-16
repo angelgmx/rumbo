@@ -124,7 +124,7 @@ Lo que organiza tu día pasa del vault a SQLite, una entidad por PR. Ver [Modelo
 - [x] Infraestructura: puerto `Database`, esquema por versiones, canal de cambios e importación única
 - [x] Ideas
 - [x] Tareas, con sus pasos, etiquetas y el foco del día
-- [ ] Hábitos y registros
+- [x] Hábitos y registros
 - [ ] Rutinas y bloques
 - [ ] Objetivos y planes si… entonces
 - [ ] Proyectos e hitos

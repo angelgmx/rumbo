@@ -1,7 +1,9 @@
 import type { AppDatabase } from "../db/appDatabase";
+import type { HabitRepository } from "../db/habitRepository";
 import type { IdeaRepository } from "../db/ideaRepository";
 import type { TaskRepository } from "../db/taskRepository";
 import { parseIdeas } from "../domain/ideas";
+import { habitHistories, parseNoteHabit } from "../domain/noteHabits";
 import { noteTaskToDraft, parseTasks, type NoteTask } from "../domain/noteTasks";
 import { sectionLines } from "../domain/sections";
 import type { Note } from "../vault/vault";
@@ -10,6 +12,12 @@ import type { VaultStore } from "./vaultStore";
 
 // La sección de la daily que antes guardaba el foco del día.
 const FOCUS_HEADING = "Foco de hoy";
+
+interface Repositories {
+  ideas: IdeaRepository;
+  tasks: TaskRepository;
+  habits: HabitRepository;
+}
 
 /**
  * Pasa a la base de datos lo que antes se guardaba en notas, una sola vez por cosa.
@@ -20,19 +28,35 @@ export class VaultImport {
     private readonly db: AppDatabase,
     private readonly store: VaultStore,
     private readonly daily: DailyService,
-    private readonly ideas: IdeaRepository,
-    private readonly tasks: TaskRepository,
+    private readonly repositories: Repositories,
   ) {}
 
   async run(): Promise<void> {
     await this.once("importado.ideas", () => this.importIdeas());
     await this.once("importado.tareas", () => this.importTasks());
+    await this.once("importado.habitos", () => this.importHabits());
   }
 
   private async importIdeas(): Promise<void> {
     const source = this.store.get(this.store.config.folders.ideas)?.source ?? "";
     for (const idea of parseIdeas(source)) {
-      await this.ideas.add(idea.text, idea.created ?? this.daily.today());
+      await this.repositories.ideas.add(idea.text, idea.created ?? this.daily.today());
+    }
+  }
+
+  /**
+   * Cada nota de hábito con lo apuntado en las dailies. Las notas mal escritas se quedan en el
+   * vault sin importar; lo apuntado de hábitos que no existen, también.
+   */
+  private async importHabits(): Promise<void> {
+    const histories = habitHistories(this.store.notesOfType("daily"));
+    for (const note of this.store.notesOfType("habit")) {
+      const habit = parseNoteHabit(note.data);
+      if (!habit || this.repositories.habits.get(habit.key)) continue;
+      await this.repositories.habits.insert(habit, habit.started ?? this.daily.today());
+      for (const [day, value] of histories.get(habit.key) ?? []) {
+        await this.repositories.habits.record(habit.key, day, value);
+      }
     }
   }
 
@@ -63,7 +87,11 @@ export class VaultImport {
     if (note.data.type === "project") draft.project ??= note.name;
     if (inFocus) draft.focusOn = day;
     const created = day ?? this.daily.today();
-    await this.tasks.insert(draft, created, task.done ? { on: task.doneOn ?? created } : undefined);
+    await this.repositories.tasks.insert(
+      draft,
+      created,
+      task.done ? { on: task.doneOn ?? created } : undefined,
+    );
   }
 
   private async once(key: string, run: () => Promise<void>): Promise<void> {

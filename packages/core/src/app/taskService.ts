@@ -10,6 +10,7 @@ import {
   type TaskDraft,
   type TaskView,
 } from "../domain/tasks";
+import type { HabitRepository } from "../db/habitRepository";
 import type { TaskRepository } from "../db/taskRepository";
 import type { Note } from "../vault/vault";
 import type { AgendaService } from "./agendaService";
@@ -28,6 +29,7 @@ export class TaskService {
     private readonly store: VaultStore,
     private readonly daily: DailyService,
     private readonly agenda: AgendaService,
+    private readonly habits: HabitRepository,
   ) {}
 
   /** Todas las que no están archivadas. */
@@ -88,8 +90,8 @@ export class TaskService {
   goalOf(links: { module?: string; habit?: string }): string | undefined {
     const roadmap = this.linked(this.named(links.module), "roadmap");
     const key = links.habit ?? roadmap?.data.habit;
-    const habit = this.store.notesOfType("habit").find((note) => note.data.key === key);
-    const goal = this.linked(habit, "goal");
+    const habit = typeof key === "string" ? this.habits.get(key) : undefined;
+    const goal = this.named(habit?.goal);
     return goal && String(goal.data.title ?? goal.name);
   }
 

@@ -25,7 +25,7 @@ export function useBlockDetails(summary: RoutineSummary, block: RoutineBlock): B
   const rumbo = useRumbo();
 
   if (block.kind === "habit") {
-    const key = rumbo.store.findByName(linkTarget(block.ref) ?? "")?.data.key;
+    const key = rumbo.routines.habitOf(block.ref)?.key;
     const habit = summary.habits.find((item) => item.habit.key === key);
     return {
       title: block.title ?? habit?.habit.name ?? blockTitle(block),

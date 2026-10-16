@@ -41,4 +41,33 @@ export const MIGRATIONS: string[][] = [
     )`,
     "CREATE INDEX tareas_por_fecha ON tareas (estado, programada, vence)",
   ],
+  [
+    // La clave es fija: la usan las tareas y las rutas del vault para señalar el hábito.
+    // La frecuencia va en JSON: "diaria", ["lun", "mie"] o {"veces_por_semana": 3}.
+    `CREATE TABLE habitos (
+      id INTEGER PRIMARY KEY,
+      clave TEXT NOT NULL UNIQUE CHECK (length(trim(clave)) > 0),
+      nombre TEXT NOT NULL CHECK (length(trim(nombre)) > 0),
+      tipo TEXT NOT NULL DEFAULT 'si_no' CHECK (tipo IN ('si_no', 'cantidad', 'duracion', 'tareas')),
+      meta REAL CHECK (meta > 0),
+      minimo REAL CHECK (minimo > 0),
+      unidad TEXT,
+      frecuencia TEXT NOT NULL DEFAULT '"diaria"' CHECK (json_valid(frecuencia)),
+      area TEXT,
+      objetivo TEXT,
+      hora_inicio TEXT,
+      hora_fin TEXT,
+      empezado TEXT,
+      hasta TEXT,
+      archivado INTEGER NOT NULL DEFAULT 0 CHECK (archivado IN (0, 1)),
+      creado TEXT NOT NULL
+    )`,
+    // Un registro por hábito y día, solo si se hizo algo: en los de sí o no, el valor es 1.
+    `CREATE TABLE registros_habito (
+      habito_id INTEGER NOT NULL REFERENCES habitos (id) ON DELETE CASCADE,
+      dia TEXT NOT NULL,
+      valor REAL NOT NULL CHECK (valor > 0),
+      PRIMARY KEY (habito_id, dia)
+    )`,
+  ],
 ];

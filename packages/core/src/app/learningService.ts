@@ -1,3 +1,4 @@
+import type { HabitRepository } from "../db/habitRepository";
 import { z } from "zod";
 import { WEEKDAYS, type IsoDate } from "../domain/dates";
 import {
@@ -146,6 +147,7 @@ export class LearningService {
     private readonly store: VaultStore,
     private readonly daily: DailyService,
     private readonly tasks: TaskService,
+    private readonly habits: HabitRepository,
   ) {}
 
   roadmaps(): RoadmapSummary[] {
@@ -342,15 +344,11 @@ export class LearningService {
       .some((task) => !task.done && task.text === text && task.scheduled === today);
     if (alreadyToday) return text;
 
-    const habitNote = this.store
-      .notesOfType("habit")
-      .find((note) => roadmap.habit !== undefined && note.data.key === roadmap.habit);
-
     await this.tasks.create({
       text,
       scheduled: today,
       habit: roadmap.habit,
-      area: linkTarget(habitNote?.data.area),
+      area: this.habits.get(roadmap.habit)?.area,
     });
     return text;
   }
