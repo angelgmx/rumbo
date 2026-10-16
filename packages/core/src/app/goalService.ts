@@ -1,4 +1,4 @@
-import type { GoalRepository } from "../db/goalRepository";
+import type { GoalRepository, StoredGoal } from "../db/goalRepository";
 import type { IsoDate } from "../domain/dates";
 import {
   daysLeft,
@@ -7,32 +7,41 @@ import {
   type GoalInput,
   type GoalStatus,
 } from "../domain/goals";
+import type { Task } from "../domain/tasks";
+import type { Note } from "../vault/vault";
 import type { DailyService } from "./dailyService";
 import type { HabitService, HabitSummary } from "./habitService";
 import type { LearningService, RoadmapSummary } from "./learningService";
 import type { ProjectService, ProjectSummary } from "./projectService";
+import type { VaultStore } from "./vaultStore";
 
 export interface GoalSummary {
   id: number;
   goal: Goal;
-  /** De 0 a 1; sin métrica ni nada que lo empuje, `undefined` («sin plan»). */
+  /** De 0 a 1; sin resultados clave ni nada que lo empuje, `undefined` («sin plan»). */
   progress?: number;
   daysLeft?: number;
   projects: ProjectSummary[];
+  /** Las tareas pendientes de sus proyectos, las que tienen fecha primero. */
+  tasks: Task[];
   habits: HabitSummary[];
   roadmaps: RoadmapSummary[];
+  /** Las notas del vault que lo acompañan. */
+  notes: Note[];
 }
 
-/** Lo que empuja un objetivo: proyectos por id, hábitos por clave y rutas por su nota. */
+/** Lo que conecta con un objetivo: proyectos por id, hábitos por clave, rutas y notas por su nota. */
 export interface GoalDriverRefs {
   projects: number[];
   habits: string[];
   roadmaps: string[];
+  notes: string[];
 }
 
 /** Objetivos: con lo que los empuja y su progreso; crearlos, editarlos y conectarlos. */
 export class GoalService {
   constructor(
+    private readonly store: VaultStore,
     private readonly goals: GoalRepository,
     private readonly projects: ProjectService,
     private readonly habits: HabitService,
@@ -47,13 +56,7 @@ export class GoalService {
     const roadmaps = this.learning.roadmaps();
     return this.goals
       .all()
-      .map((stored) =>
-        this.summarize(stored.id, stored.goal, stored.roadmaps, {
-          projects,
-          habits,
-          roadmaps,
-        }),
-      )
+      .map((stored) => this.summarize(stored, { projects, habits, roadmaps }))
       .sort(byDeadline);
   }
 
@@ -76,11 +79,14 @@ export class GoalService {
     return this.change(id, (goal) => ({ ...goal, status }));
   }
 
-  /** Apunta dónde va la métrica. */
-  setCurrent(id: number, current: number): Promise<void> {
-    return this.change(id, (goal) =>
-      goal.metric ? { ...goal, metric: { ...goal.metric, current } } : goal,
-    );
+  /** Apunta dónde va un resultado clave. */
+  setCurrent(id: number, index: number, current: number): Promise<void> {
+    return this.change(id, (goal) => ({
+      ...goal,
+      keyResults: goal.keyResults.map((keyResult, i) =>
+        i === index ? { ...keyResult, current } : keyResult,
+      ),
+    }));
   }
 
   /** Lo borra. Sus proyectos y hábitos se quedan, sin objetivo. */
@@ -108,10 +114,12 @@ export class GoalService {
         await this.habits.setGoal(habit.key, wanted ? id : undefined);
       }
     }
-    for (const roadmap of current.roadmaps.filter((name) => !drivers.roadmaps.includes(name))) {
-      await this.goals.removeRoadmap(id, roadmap);
+    const wanted = [...drivers.roadmaps, ...drivers.notes];
+    for (const note of [...current.roadmaps, ...current.notes]) {
+      if (!wanted.includes(note)) await this.goals.unlink(id, note);
     }
-    for (const roadmap of drivers.roadmaps) await this.goals.addRoadmap(id, roadmap);
+    for (const roadmap of drivers.roadmaps) await this.goals.link(id, roadmap, "roadmap");
+    for (const note of drivers.notes) await this.goals.link(id, note, "note");
   }
 
   private async change(id: number, apply: (goal: Goal) => Goal): Promise<void> {
@@ -120,9 +128,7 @@ export class GoalService {
   }
 
   private summarize(
-    id: number,
-    goal: Goal,
-    roadmapNames: string[],
+    { id, goal, roadmaps: roadmapNames, notes }: StoredGoal,
     all: { projects: ProjectSummary[]; habits: HabitSummary[]; roadmaps: RoadmapSummary[] },
   ): GoalSummary {
     const projects = all.projects.filter(({ project }) => project.goalId === id);
@@ -141,10 +147,16 @@ export class GoalService {
       }),
       daysLeft: daysLeft(goal, today),
       projects,
+      tasks: projects.flatMap((project) => project.nextTasks).sort(byDate),
       habits,
       roadmaps,
+      notes: notes.flatMap((name) => this.store.findByName(name) ?? []),
     };
   }
+}
+
+function byDate(a: Task, b: Task): number {
+  return (a.scheduled ?? a.due ?? "9999").localeCompare(b.scheduled ?? b.due ?? "9999");
 }
 
 function byDeadline(a: GoalSummary, b: GoalSummary): number {

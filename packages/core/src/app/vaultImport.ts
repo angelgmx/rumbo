@@ -73,7 +73,7 @@ export class VaultImport {
     }
     for (const roadmap of this.store.notesOfType("roadmap")) {
       const id = this.goalIds.get(linkTarget(roadmap.data.goal) ?? "");
-      if (id !== undefined) await this.repositories.goals.addRoadmap(id, roadmap.name);
+      if (id !== undefined) await this.repositories.goals.link(id, roadmap.name, "roadmap");
     }
   }
 

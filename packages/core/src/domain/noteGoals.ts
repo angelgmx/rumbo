@@ -54,8 +54,10 @@ export function parseNoteGoal(note: {
     period,
     deadline,
     status: GOAL_STATUS[status ?? ""] ?? "active",
+    keyResults: [],
     obstacle: obstacle ?? "",
     plans: [],
+    resources: [],
   });
 }
 

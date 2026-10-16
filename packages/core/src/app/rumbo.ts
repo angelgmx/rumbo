@@ -100,7 +100,7 @@ async function open({ fs, database, clock = systemClock }: RumboSources): Promis
   const ideas = new IdeaService(ideaRepository, daily, tasks);
   const routines = new RoutineService(routineRepository, daily, habits, tasks, learning);
   const projects = new ProjectService(projectRepository, tasks, daily, goalRepository);
-  const goals = new GoalService(goalRepository, projects, habits, learning, daily);
+  const goals = new GoalService(store, goalRepository, projects, habits, learning, daily);
 
   return {
     changes,

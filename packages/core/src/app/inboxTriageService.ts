@@ -25,7 +25,14 @@ const EMPTY_PROJECT: ProjectInput = {
   links: [],
   milestones: [],
 };
-const EMPTY_GOAL: GoalInput = { title: "", why: "", obstacle: "", plans: [] };
+const EMPTY_GOAL: GoalInput = {
+  title: "",
+  why: "",
+  keyResults: [],
+  obstacle: "",
+  plans: [],
+  resources: [],
+};
 
 export interface TriageSuggestion {
   task: Task;

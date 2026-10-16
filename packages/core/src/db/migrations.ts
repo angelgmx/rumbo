@@ -97,9 +97,10 @@ export const MIGRATIONS: string[][] = [
     )`,
   ],
   [
-    // Un objetivo con su métrica y sus planes «si… entonces» dentro: siempre van con él.
-    //   metrica: {"nombre": "Sesiones", "desde": 6, "hasta": 80, "unidad": "sesiones", "actual": 12}
-    //   planes:  [{"si": "me da vergüenza", "entonces": "reservo 3 clases el domingo"}]
+    // Un objetivo con sus resultados clave, planes «si… entonces» y recursos dentro:
+    //   resultados_clave: [{"nombre": "Sesiones", "desde": 6, "hasta": 80, "unidad": "sesiones", "actual": 12}]
+    //   planes:   [{"si": "me da vergüenza", "entonces": "reservo 3 clases el domingo"}]
+    //   recursos: [{"titulo": "Método Nation", "url": "https://…", "tipo": "articulo"}]
     `CREATE TABLE objetivos (
       id INTEGER PRIMARY KEY,
       titulo TEXT NOT NULL CHECK (length(trim(titulo)) > 0),
@@ -110,16 +111,18 @@ export const MIGRATIONS: string[][] = [
       fecha_limite TEXT,
       estado TEXT NOT NULL DEFAULT 'activo'
         CHECK (estado IN ('sin_empezar', 'activo', 'pausado', 'hecho', 'abandonado', 'fallido')),
-      metrica TEXT CHECK (metrica IS NULL OR json_valid(metrica)),
+      resultados_clave TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(resultados_clave)),
       obstaculo TEXT NOT NULL DEFAULT '',
       planes TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(planes)),
+      recursos TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(recursos)),
       creado TEXT NOT NULL
     )`,
-    // Las rutas viven en el vault: se señalan por el nombre de su nota.
-    `CREATE TABLE objetivo_rutas (
+    // Las rutas y las notas que lo acompañan viven en el vault: se señalan por el nombre de su nota.
+    `CREATE TABLE objetivo_notas (
       objetivo_id INTEGER NOT NULL REFERENCES objetivos (id) ON DELETE CASCADE,
-      ruta_nota TEXT NOT NULL,
-      PRIMARY KEY (objetivo_id, ruta_nota)
+      nota TEXT NOT NULL,
+      tipo TEXT NOT NULL CHECK (tipo IN ('ruta', 'nota')),
+      PRIMARY KEY (objetivo_id, nota)
     )`,
     // Un proyecto con sus hitos y enlaces dentro:
     //   hitos:   [{"titulo": "Landing", "fecha": "2026-11-30", "hecho": false}]

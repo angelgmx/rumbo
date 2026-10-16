@@ -1,11 +1,19 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createRumbo, type Rumbo } from "../src";
-import { goalProgress, metricProgress, type Goal } from "../src/domain/goals";
+import { goalProgress, keyResultProgress, type Goal } from "../src/domain/goals";
 import { projectProgress, type Project } from "../src/domain/projects";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
 import { memoryDatabase } from "./memoryDatabase";
 
-const goal: Goal = { title: "B2", why: "", status: "active", obstacle: "", plans: [] };
+const goal: Goal = {
+  title: "B2",
+  why: "",
+  status: "active",
+  keyResults: [],
+  obstacle: "",
+  plans: [],
+  resources: [],
+};
 const project: Project = {
   title: "Web",
   outcome: "Publicada",
@@ -16,10 +24,16 @@ const project: Project = {
 };
 
 describe("goalProgress", () => {
-  it("follows the metric when there is one", () => {
-    expect(metricProgress({ label: "Sesiones", from: 6, target: 80, current: 43 })).toBe(0.5);
-    const measured = { ...goal, metric: { label: "x", from: 0, target: 10, current: 3 } };
-    expect(goalProgress(measured, { projects: [1], roadmaps: [], habits: [] })).toBe(0.3);
+  it("follows its key results when it has them", () => {
+    expect(keyResultProgress({ title: "Sesiones", from: 6, target: 80, current: 43 })).toBe(0.5);
+    const measured = {
+      ...goal,
+      keyResults: [
+        { title: "a", from: 0, target: 10, current: 3 },
+        { title: "b", from: 0, target: 10, current: 7 },
+      ],
+    };
+    expect(goalProgress(measured, { projects: [1], roadmaps: [], habits: [] })).toBe(0.5);
   });
 
   it("averages what drives it, and is «sin plan» without anything", () => {
@@ -75,45 +89,67 @@ describe("goals", () => {
     ]);
     const id = await rumbo.goals.create(
       {
+        ...goal,
         title: "Inglés fluido en entrevista",
         why: "Trabajar fuera",
         deadline: "2027-10-14",
         obstacle: "Me da vergüenza",
         plans: [{ if: "lo dejo", then: "reservo 3 clases el domingo" }],
+        resources: [{ title: "Nation", url: "https://x.org", kind: "article", status: "pending" }],
       },
-      { projects: [projectId!], habits: ["reading"], roadmaps: ["Python basics"] },
+      {
+        projects: [projectId!],
+        habits: ["reading"],
+        roadmaps: ["Python basics"],
+        notes: ["Python"],
+      },
     );
 
     const summary = rumbo.goals.get(id!)!;
     expect(summary.projects.map((p) => p.project.title)).toEqual(["Entrevista simulada"]);
     expect(summary.habits.map((h) => h.habit.key)).toEqual(["reading"]);
     expect(summary.roadmaps.map((r) => r.title)).toEqual(["Python basics"]);
+    expect(summary.notes.map((note) => note.name)).toEqual(["Python"]);
+    expect(summary.tasks.map((task) => task.text)).toEqual([
+      "Preparar 10 preguntas",
+      "Grabar la simulación",
+    ]);
+    expect(summary.goal.resources).toEqual([
+      { title: "Nation", url: "https://x.org", kind: "article", status: "pending" },
+    ]);
     expect(summary.goal.plans).toEqual([{ if: "lo dejo", then: "reservo 3 clases el domingo" }]);
     expect(summary.daysLeft).toBe(364);
     expect(summary.progress).toBeGreaterThan(0);
     expect(rumbo.tasks.goalOf({ projectId })).toBe("Inglés fluido en entrevista");
   });
 
-  it("tracks the metric and disconnects what is no longer chosen", async () => {
+  it("tracks each key result and disconnects what is no longer chosen", async () => {
     const id = await rumbo.goals.create(
       {
-        title: "B2",
-        why: "",
-        obstacle: "",
-        plans: [],
-        metric: { label: "Sesiones", from: 6, target: 80, unit: "sesiones" },
+        ...goal,
+        keyResults: [
+          { title: "Sesiones", from: 6, target: 80, unit: "sesiones" },
+          { title: "Vocabulario", from: 0, target: 100 },
+        ],
       },
-      { projects: [], habits: ["reading"], roadmaps: [] },
+      { projects: [], habits: ["reading"], roadmaps: [], notes: ["Python"] },
     );
-    await rumbo.goals.setCurrent(id!, 43);
+    await rumbo.goals.setCurrent(id!, 0, 80);
+    expect(rumbo.goals.get(id!)!.goal.keyResults[0]!.current).toBe(80);
     expect(rumbo.goals.get(id!)!.progress).toBe(0.5);
 
-    await rumbo.goals.setDrivers(id!, { projects: [], habits: [], roadmaps: [] });
+    await rumbo.goals.setDrivers(id!, { projects: [], habits: [], roadmaps: [], notes: [] });
     expect(rumbo.goals.get(id!)!.habits).toEqual([]);
+    expect(rumbo.goals.get(id!)!.notes).toEqual([]);
   });
 
   it("keeps projects and habits when a goal is removed", async () => {
-    const id = await rumbo.goals.create(goal, { projects: [], habits: ["reading"], roadmaps: [] });
+    const id = await rumbo.goals.create(goal, {
+      projects: [],
+      habits: ["reading"],
+      roadmaps: [],
+      notes: [],
+    });
     await rumbo.goals.remove(id!);
     expect(rumbo.goals.get(id!)).toBeUndefined();
     expect(rumbo.habits.get("reading")).toBeDefined();

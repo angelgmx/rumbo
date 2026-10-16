@@ -162,9 +162,9 @@ roadmap: "[[Java desde cero]]"
 
 Viven en la base de datos de la app (tablas `objetivos` y `proyectos`, ver [Modelo de datos](modelo-de-datos.md)).
 
-- **Objetivo:** un resultado en una fecha. Qué, por qué, cómo se mide (desde → hasta), qué te frenará (planes «si… entonces») y qué lo empuja: proyectos, hábitos y rutas. El progreso se calcula: por la métrica o, si no tiene, por lo que lo empuja. Sin nada, está «sin plan».
+- **Objetivo:** un resultado en una fecha. Qué, por qué, sus **resultados clave** (cada uno desde → hasta), qué te frenará (planes «si… entonces»), qué lo empuja (proyectos, hábitos y rutas), las notas del vault que lo acompañan y sus recursos (enlaces). El progreso se calcula: por sus resultados clave o, si no tiene, por lo que lo empuja. Sin nada, está «sin plan».
 - **Proyecto:** algo con un final y un **resultado** que dice cuándo está terminado. Tiene hitos, enlaces (repo, web) y sus tareas. El progreso sale de los hitos o, si no tiene, de sus tareas.
-- Una ruta empuja un objetivo desde el objetivo (no se escribe nada en la nota de la ruta).
+- Las rutas y notas se conectan desde el objetivo (no se escribe nada en sus notas).
 - **Lo que ya tenías:** las notas `type: goal` y `type: project` se importan una vez. Las notas no se tocan.
 
 ### Organizar el Inbox con IA

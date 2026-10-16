@@ -116,7 +116,7 @@ export {
   type Goal,
   type GoalHorizon,
   type GoalInput,
-  type GoalMetric,
+  type KeyResult,
   type GoalStatus,
   type IfThen,
 } from "./domain/goals";
