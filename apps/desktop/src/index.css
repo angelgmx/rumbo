@@ -181,6 +181,14 @@
   }
 }
 
+/* El halo del módulo que toca ahora: tres anillos de bermellón cada vez más suaves. */
+@utility halo-primary {
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent),
+    0 0 0 9px color-mix(in srgb, var(--primary) 8%, transparent),
+    0 0 0 14px color-mix(in srgb, var(--primary) 5%, transparent);
+}
+
 /* Con «reducir movimiento» todo pasa a fundidos muy cortos. */
 @media (prefers-reduced-motion: reduce) {
   *,
