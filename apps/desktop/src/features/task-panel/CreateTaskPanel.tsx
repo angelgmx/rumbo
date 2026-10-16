@@ -1,7 +1,10 @@
 import { useState, type KeyboardEvent } from "react";
+import { useLocation } from "wouter";
+import { useRumbo } from "@/app/RumboContext";
 import { CreateTaskFooter } from "./CreateTaskFooter";
 import { TaskPanelBody } from "./TaskPanelBody";
 import { TaskPanelHeader } from "./TaskPanelHeader";
+import { EMPTY_DRAFT } from "./taskDraft";
 import { useNewTask } from "./useNewTask";
 import { useTaskContext } from "./useTaskContext";
 
@@ -32,7 +35,7 @@ function NewTaskForm({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const task = useNewTask(onCreated);
+  const task = useNewTask(onCreated, useStartingDraft());
   const context = useTaskContext(task.draft);
 
   // Ctrl Enter crea desde cualquier campo, también desde los pasos y las propiedades.
@@ -63,4 +66,15 @@ function NewTaskForm({
       />
     </div>
   );
+}
+
+// Lo que se crea desde Foco o desde Tareas › Hoy es para hoy: si no, se perdería en el inbox.
+const TODAY_SCREENS = ["/", "/tareas/hoy"];
+
+function useStartingDraft() {
+  const rumbo = useRumbo();
+  const [location] = useLocation();
+  return TODAY_SCREENS.includes(location)
+    ? { ...EMPTY_DRAFT, scheduled: rumbo.daily.today() }
+    : EMPTY_DRAFT;
 }
