@@ -1,4 +1,4 @@
-import { type BlockKind, type Routine, type RoutineTemplate } from "@rumbo/core";
+import type { BlockKind, Routine } from "@rumbo/core";
 import {
   BookOpenIcon,
   CheckIcon,
@@ -58,20 +58,6 @@ export const BLOCK_KIND_ICON: Record<BlockKind, LucideIcon> = {
   break: CoffeeIcon,
   custom: PencilIcon,
 };
-
-/** Nombre corto de cada plantilla, como en la fila «Empieza con una plantilla». */
-export const TEMPLATE_LABEL: Record<RoutineTemplate, string> = {
-  morning: "Mañana",
-  study: "Estudio",
-  gym: "Gym",
-  evening: "Noche",
-  weekend: "Fin de semana",
-};
-
-/** Las plantillas no tienen tipo «fin de semana»: se pinta como una rutina libre. */
-export function templateKind(template: RoutineTemplate): Routine["kind"] {
-  return template === "weekend" ? "custom" : template;
-}
 
 /** Fondo rayado de los descansos, igual en la franja del día y en el editor. */
 export const BREAK_PATTERN =

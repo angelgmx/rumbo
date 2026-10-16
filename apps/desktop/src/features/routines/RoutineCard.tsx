@@ -16,7 +16,7 @@ import { useRoutinePurpose } from "./useRoutinePurpose";
 import { WeekdayChips } from "./WeekdayChips";
 
 /** Una rutina en la lista: cuándo es, sus bloques y cómo se está cumpliendo. */
-export function RoutineCard({ summary }: { summary: RoutineSummary }) {
+export function RoutineCard({ summary, onEdit }: { summary: RoutineSummary; onEdit: () => void }) {
   const rumbo = useRumbo();
   const look = useRoutineLook(summary.routine);
   const purpose = useRoutinePurpose(summary);
@@ -45,7 +45,7 @@ export function RoutineCard({ summary }: { summary: RoutineSummary }) {
               onCheckedChange={(active) => rumbo.routines.setActive(summary.id, active)}
             />
           </label>
-          <RoutineMenu summary={summary} className="relative z-10 -mr-2" />
+          <RoutineMenu summary={summary} onEdit={onEdit} className="relative z-10 -mr-2" />
         </div>
 
         <div className="flex items-center gap-4 text-sm">

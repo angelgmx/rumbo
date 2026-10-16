@@ -78,14 +78,14 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 **Lógica en `core` (hecha):**
 
 - [x] Contador por tarea: `[counter:: minutes 12/30]`, `pomodoro`, `count` y `progress`
-- [x] Rutinas (`type: routine`): bloques con hora calculada, rutinas de hoy, plantillas, reordenar, activar y pausar
+- [x] Rutinas (`type: routine`): bloques con hora calculada, rutinas de hoy, vigencia, reordenar, activar y pausar
 - [x] Un bloque de tema genera las tareas del día; completar un bloque marca su hábito y empieza el tema
 
 - [x] Editar bloques (añadir, quitar, minutos, nombre), cumplimiento de las últimas 4 semanas y choques entre rutinas
 
 **Pantallas:**
 
-- [x] **Rutinas**: el día en una franja (rutinas, huecos libres, línea de ahora, la siguiente con «Empezar»), una tarjeta por rutina con sus días, bloques y cumplimiento, filtro por área y plantillas
+- [x] **Rutinas**: el día en una franja (rutinas, huecos libres, línea de ahora, la siguiente con «Empezar»), una tarjeta por rutina con sus días, bloques y cumplimiento, filtro por área y un panel para crear y editar con propiedades y bloques
 - [x] Eliminar una rutina (con confirmación) desde su tarjeta o su editor
 - [x] **Editor de rutina**: días y hora, bloques que se arrastran para ordenarlos, minutos y nombre en su sitio, las tareas que genera hoy cada bloque de tema, resumen y biblioteca de temas, hábitos y tareas para arrastrar
 - [x] Interruptor rediseñado (encendido con halo, foco con anillo, deshabilitado)

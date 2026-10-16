@@ -1,78 +1,102 @@
-import { ROUTINE_TEMPLATES, routineSchema, type RoutineTemplate } from "@rumbo/core";
-import type { KeyboardEvent } from "react";
+import {
+  routineEnd,
+  routineMinutes,
+  routineSchema,
+  timedBlocks,
+  type RoutineSummary,
+} from "@rumbo/core";
+import type { KeyboardEvent, ReactNode } from "react";
 import { toast } from "sonner";
-import { useLocation } from "wouter";
 import { useRumbo } from "@/app/RumboContext";
 import { PanelFooter } from "@/components/panel/PanelFooter";
 import { PanelHeader } from "@/components/panel/PanelHeader";
-import { SectionLabel } from "@/components/panel/SectionLabel";
 import { SidePanel } from "@/components/panel/SidePanel";
-import { SegmentedControl } from "@/components/SegmentedControl";
 import { formatMinutes } from "@/lib/format";
-import { routineHref } from "../links";
-import { TEMPLATE_LABEL, useRoutineLook } from "../look";
-import { RoutineBlocksPreview } from "./RoutineBlocksPreview";
+import { useRoutineLook } from "../look";
+import { RoutineBlocks } from "./RoutineBlocks";
 import { RoutineProperties } from "./RoutineProperties";
-import { routineInput, useRoutineDraft, type Start } from "./useRoutineDraft";
+import { isBlockComplete, routineInput, useRoutineDraft } from "./useRoutineDraft";
 
-const STARTS: { value: Start; label: string }[] = [
-  { value: "blank", label: "En blanco" },
-  ...(Object.keys(ROUTINE_TEMPLATES) as RoutineTemplate[]).map((template) => ({
-    value: template,
-    label: TEMPLATE_LABEL[template],
-  })),
-];
+/** Qué abre el panel: una rutina nueva o una que ya existe. */
+export type RoutineTarget = "new" | RoutineSummary;
 
-/** Crear una rutina en el panel lateral. Al crearla se abre su editor para ordenar los bloques. */
+/** Crear o editar una rutina en el panel lateral: nombre, propiedades y bloques. */
 export function RoutinePanel({
-  from,
+  target,
   onClose,
+  children,
 }: {
-  /** Con qué empieza; sin él, el panel está cerrado. */
-  from: Start | undefined;
+  /** Sin él, el panel está cerrado. */
+  target: RoutineTarget | undefined;
   onClose: () => void;
+  /** Hueco bajo el nombre, para lo que se añada a la cabecera de la rutina. */
+  children?: ReactNode;
 }) {
   return (
-    <SidePanel open={from !== undefined} title="Nueva rutina" onClose={onClose}>
-      {from !== undefined && <RoutinePanelContent key={from} from={from} onClose={onClose} />}
+    <SidePanel open={target !== undefined} title="Rutina" onClose={onClose}>
+      {target !== undefined && (
+        <RoutinePanelContent
+          key={target === "new" ? "new" : target.id}
+          summary={target === "new" ? undefined : target}
+          onClose={onClose}
+        >
+          {children}
+        </RoutinePanelContent>
+      )}
     </SidePanel>
   );
 }
 
-function RoutinePanelContent({ from, onClose }: { from: Start; onClose: () => void }) {
+function RoutinePanelContent({
+  summary,
+  onClose,
+  children,
+}: {
+  summary: RoutineSummary | undefined;
+  onClose: () => void;
+  children: ReactNode;
+}) {
   const rumbo = useRumbo();
-  const [, navigate] = useLocation();
-  const { draft, patch, choose, blocks } = useRoutineDraft(from);
+  const { draft, patch, ...blocks } = useRoutineDraft(summary);
   const input = routineInput(draft);
-  const look = useRoutineLook(routineSchema.parse(input));
-  const minutes = blocks.reduce((sum, block) => sum + block.minutes, 0);
-  const canCreate = draft.title.trim() !== "";
+  const routine = routineSchema.parse(input);
+  const look = useRoutineLook(routine);
+  const minutes = routineMinutes(routine);
+  const canSave =
+    draft.title.trim() !== "" && draft.blocks.every(({ block }) => isBlockComplete(block));
 
-  async function create() {
-    if (!canCreate) return;
-    const id = await rumbo.routines.create(input);
-    toast.success(`«${input.title}» creada`);
-    onClose();
-    if (id !== undefined) navigate(routineHref(id));
+  async function save() {
+    if (!canSave) return;
+    try {
+      if (summary) await rumbo.routines.save(summary.id, input);
+      else await rumbo.routines.create(input);
+      toast.success(summary ? "Cambios guardados" : `«${input.title}» creada`);
+      onClose();
+    } catch {
+      toast.error("No se ha podido guardar la rutina");
+    }
   }
 
-  // Ctrl Enter crea desde cualquier campo.
+  // Ctrl Enter guarda desde cualquier campo.
   function onKeyDown(event: KeyboardEvent) {
     if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
       event.preventDefault();
-      void create();
+      void save();
     }
   }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col" onKeyDown={onKeyDown}>
-      <PanelHeader crumbs={["Rutinas", "Nueva rutina"]} onClose={onClose} />
+      <PanelHeader
+        crumbs={["Rutinas", summary ? "Editar rutina" : "Nueva rutina"]}
+        onClose={onClose}
+      />
       <div className="flex min-h-0 flex-1 flex-col gap-7 overflow-y-auto px-6 pb-6">
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <span className="size-3 shrink-0 rounded-sm" style={{ backgroundColor: look.color }} />
             <input
-              autoFocus
+              autoFocus={!summary}
               value={draft.title}
               onChange={(event) => patch({ title: event.target.value })}
               placeholder="Ponle el nombre que quieras"
@@ -80,35 +104,30 @@ function RoutinePanelContent({ from, onClose }: { from: Start; onClose: () => vo
               className="min-w-0 flex-1 bg-transparent text-2xl leading-10 font-semibold tracking-tight outline-none placeholder:text-muted-foreground/50"
             />
           </div>
-          <p className="pl-6 text-sm text-muted-foreground">
-            Un hueco fijo del día con bloques en orden.
-          </p>
+          {children}
         </div>
-
-        <section className="flex flex-col gap-3">
-          <SectionLabel>Bloques para empezar</SectionLabel>
-          <SegmentedControl
-            label="Bloques para empezar"
-            options={STARTS}
-            value={draft.from}
-            onChange={choose}
-          />
-        </section>
-
-        <RoutineProperties
-          draft={draft}
+        <RoutineProperties draft={draft} minutes={minutes} onChange={patch} />
+        <RoutineBlocks
+          blocks={draft.blocks}
+          timed={timedBlocks(routine)}
           minutes={minutes}
-          withRoadmap={blocks.some((block) => block.kind === "module")}
-          onChange={patch}
+          end={routineEnd(routine)}
+          onChange={blocks.changeBlock}
+          onRetype={blocks.retypeBlock}
+          onRemove={blocks.removeBlock}
+          onMove={blocks.moveBlock}
+          onAdd={blocks.addBlock}
         />
-
-        {blocks.length > 0 && <RoutineBlocksPreview blocks={blocks} color={look.color} />}
       </div>
-      <PanelFooter label="Crear rutina" disabled={!canCreate} onSubmit={() => void create()}>
+      <PanelFooter
+        label={summary ? "Guardar cambios" : "Crear rutina"}
+        disabled={!canSave}
+        onSubmit={() => void save()}
+      >
         <span className="text-sm text-muted-foreground">
-          {blocks.length > 0
-            ? `${formatMinutes(minutes)} · ${blocks.length} bloques`
-            : "Los bloques los pones en el editor"}
+          {draft.blocks.length > 0
+            ? `${draft.blocks.length} bloques · ${formatMinutes(minutes)} · termina ${routineEnd(routine)}`
+            : "Sin bloques todavía"}
         </span>
       </PanelFooter>
     </div>

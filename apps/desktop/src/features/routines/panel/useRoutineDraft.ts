@@ -1,62 +1,118 @@
 import {
-  ROUTINE_TEMPLATES,
+  insertBlock,
+  moveBlock,
+  removeBlock,
+  updateBlock,
+  type BlockKind,
   type HabitSchedule,
   type RoutineBlock,
   type RoutineInput,
-  type RoutineTemplate,
+  type RoutineSummary,
 } from "@rumbo/core";
 import { useState } from "react";
-import { templateKind } from "../look";
 
-export type Start = RoutineTemplate | "blank";
+export interface DraftBlock {
+  /** Estable mientras se edita: es lo que se arrastra. */
+  id: string;
+  block: RoutineBlock;
+}
 
 export interface RoutineDraft {
   title: string;
-  from: Start;
   days: HabitSchedule;
   start: string;
+  from?: string;
+  until?: string;
+  goalId?: number;
+  habit?: string;
   area?: string;
-  /** La nota de la ruta que avanzan sus bloques de tema. */
-  roadmap?: string;
+  active: boolean;
+  blocks: DraftBlock[];
 }
 
-const BLANK: RoutineDraft = { title: "", from: "blank", days: "daily", start: "18:00" };
+const BLANK: RoutineDraft = {
+  title: "",
+  days: "daily",
+  start: "18:00",
+  active: true,
+  blocks: [],
+};
 
-/** Lo que se rellena al crear una rutina; una plantilla trae sus bloques, días y hora. */
-export function useRoutineDraft(initial: Start) {
-  const [draft, setDraft] = useState<RoutineDraft>(() => withTemplate(BLANK, initial));
+// Minutos con los que entra un bloque nuevo de cada tipo.
+const DEFAULT_MINUTES: Record<BlockKind, number> = {
+  habit: 15,
+  module: 45,
+  task: 15,
+  break: 10,
+  custom: 15,
+};
+
+/** Lo que se edita en el panel: una rutina en blanco o la copia de una que existe. */
+export function useRoutineDraft(summary: RoutineSummary | undefined) {
+  const [draft, setDraft] = useState<RoutineDraft>(() => (summary ? draftOf(summary) : BLANK));
   const patch = (changes: Partial<RoutineDraft>) =>
     setDraft((current) => ({ ...current, ...changes }));
-  const choose = (from: Start) => setDraft((current) => withTemplate(current, from));
-  return { draft, patch, choose, blocks: blocksOf(draft) };
-}
+  const editBlocks = (edit: (blocks: DraftBlock[]) => DraftBlock[]) =>
+    setDraft((current) => ({ ...current, blocks: edit(current.blocks) }));
 
-/** La rutina tal como se guarda: los bloques de tema apuntan a la ruta elegida. */
-export function routineInput(draft: RoutineDraft): RoutineInput {
   return {
-    title: draft.title.trim(),
-    kind: draft.from === "blank" ? "custom" : templateKind(draft.from),
-    days: draft.days,
-    start: draft.start,
-    area: draft.area,
-    blocks: blocksOf(draft),
+    draft,
+    patch,
+    addBlock: (kind: BlockKind) =>
+      editBlocks((blocks) =>
+        insertBlock(blocks, { id: crypto.randomUUID(), block: newBlock(kind) }),
+      ),
+    changeBlock: (index: number, changes: Partial<RoutineBlock>) =>
+      editBlocks((blocks) =>
+        updateBlock(blocks, index, { block: { ...blocks[index]!.block, ...changes } }),
+      ),
+    retypeBlock: (index: number, kind: BlockKind) =>
+      editBlocks((blocks) =>
+        updateBlock(blocks, index, { block: { kind, minutes: blocks[index]!.block.minutes } }),
+      ),
+    removeBlock: (index: number) => editBlocks((blocks) => removeBlock(blocks, index)),
+    moveBlock: (from: number, to: number) => editBlocks((blocks) => moveBlock(blocks, from, to)),
   };
 }
 
-function withTemplate(draft: RoutineDraft, from: Start): RoutineDraft {
-  if (from === "blank") return { ...draft, from };
-  // La plantilla trae bloques, días y hora; el nombre siempre es el tuyo.
-  const template = ROUTINE_TEMPLATES[from];
-  return { ...draft, from, days: template.days ?? "daily", start: template.start };
+/** La rutina tal como se guarda. */
+export function routineInput(draft: RoutineDraft): RoutineInput {
+  return {
+    title: draft.title.trim(),
+    days: draft.days,
+    start: draft.start,
+    from: draft.from,
+    until: draft.until,
+    goalId: draft.goalId,
+    habit: draft.habit,
+    area: draft.area,
+    active: draft.active,
+    blocks: draft.blocks.map(({ block }) => block),
+  };
 }
 
-function blocksOf(draft: RoutineDraft): RoutineBlock[] {
-  if (draft.from === "blank") return [];
-  const blocks = (ROUTINE_TEMPLATES[draft.from].blocks ?? []) as RoutineBlock[];
-  if (!draft.roadmap) return blocks;
-  return blocks.map((block) =>
-    block.kind === "module"
-      ? { kind: "module", ref: `[[${draft.roadmap}]]`, minutes: block.minutes }
-      : block,
-  );
+/** Un bloque está listo cuando dice qué es: la nota a la que apunta o su título. */
+export function isBlockComplete({ kind, ref, title }: RoutineBlock): boolean {
+  if (kind === "habit" || kind === "module") return Boolean(ref);
+  if (kind === "break") return true;
+  return Boolean(title?.trim());
+}
+
+function newBlock(kind: BlockKind): RoutineBlock {
+  return { kind, minutes: DEFAULT_MINUTES[kind] };
+}
+
+function draftOf({ routine, title }: RoutineSummary): RoutineDraft {
+  return {
+    title,
+    days: routine.days,
+    start: routine.start.padStart(5, "0"),
+    from: routine.from,
+    until: routine.until,
+    goalId: routine.goalId,
+    habit: routine.habit,
+    area: routine.area,
+    active: routine.active,
+    blocks: routine.blocks.map((block) => ({ id: crypto.randomUUID(), block })),
+  };
 }

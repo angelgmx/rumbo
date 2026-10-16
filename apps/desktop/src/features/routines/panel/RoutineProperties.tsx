@@ -1,30 +1,30 @@
 import { addMinutesToTime } from "@rumbo/core";
-import { useRumbo } from "@/app/RumboContext";
 import { DaysField } from "@/components/panel/DaysField";
 import { OptionList } from "@/components/panel/OptionList";
 import { PropertyRow, ReadOnlyRow } from "@/components/panel/PropertyRow";
 import { SectionLabel } from "@/components/panel/SectionLabel";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { AreaDot } from "@/features/tasks/AreaDot";
+import { useAreaNames } from "@/hooks/useAreaNames";
+import { formatMinutes } from "@/lib/format";
+import { GoalProperty } from "./GoalProperty";
+import { HabitProperty } from "./HabitProperty";
 import type { RoutineDraft } from "./useRoutineDraft";
+import { ValidityProperty } from "./ValidityProperty";
 
-/** Días, hora, área y la ruta que avanza: una fila cada una, como en el panel de tareas. */
+/** Las propiedades de la rutina, una fila cada una, como en el panel de tareas. */
 export function RoutineProperties({
   draft,
   minutes,
-  withRoadmap,
   onChange,
 }: {
   draft: RoutineDraft;
+  /** Lo que suman los bloques: con él se calcula la hora de fin. */
   minutes: number;
-  /** Solo si tiene bloques de tema: son los que avanzan la ruta. */
-  withRoadmap: boolean;
   onChange: (changes: Partial<RoutineDraft>) => void;
 }) {
-  const rumbo = useRumbo();
-  const areas = rumbo.store.notesOfType("area").map((note) => String(note.data.name ?? note.name));
-  const roadmaps = rumbo.learning
-    .roadmaps()
-    .map((roadmap) => ({ value: roadmap.name, label: roadmap.title }));
+  const areas = useAreaNames();
 
   return (
     <section className="flex flex-col">
@@ -42,7 +42,7 @@ export function RoutineProperties({
             {minutes > 0 && (
               <span className="font-sans text-muted-foreground">
                 {" "}
-                · termina {addMinutesToTime(draft.start, minutes)}
+                · termina {addMinutesToTime(draft.start, minutes)} ({formatMinutes(minutes)})
               </span>
             )}
           </span>
@@ -59,7 +59,22 @@ export function RoutineProperties({
           />
         )}
       </PropertyRow>
-      <PropertyRow label="Área" empty="Sin área" value={draft.area} width="w-60">
+      <ValidityProperty from={draft.from} until={draft.until} onChange={onChange} />
+      <GoalProperty goalId={draft.goalId} onChange={(goalId) => onChange({ goalId })} />
+      <HabitProperty habit={draft.habit} onChange={(habit) => onChange({ habit })} />
+      <PropertyRow
+        label="Área"
+        empty="Sin área"
+        value={
+          draft.area && (
+            <>
+              <AreaDot area={draft.area} />
+              {draft.area}
+            </>
+          )
+        }
+        width="w-60"
+      >
         {(close) => (
           <OptionList
             options={areas.map((area) => ({ value: area, label: area }))}
@@ -72,26 +87,13 @@ export function RoutineProperties({
           />
         )}
       </PropertyRow>
-      {withRoadmap && (
-        <PropertyRow
-          label="Ruta"
-          empty="Sin ruta"
-          value={roadmaps.find((roadmap) => roadmap.value === draft.roadmap)?.label}
-          width="w-64"
-        >
-          {(close) => (
-            <OptionList
-              options={roadmaps}
-              value={draft.roadmap}
-              clearLabel="Sin ruta"
-              onChoose={(roadmap) => {
-                onChange({ roadmap });
-                close();
-              }}
-            />
-          )}
-        </PropertyRow>
-      )}
+      <ReadOnlyRow label="Activa">
+        <Switch
+          checked={draft.active}
+          onCheckedChange={(active) => onChange({ active })}
+          aria-label="Activa"
+        />
+      </ReadOnlyRow>
     </section>
   );
 }

@@ -123,7 +123,7 @@ function Editor({ summary }: { summary: RoutineSummary }) {
                 onCheckedChange={(active) => rumbo.routines.setActive(summary.id, active)}
               />
             </label>
-            <RoutineMenu summary={summary} showEdit={false} className="mt-1.5" />
+            <RoutineMenu summary={summary} className="mt-1.5" />
           </div>
 
           <RoutineSettings summary={summary} />

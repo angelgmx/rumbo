@@ -14,10 +14,8 @@ import {
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { RoutineCard } from "./RoutineCard";
-import { TemplateGallery } from "./TemplateGallery";
 import { TodayCard } from "./TodayCard";
-import { RoutinePanel } from "./panel/RoutinePanel";
-import type { Start } from "./panel/useRoutineDraft";
+import { RoutinePanel, type RoutineTarget } from "./panel/RoutinePanel";
 
 const ALL_AREAS = "all";
 
@@ -26,7 +24,7 @@ export function RoutinesScreen() {
   const rumbo = useRumbo();
   const list = useVaultQuery((r) => r.routines.list()).data;
   const [area, setArea] = useState(ALL_AREAS);
-  const [creating, setCreating] = useState<Start>();
+  const [target, setTarget] = useState<RoutineTarget>();
 
   const header = (
     <>
@@ -34,13 +32,13 @@ export function RoutinesScreen() {
         title="Rutinas"
         newTask={false}
         actions={
-          <Button onClick={() => setCreating("blank")}>
+          <Button onClick={() => setTarget("new")}>
             <PlusIcon data-icon="inline-start" />
             Nueva rutina
           </Button>
         }
       />
-      <RoutinePanel from={creating} onClose={() => setCreating(undefined)} />
+      <RoutinePanel target={target} onClose={() => setTarget(undefined)} />
     </>
   );
   if (!list) return header;
@@ -87,8 +85,7 @@ export function RoutinesScreen() {
                 </EmptyMedia>
                 <EmptyTitle>Todavía no tienes rutinas</EmptyTitle>
                 <EmptyDescription>
-                  Una rutina pone en orden y a su hora tus hábitos, tus temas y tus tareas. Empieza
-                  con una plantilla.
+                  Una rutina pone en orden y a su hora tus hábitos, tus temas y tus tareas.
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
@@ -97,13 +94,15 @@ export function RoutinesScreen() {
               <TodayCard date={today} today={todays} other={others} />
               <div className="grid grid-cols-2 gap-4">
                 {visible.map((summary) => (
-                  <RoutineCard key={summary.id} summary={summary} />
+                  <RoutineCard
+                    key={summary.id}
+                    summary={summary}
+                    onEdit={() => setTarget(summary)}
+                  />
                 ))}
               </div>
             </>
           )}
-
-          <TemplateGallery onPick={setCreating} />
         </div>
       </main>
     </>

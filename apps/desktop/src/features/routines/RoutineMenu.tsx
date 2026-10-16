@@ -14,17 +14,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { routineHref } from "./links";
 
 /** «…» de una rutina: editarla o eliminarla (con confirmación). */
 export function RoutineMenu({
   summary,
-  showEdit = true,
+  onEdit,
   className,
 }: {
   summary: RoutineSummary;
-  /** En el propio editor, «Editar» sobra. */
-  showEdit?: boolean;
+  /** Abre la rutina para editarla; en el propio editor sobra. */
+  onEdit?: () => void;
   className?: string;
 }) {
   const rumbo = useRumbo();
@@ -57,10 +56,10 @@ export function RoutineMenu({
           <EllipsisIcon />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {showEdit && (
+          {onEdit && (
             <>
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => navigate(routineHref(summary.id))}>
+                <DropdownMenuItem onClick={onEdit}>
                   <PencilIcon />
                   Editar
                 </DropdownMenuItem>
