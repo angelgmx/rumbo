@@ -1,8 +1,16 @@
 import { z } from "zod";
-import { addMinutesToTime } from "./agenda";
+import { addMinutesToTime, minutesBetween } from "./agenda";
 import type { Counter } from "./counters";
-import type { IsoDate } from "./dates";
-import { isScheduledOn, scheduleSchema, timeSchema } from "./habits";
+import { addDays, startOfWeek, WEEKDAYS, type IsoDate, type Weekday } from "./dates";
+import {
+  isDone,
+  isScheduledOn,
+  scheduleSchema,
+  timeSchema,
+  type Habit,
+  type HabitHistory,
+  type HabitSchedule,
+} from "./habits";
 import { linkTarget } from "./links";
 import type { TaskDraft } from "./tasks";
 
@@ -85,6 +93,104 @@ export function moveBlock<T>(blocks: T[], from: number, to: number): T[] {
   const [moved] = result.splice(from, 1);
   result.splice(to, 0, moved!);
   return result;
+}
+
+/** Mete un bloque en una posición; sin posición, al final. */
+export function insertBlock<T>(blocks: T[], block: T, at = blocks.length): T[] {
+  const index = Math.min(Math.max(at, 0), blocks.length);
+  return [...blocks.slice(0, index), block, ...blocks.slice(index)];
+}
+
+export function removeBlock<T>(blocks: T[], index: number): T[] {
+  return blocks.filter((_, i) => i !== index);
+}
+
+/** Cambia algunos campos de un bloque y deja el resto como estaba escrito. */
+export function updateBlock<T extends object>(
+  blocks: T[],
+  index: number,
+  changes: Partial<T>,
+): T[] {
+  return blocks.map((block, i) => (i === index ? { ...block, ...changes } : block));
+}
+
+/** El próximo día que toca la rutina después de `from`, mirando una semana hacia delante. */
+export function nextRoutineDay(routine: Routine, from: IsoDate): IsoDate | undefined {
+  if (!routine.active) return undefined;
+  for (let offset = 1; offset <= 7; offset++) {
+    const day = addDays(from, offset);
+    if (isScheduledOn(routine.days, day)) return day;
+  }
+  return undefined;
+}
+
+export interface RoutineClash {
+  title: string;
+  days: Weekday[];
+}
+
+/**
+ * Otras rutinas activas que se solapan en hora algún día que comparten.
+ * Las de «N veces por semana» no tienen días fijos, así que no chocan con nada.
+ */
+export function routineClashes(
+  routine: Routine,
+  others: { title: string; routine: Routine }[],
+): RoutineClash[] {
+  const days = fixedDays(routine.days);
+  return others
+    .filter((other) => other.routine.active && overlapsInTime(routine, other.routine))
+    .map((other) => ({
+      title: other.title,
+      days: fixedDays(other.routine.days).filter((day) => days.includes(day)),
+    }))
+    .filter((clash) => clash.days.length > 0);
+}
+
+function fixedDays(schedule: HabitSchedule): Weekday[] {
+  if (schedule === "daily") return [...WEEKDAYS];
+  return Array.isArray(schedule) ? schedule : [];
+}
+
+function overlapsInTime(a: Routine, b: Routine): boolean {
+  const start = (routine: Routine) => minutesBetween("00:00", routine.start);
+  const end = (routine: Routine) => start(routine) + routineMinutes(routine);
+  return start(a) < end(b) && start(b) < end(a);
+}
+
+/** Un hábito de la rutina con lo apuntado en las dailies. */
+export interface RoutineHabit {
+  habit: Habit;
+  history: HabitHistory;
+}
+
+/**
+ * Cumplimiento de las últimas semanas, de la más antigua a la actual, de 0 a 1:
+ * de los hábitos de la rutina, cuántos se hicieron los días que tocaba.
+ * La semana actual cuenta hasta hoy. Sin hábitos no hay forma de medirla.
+ */
+export function weeklyCompliance(
+  routine: Routine,
+  habits: RoutineHabit[],
+  today: IsoDate,
+  weeks = 4,
+): number[] {
+  if (habits.length === 0) return [];
+  const thisWeek = startOfWeek(today);
+  return Array.from({ length: weeks }, (_, i) => {
+    const weekStart = addDays(thisWeek, (i - weeks + 1) * 7);
+    const days = Array.from({ length: 7 }, (_day, d) => addDays(weekStart, d)).filter(
+      (day) => day <= today && isScheduledOn(routine.days, day),
+    );
+    const expected = days.length * habits.length;
+    if (expected === 0) return 0;
+    const done = days.reduce(
+      (total, day) =>
+        total + habits.filter(({ habit, history }) => isDone(habit, history.get(day))).length,
+      0,
+    );
+    return done / expected;
+  });
 }
 
 /** Lo que hay pendiente del tema que toca, para decidir las tareas de un bloque de estudio. */

@@ -36,3 +36,10 @@ const dayMonthFormat = new Intl.DateTimeFormat("es", { day: "numeric", month: "s
 export function formatDayMonth(date: IsoDate): string {
   return dayMonthFormat.format(toDate(date)).replace(".", "");
 }
+
+const weekdayFormat = new Intl.DateTimeFormat("es", { weekday: "short" });
+
+/** "vie" */
+export function formatShortWeekday(date: IsoDate): string {
+  return weekdayFormat.format(toDate(date)).replace(".", "");
+}
