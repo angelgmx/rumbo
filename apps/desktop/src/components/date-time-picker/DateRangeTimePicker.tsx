@@ -78,7 +78,7 @@ export function DateRangeTimePicker({
   }
 
   return (
-    <div className="flex w-64 flex-col gap-3 p-2">
+    <div className="flex w-72 flex-col gap-3 p-3">
       <Shortcuts shortcuts={shortcuts} value={value} onChoose={choose} />
       <Calendar month={month} today={today} range={value} onMonthChange={setMonth} onPick={pick} />
       {withTime && value.start && (

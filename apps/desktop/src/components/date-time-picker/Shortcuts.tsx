@@ -12,15 +12,16 @@ export function Shortcuts({
   onChoose: (shortcut: Shortcut) => void;
 }) {
   return (
-    <div role="group" aria-label="Atajos" className="grid grid-cols-4 gap-1.5">
+    // Fichas a la medida de su texto: «En 1 semana» no cabe en una rejilla fija de cuatro.
+    <div role="group" aria-label="Atajos" className="flex flex-wrap gap-1.5">
       {shortcuts.map((shortcut) => (
         <Button
           key={shortcut.label}
           type="button"
           variant="outline"
-          size="xs"
+          size="sm"
           aria-pressed={isActive(shortcut, value)}
-          className="px-1 aria-pressed:border-primary/40 aria-pressed:bg-primary-soft aria-pressed:text-primary-text"
+          className="h-7 rounded-full px-3 text-xs font-medium aria-pressed:border-primary/40 aria-pressed:bg-primary-soft aria-pressed:text-primary-text"
           onClick={() => onChoose(shortcut)}
         >
           {shortcut.label}
