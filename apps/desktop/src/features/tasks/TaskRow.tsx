@@ -1,4 +1,5 @@
 import type { Priority, Task } from "@rumbo/core";
+import type { ReactNode } from "react";
 import { ClockIcon, FileTextIcon, FolderKanbanIcon, RepeatIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatShortDay } from "@/lib/format";
@@ -25,6 +26,7 @@ export function TaskRow({
   showDate = true,
   onToggle,
   onOpen,
+  aside,
 }: {
   task: Task;
   today: string;
@@ -34,6 +36,8 @@ export function TaskRow({
   showDate?: boolean;
   onToggle: (done: boolean) => void;
   onOpen: () => void;
+  /** Algo más al final de la fila, como la propuesta de la IA. */
+  aside?: ReactNode;
 }) {
   const date = task.scheduled ?? task.due;
   const late = !task.done && date !== undefined && date < today;
@@ -98,6 +102,7 @@ export function TaskRow({
         )}
         <StepsChip steps={task.steps} />
       </div>
+      {aside}
     </div>
   );
 }

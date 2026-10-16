@@ -23,6 +23,9 @@ import { DoneList } from "./DoneList";
 import { FilterChip } from "./FilterChip";
 import { groupByDay } from "./groupByDay";
 import { IdeasPane } from "./IdeasPane";
+import { InboxList } from "./triage/InboxList";
+import { TriageButton } from "./triage/TriageButton";
+import { useInboxTriage } from "./triage/useInboxTriage";
 import { ProcessInboxDialog } from "./ProcessInboxDialog";
 import { SaveViewButton } from "./SaveViewButton";
 import { areaOf, countBy, matchesFilter, projectOf, type TaskFilter } from "./taskFilters";
@@ -46,6 +49,7 @@ export function TasksScreen() {
   const filter = filtered.view === viewSlug ? filtered.filter : {};
   const setFilter = (next: TaskFilter) => setFiltered({ view: viewSlug, filter: next });
   const taskPanel = useTaskPanel();
+  const triage = useInboxTriage();
 
   const [, navigate] = useLocation();
   const all = useVaultQuery((r) => r.tasks.all()).data ?? [];
@@ -96,7 +100,14 @@ export function TasksScreen() {
         }
         actions={
           showIdeas ? undefined : current.view === "inbox" ? (
-            <ProcessInboxDialog />
+            <>
+              <TriageButton
+                ready={triage.ready}
+                thinking={triage.thinking}
+                onPropose={triage.propose}
+              />
+              <ProcessInboxDialog />
+            </>
           ) : (
             <>
               {current.view === "done" && (
@@ -181,6 +192,8 @@ export function TasksScreen() {
                   <GroupedTaskList groups={groupByDay(tasks, today)} {...listProps} />
                 ) : current.view === "done" ? (
                   <DoneList tasks={tasks} {...listProps} />
+                ) : current.view === "inbox" ? (
+                  <InboxList tasks={tasks} triage={triage} {...listProps} />
                 ) : (
                   <TaskList tasks={tasks} {...listProps} />
                 )}

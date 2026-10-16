@@ -27,6 +27,7 @@ folders:
   archive: 00 - Inbox/Archivo de tareas.md # opcional; por defecto, junto al inbox
   habits: Hábitos
   goals: Objetivos
+  projects: Proyectos # por defecto, Projects
   routines: 07 - Rutinas
   templates: 05 - Plantillas # aquí se busca la plantilla "Daily.md"
 
@@ -244,6 +245,30 @@ parent: "[[Visión]]"
 deadline: 2027-06-30
 ```
 
+### Proyecto — `type: project`
+
+Sus tareas son las casillas de la propia nota.
+
+```yaml
+type: project
+title: Viaje a Japón
+area: "[[Personal]]" # opcional
+status: active # active | done | paused | dropped
+```
+
+### Organizar el Inbox con IA
+
+«Procesar con IA» manda a la IA el texto de las tareas sin procesar del inbox, las áreas de arriba del todo y una semana de calendario. Por cada una propone qué es y no escribe nada hasta que aceptas:
+
+| Propone  | Al aceptar                                                                       |
+| -------- | -------------------------------------------------------------------------------- |
+| Tarea    | Le pone el área (`[area:: …]`) y la fecha (`⏳`); deja de estar sin procesar     |
+| Idea     | Pasa a la nota de ideas                                                          |
+| Proyecto | Crea la nota `type: project` en `folders.projects` y quita la tarea del inbox    |
+| Objetivo | Crea la nota `type: goal` en `folders.goals`, activa, y quita la tarea del inbox |
+
+Un área que no existe o una fecha que no es real se descartan. Una tarea sin área ni fecha no se propone: no cambiaría nada.
+
 ### Jerarquía de Roadmaps
 
 ```
@@ -447,4 +472,4 @@ blocks:
 
 ### Tipos previstos
 
-`checkpoint`, `resource`, `project`, `review`, `vision`, `brief`, `research`, `system`, `playbook`. Se documentarán aquí cuando la app empiece a usarlos.
+`checkpoint`, `resource`, `review`, `vision`, `brief`, `research`, `system`, `playbook`. Se documentarán aquí cuando la app empiece a usarlos.

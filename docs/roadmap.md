@@ -112,4 +112,4 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 
 - [x] Puerto `AiProvider` en `core` y adaptador compatible con OpenAI (Ollama, LM Studio, Groq, Gemini, OpenRouter, OpenAI)
 - [x] Ajustes › Inteligencia artificial: proveedor, URL, modelo, clave en el llavero del sistema y «Probar»
-- [ ] Organizar el Inbox con IA: propone qué es cada cosa y tú decides
+- [x] Organizar el Inbox con IA: propone si es tarea, idea, proyecto u objetivo, con área y fecha, y tú decides

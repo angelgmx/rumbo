@@ -1,5 +1,6 @@
 import type { Task } from "@rumbo/core";
 import { AnimatePresence, motion } from "motion/react";
+import type { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { listItem } from "@/lib/motion";
 import type { TaskGroup } from "./groupByDay";
@@ -10,6 +11,7 @@ interface TaskListProps {
   showSource?: boolean;
   onToggle: (task: Task, done: boolean) => void;
   onOpen: (task: Task) => void;
+  aside?: (task: Task) => ReactNode;
 }
 
 /** Una tarjeta por grupo (un día, «Más adelante»…), con su título y cuántas tiene. */
@@ -47,6 +49,7 @@ function Rows({
   showDate,
   onToggle,
   onOpen,
+  aside,
 }: TaskListProps & { tasks: Task[]; showDate: boolean }) {
   return (
     <AnimatePresence initial={false}>
@@ -63,6 +66,7 @@ function Rows({
             showDate={showDate}
             onToggle={(done) => onToggle(task, done)}
             onOpen={() => onOpen(task)}
+            aside={aside?.(task)}
           />
         </motion.div>
       ))}
