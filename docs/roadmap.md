@@ -84,6 +84,7 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 
 - [x] Contadores en la interfaz: elegir el contador al crear una tarea, verlo en las filas de Tareas y en Foco, y usarlo en el detalle de la tarea (cronómetro, pomodoro, −/+ y progreso)
 - [x] Detalle de tarea en un panel lateral, con lo que la tarea guarda en el vault
+- [x] Tareas igual al diseño: captura en la barra lateral, áreas y proyectos con su número, filtros por área, proyecto y etiqueta, columnas en cada fila, Próximas agrupadas por día y Procesar inbox con «¿Qué es?»
 - [x] «Ahora» en Foco enseña el contador de la primera tarea del foco cuando no hay un bloque de agenda en curso
 - [ ] Registro de sesiones y estimado vs real (necesitan guardar el tiempo de cada sesión)
 - [ ] Rutinas, Foco v2, modo enfoque y cerrar el día

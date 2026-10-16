@@ -64,7 +64,7 @@ export function CreateTaskDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" />}>
+      <DialogTrigger render={<Button />}>
         <PlusIcon data-icon="inline-start" />
         Nueva tarea
       </DialogTrigger>

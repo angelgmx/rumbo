@@ -9,6 +9,7 @@ const savedViewSchema = z.object({
   view: z.enum(["inbox", "today", "upcoming", "someday", "done"]),
   area: z.string().optional(),
   tag: z.string().optional(),
+  project: z.string().optional(),
 });
 
 /** Una vista de tareas con sus filtros, guardada para volver a ella de un clic. */
