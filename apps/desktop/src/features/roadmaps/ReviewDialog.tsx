@@ -1,16 +1,8 @@
 import type { ReviewCard, ReviewRating } from "@rumbo/core";
-import { BrainIcon, CheckIcon } from "lucide-react";
+import { CheckIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRumbo } from "@/app/RumboContext";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -49,37 +41,6 @@ export function useDueCards(roadmap?: string): ReviewCard[] {
 /** Unos 30 segundos por concepto. */
 export function reviewMinutes(cards: number): number {
   return Math.max(1, Math.round(cards * 0.5));
-}
-
-/** La tarjeta de Hoy con los conceptos que toca repasar. */
-export function ReviewTodayCard() {
-  const cards = useDueCards();
-  const review = useReview(cards.length);
-  if (cards.length === 0 && !review.open) return null;
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BrainIcon className="size-4" />
-          Repaso de hoy
-        </CardTitle>
-        <CardDescription>
-          {cards.length} {cards.length === 1 ? "concepto" : "conceptos"} · unos{" "}
-          {reviewMinutes(cards.length)} min
-        </CardDescription>
-        <CardAction>
-          <Button size="sm" onClick={review.start}>
-            Repasar
-          </Button>
-        </CardAction>
-      </CardHeader>
-      <CardFooter className="text-sm text-muted-foreground">
-        Repasar lo que ya sabes es lo que hace que no se olvide.
-      </CardFooter>
-      <ReviewDialog {...review.dialog} />
-    </Card>
-  );
 }
 
 /** Abre el repaso recordando cuántas había al empezar, para la barra de progreso. */
