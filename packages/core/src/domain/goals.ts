@@ -82,6 +82,48 @@ export function daysLeft(goal: Goal, today: IsoDate): number | undefined {
   return goal.deadline ? daysBetween(today, goal.deadline) : undefined;
 }
 
+/** «2027» es de todo el año; «2027-T1», de un trimestre. */
+export function periodHorizon(period: string): GoalHorizon {
+  return /-T[1-4]$/.test(period) ? "quarter" : "year";
+}
+
+/** Los periodos que se pueden elegir: este año y el siguiente, y los trimestres que quedan. */
+export function periodChoices(today: IsoDate): string[] {
+  const year = Number(today.slice(0, 4));
+  const quarter = Math.ceil(Number(today.slice(5, 7)) / 3);
+  const quarters = Array.from({ length: 4 }, (_, index) => {
+    const offset = quarter - 1 + index;
+    return `${year + Math.floor(offset / 4)}-T${(offset % 4) + 1}`;
+  });
+  return [String(year), String(year + 1), ...quarters];
+}
+
+export interface PeriodGroup<T> {
+  /** `undefined` agrupa lo que no tiene periodo. */
+  year?: string;
+  /** Primero lo de todo el año (sin trimestre) y después T1 a T4. */
+  quarters: { quarter?: string; items: T[] }[];
+}
+
+/** Agrupa por año y, dentro, por trimestre; los años de menor a mayor y «sin periodo» al final. */
+export function groupByPeriod<T extends { goal: Goal }>(items: T[]): PeriodGroup<T>[] {
+  const years = new Map<string | undefined, Map<string | undefined, T[]>>();
+  for (const item of items) {
+    const [year, quarter] = item.goal.period?.split("-") ?? [];
+    const quarters = years.get(year) ?? new Map<string | undefined, T[]>();
+    quarters.set(quarter, [...(quarters.get(quarter) ?? []), item]);
+    years.set(year, quarters);
+  }
+  return [...years]
+    .sort(([a], [b]) => (a ?? "9999").localeCompare(b ?? "9999"))
+    .map(([year, quarters]) => ({
+      year,
+      quarters: [...quarters]
+        .sort(([a], [b]) => (a ?? "").localeCompare(b ?? ""))
+        .map(([quarter, grouped]) => ({ quarter, items: grouped })),
+    }));
+}
+
 function average(values: number[]): number {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }

@@ -113,12 +113,17 @@ export type { GoalDriverRefs, GoalSummary } from "./app/goalService";
 export type { ProjectSummary } from "./app/projectService";
 export {
   GOAL_STATUSES,
+  groupByPeriod,
+  keyResultProgress,
+  periodChoices,
+  periodHorizon,
   type Goal,
   type GoalHorizon,
   type GoalInput,
   type KeyResult,
   type GoalStatus,
   type IfThen,
+  type PeriodGroup,
 } from "./domain/goals";
 export {
   PROJECT_STATUSES,

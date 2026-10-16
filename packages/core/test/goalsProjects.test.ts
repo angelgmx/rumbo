@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createRumbo, type Rumbo } from "../src";
-import { goalProgress, keyResultProgress, type Goal } from "../src/domain/goals";
+import {
+  goalProgress,
+  groupByPeriod,
+  keyResultProgress,
+  periodChoices,
+  periodHorizon,
+  type Goal,
+} from "../src/domain/goals";
 import { projectProgress, type Project } from "../src/domain/projects";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
 import { memoryDatabase } from "./memoryDatabase";
@@ -42,6 +49,53 @@ describe("goalProgress", () => {
     expect(
       goalProgress({ ...goal, status: "done" }, { projects: [], roadmaps: [], habits: [] }),
     ).toBe(1);
+  });
+});
+
+describe("periods", () => {
+  it("tells a year from a quarter", () => {
+    expect(periodHorizon("2027")).toBe("year");
+    expect(periodHorizon("2027-T3")).toBe("quarter");
+  });
+
+  it("offers this year, the next and the coming quarters", () => {
+    expect(periodChoices("2026-10-15")).toEqual([
+      "2026",
+      "2027",
+      "2026-T4",
+      "2027-T1",
+      "2027-T2",
+      "2027-T3",
+    ]);
+  });
+
+  it("groups by year and then quarter, without period last", () => {
+    const at = (period?: string) => ({ goal: { ...goal, period } });
+    const groups = groupByPeriod([
+      at(),
+      at("2027-T2"),
+      at("2026"),
+      at("2027"),
+      at("2027-T1"),
+      at("2027-T2"),
+    ]);
+    expect(
+      groups.map(({ year, quarters }) => [
+        year,
+        quarters.map(({ quarter, items }) => [quarter, items.length]),
+      ]),
+    ).toEqual([
+      ["2026", [[undefined, 1]]],
+      [
+        "2027",
+        [
+          [undefined, 1],
+          ["T1", 1],
+          ["T2", 2],
+        ],
+      ],
+      [undefined, [[undefined, 1]]],
+    ]);
   });
 });
 
@@ -141,6 +195,18 @@ describe("goals", () => {
     await rumbo.goals.setDrivers(id!, { projects: [], habits: [], roadmaps: [], notes: [] });
     expect(rumbo.goals.get(id!)!.habits).toEqual([]);
     expect(rumbo.goals.get(id!)!.notes).toEqual([]);
+  });
+
+  it("changes only what it is given", async () => {
+    const id = await rumbo.goals.create({ ...goal, title: "B2", area: "Python", why: "Viajar" });
+    await rumbo.goals.update(id!, { area: undefined, period: "2027-T1", horizon: "quarter" });
+    const { goal: changed } = rumbo.goals.get(id!)!;
+    expect([changed.title, changed.why, changed.area, changed.period]).toEqual([
+      "B2",
+      "Viajar",
+      undefined,
+      "2027-T1",
+    ]);
   });
 
   it("brings the tasks connected straight to it, and starts today", async () => {

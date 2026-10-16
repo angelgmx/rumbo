@@ -77,7 +77,8 @@ export class GoalService {
     return id;
   }
 
-  update(id: number, input: GoalInput): Promise<void> {
+  /** Cambia lo que se pase; el resto del objetivo se queda como estaba. */
+  update(id: number, input: Partial<GoalInput>): Promise<void> {
     return this.change(id, (goal) => ({ ...goal, ...input }));
   }
 
