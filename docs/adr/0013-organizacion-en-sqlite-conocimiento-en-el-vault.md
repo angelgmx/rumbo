@@ -5,7 +5,7 @@
 - **Decisión:**
   - **El vault guarda el conocimiento:** áreas, temas, rutas, módulos, apuntes, ejercicios, retos, recursos y el diario.
   - **SQLite guarda la organización:** tareas, hábitos y sus registros, rutinas, objetivos, proyectos, sesiones, cierres del día, ideas y propuestas de la IA.
-  - La base de datos va en la carpeta de datos de la app (`rumbo.db`), no en el vault: Obsidian Sync no la toca.
+  - La base de datos va en `rumbo.db` (ver la [0014](0014-base-de-datos-dentro-del-vault.md): dentro del vault, en `.rumbo/`).
   - Esquema en castellano, por versiones, descrito en [Modelo de datos](../modelo-de-datos.md).
   - `core` sigue puro: recibe la base de datos por el puerto `Database`. La app usa el plugin `sql` de Tauri; los tests, `node:sqlite` en memoria.
   - Lo que ya había en notas se importa una vez por cosa; las notas no se tocan.

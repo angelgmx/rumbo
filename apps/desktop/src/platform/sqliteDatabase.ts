@@ -1,19 +1,28 @@
 import type { Database } from "@rumbo/core";
+import { mkdir } from "@tauri-apps/plugin-fs";
 import SqlDatabase from "@tauri-apps/plugin-sql";
 
-// La base de datos de la app vive en su carpeta de datos, no en el vault (ver ADR-0013).
-const DATABASE_URL = "sqlite:rumbo.db";
+// La base de datos vive dentro del vault, en `.rumbo/`: viaja con él en copias y sincronización
+// y no se pierde al reinstalar la app (ver ADR-0014).
+const FOLDER = ".rumbo";
+const FILE = "rumbo.db";
 
-let opened: Promise<Database> | undefined;
+const opened = new Map<string, Promise<Database>>();
 
-/** El puerto Database de core sobre el plugin sql de Tauri. Una sola conexión para toda la app. */
-export function openAppDatabase(): Promise<Database> {
-  opened ??= connect();
-  return opened;
+/** El puerto Database de core sobre el plugin sql de Tauri. Una conexión por vault. */
+export function openAppDatabase(vaultRoot: string): Promise<Database> {
+  let database = opened.get(vaultRoot);
+  if (!database) {
+    database = connect(vaultRoot);
+    opened.set(vaultRoot, database);
+  }
+  return database;
 }
 
-async function connect(): Promise<Database> {
-  const db = await SqlDatabase.load(DATABASE_URL);
+async function connect(vaultRoot: string): Promise<Database> {
+  const folder = `${vaultRoot}/${FOLDER}`;
+  await mkdir(folder, { recursive: true });
+  const db = await SqlDatabase.load(`sqlite:${folder}/${FILE}`);
   // Las claves ajenas están apagadas por defecto en SQLite; sin ellas no hay borrado en cascada.
   await db.execute("PRAGMA foreign_keys = ON");
   return {

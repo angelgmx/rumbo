@@ -7,7 +7,7 @@ Rumbo guarda cada cosa donde mejor se cuida (ver [ADR-0013](adr/0013-organizacio
 | **Vault** (Markdown)       | El conocimiento: áreas, temas, rutas, módulos, apuntes, ejercicios, retos, recursos y el diario    | Es tuyo, se lee en Obsidian y dura décadas                        |
 | **Base de datos** (SQLite) | La organización: tareas, hábitos, rutinas, objetivos, proyectos, sesiones, cierres del día e ideas | Necesita consultas rápidas, relaciones y que nunca quede a medias |
 
-La base de datos es un fichero `rumbo.db` en la carpeta de datos de la app (no en el vault): así Obsidian Sync no la toca y no puede corromperse al sincronizar desde dos equipos.
+La base de datos es un fichero `rumbo.db` dentro del vault, en `.rumbo/` (ver [ADR 0014](adr/0014-base-de-datos-dentro-del-vault.md)): viaja con el vault en las copias de seguridad. Obsidian no la enseña ni la sincroniza; si sincronizas el vault con otra herramienta, no abras Rumbo en dos equipos a la vez.
 
 ## Reglas
 

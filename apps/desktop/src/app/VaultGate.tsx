@@ -33,7 +33,7 @@ export function VaultGate({ children }: { children: ReactNode }) {
     try {
       const rumbo = await createRumbo({
         fs: tauriFileSystem(root),
-        database: await openAppDatabase(),
+        database: await openAppDatabase(root),
       });
       setState({ status: "ready", rumbo, root });
     } catch (error) {

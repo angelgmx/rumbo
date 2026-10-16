@@ -17,6 +17,7 @@ Un ADR es una nota corta con una decisión técnica: **contexto → decisión �
 | [0011](0011-progreso-por-pasos.md)                              | El progreso de una tarea son sus pasos; el tiempo real lo mide la sesión              |
 | [0012](0012-ia-con-un-puerto-y-proveedores-compatibles.md)      | La IA va detrás de un puerto: Claude y compatibles con OpenAI; la clave en el llavero |
 | [0013](0013-organizacion-en-sqlite-conocimiento-en-el-vault.md) | La organización en SQLite; el conocimiento en el vault                                |
+| [0014](0014-base-de-datos-dentro-del-vault.md)                  | La base de datos dentro del vault, en `.rumbo/`                                       |
 
 Plantilla:
 
