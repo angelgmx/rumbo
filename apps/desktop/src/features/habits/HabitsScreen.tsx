@@ -2,7 +2,6 @@ import { completionRate, startOfWeek } from "@rumbo/core";
 import { FlameIcon } from "lucide-react";
 import { useState } from "react";
 import { useRumbo } from "@/app/RumboContext";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Empty,
   EmptyDescription,
@@ -12,6 +11,7 @@ import {
 } from "@/components/ui/empty";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
+import { ArchivedHabits } from "./ArchivedHabits";
 import { NewHabitButton } from "./HabitDialogs";
 import { WeekTracker } from "./WeekTracker";
 import { YearHeatmap } from "./YearHeatmap";
@@ -20,11 +20,11 @@ export function HabitsScreen() {
   const rumbo = useRumbo();
   const today = rumbo.daily.today();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today));
-  const list = useVaultQuery((r) => r.habits.list()).data;
+  const habits = useVaultQuery((r) => r.habits.list()).data;
+  const archived = useVaultQuery((r) => r.habits.archived()).data ?? [];
 
-  if (!list) return <ScreenHeader title="Hábitos" actions={<NewHabitButton />} />;
+  if (!habits) return <ScreenHeader title="Hábitos" actions={<NewHabitButton />} />;
 
-  const { habits, invalid } = list;
   const doneToday = habits.filter((summary) => summary.doneToday).length;
   const thisWeek = average(
     habits.map(({ habit, history }) => completionRate(habit, history, startOfWeek(today), today)),
@@ -34,7 +34,7 @@ export function HabitsScreen() {
     <>
       <ScreenHeader title="Hábitos" actions={<NewHabitButton />} />
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6">
+        <div className="flex flex-col gap-6">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">Hábitos</h1>
             <p className="mt-1 text-muted-foreground">
@@ -43,13 +43,6 @@ export function HabitsScreen() {
             </p>
           </div>
 
-          {invalid.length > 0 && (
-            <Alert variant="destructive">
-              <AlertTitle>Hay hábitos que no se pueden leer</AlertTitle>
-              <AlertDescription>Revisa el frontmatter de: {invalid.join(", ")}</AlertDescription>
-            </Alert>
-          )}
-
           {habits.length === 0 ? (
             <Empty>
               <EmptyHeader>
@@ -57,9 +50,7 @@ export function HabitsScreen() {
                   <FlameIcon />
                 </EmptyMedia>
                 <EmptyTitle>Todavía no tienes hábitos</EmptyTitle>
-                <EmptyDescription>
-                  Crea una nota con «type: habit» en tu vault y aparecerá aquí.
-                </EmptyDescription>
+                <EmptyDescription>Crea el primero con «Nuevo hábito».</EmptyDescription>
               </EmptyHeader>
             </Empty>
           ) : (
@@ -79,6 +70,7 @@ export function HabitsScreen() {
               ))}
             </>
           )}
+          <ArchivedHabits habits={archived} />
         </div>
       </main>
     </>

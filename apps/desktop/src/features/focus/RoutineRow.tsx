@@ -3,10 +3,12 @@ import { CheckCircle2Icon, ChevronDownIcon, CircleIcon } from "lucide-react";
 import { useState } from "react";
 import { AreaIcon } from "@/components/AreaIcon";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useRoutineLook } from "@/features/routines/look";
 import { Tag } from "@/features/roadmaps/Tag";
 import { formatMinutes } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { TimelineRow } from "./TimelineRow";
 import type { RoutineGroup } from "./useFocusDay";
 
 interface RoutineRowProps {
@@ -23,10 +25,16 @@ export function RoutineRow({ group, time, onCompleteStep }: RoutineRowProps) {
   const done = steps.filter((step) => step.done).length;
 
   return (
-    <div className="flex items-start gap-4 px-3 py-2.5">
-      <span className="w-12 pt-2 font-mono text-sm text-muted-foreground">
-        {summary.routine.start}
-      </span>
+    <TimelineRow
+      time={summary.routine.start}
+      marker={
+        <Checkbox
+          checked={steps.length > 0 && done === steps.length}
+          disabled
+          aria-label={`${summary.title}: ${done} de ${steps.length}`}
+        />
+      }
+    >
       <AreaIcon area={look} className="size-10" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 pt-1.5">
@@ -50,7 +58,7 @@ export function RoutineRow({ group, time, onCompleteStep }: RoutineRowProps) {
           </div>
         )}
       </div>
-      <span className="pt-2 font-mono text-sm text-muted-foreground">
+      <span className="pt-2.5 font-mono text-sm text-muted-foreground">
         {formatMinutes(summary.minutes)}
       </span>
       {steps.length > 0 && (
@@ -64,7 +72,7 @@ export function RoutineRow({ group, time, onCompleteStep }: RoutineRowProps) {
           <ChevronDownIcon className={cn("transition-transform", open && "rotate-180")} />
         </Button>
       )}
-    </div>
+    </TimelineRow>
   );
 }
 
@@ -82,7 +90,7 @@ function StepChip({
   onComplete: () => void;
 }) {
   const Icon = step.done ? CheckCircle2Icon : CircleIcon;
-  const canComplete = !step.done && step.habit.habit.kind !== "tasks";
+  const canComplete = !step.done && step.completable;
 
   return (
     <button

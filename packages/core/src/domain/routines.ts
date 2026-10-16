@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { addMinutesToTime, minutesBetween } from "./agenda";
-import type { Counter } from "./counters";
 import { addDays, startOfWeek, WEEKDAYS, type IsoDate, type Weekday } from "./dates";
 import {
   isDone,
@@ -12,7 +11,8 @@ import {
   type HabitSchedule,
 } from "./habits";
 import { linkTarget } from "./links";
-import type { TaskDraft } from "./tasks";
+import { taskInterval } from "./taskOrganizing";
+import type { Task, TaskDraft } from "./tasks";
 
 // Una rutina es una nota "type: routine": una hora de inicio y una lista de bloques
 // en orden. Es lo que une hábitos, temas de una ruta y tareas en un hueco del día:
@@ -21,19 +21,24 @@ import type { TaskDraft } from "./tasks";
 //   blocks:
 //     - { kind: habit, ref: "[[Hábito — Inglés]]", minutes: 15 }
 //     - { kind: module, ref: "[[Java desde cero]]", minutes: 45 }
+//     - { kind: task, ref: "12", minutes: 20 }
+//     - { kind: activity, title: Café, minutes: 10 }
 //     - { kind: break, minutes: 10 }
+// `from` y `until` acotan su vigencia: pasada `until`, la rutina deja de tocar.
 
-export const ROUTINE_KINDS = ["morning", "afternoon", "evening", "study", "gym", "custom"] as const;
-export const BLOCK_KINDS = ["habit", "module", "task", "break", "custom"] as const;
+const ROUTINE_KINDS = ["morning", "afternoon", "evening", "study", "gym", "custom"] as const;
+export const BLOCK_KINDS = ["habit", "module", "task", "activity", "break"] as const;
 export type BlockKind = (typeof BLOCK_KINDS)[number];
 
 const blockSchema = z.object({
   kind: z.enum(BLOCK_KINDS),
-  /** La nota del bloque: un hábito, un tema (o su ruta, y toca el tema en curso) o una tarea. */
+  /** A qué apunta: la clave de un hábito, un tema (o su ruta, y toca el tema en curso) o el id de una tarea. */
   ref: z.string().optional(),
   title: z.string().optional(),
   minutes: z.number().int().positive(),
 });
+
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 export const routineSchema = z.object({
   title: z.string().optional(),
@@ -42,6 +47,13 @@ export const routineSchema = z.object({
   days: scheduleSchema.default("daily"),
   start: timeSchema,
   active: z.boolean().default(true),
+  /** Primer y último día en que toca; sin ellos, siempre. */
+  from: dateSchema.optional(),
+  until: dateSchema.optional(),
+  /** El objetivo al que empuja. */
+  goalId: z.number().int().positive().optional(),
+  /** La clave del hábito que marca la rutina, además de los de sus bloques. */
+  habit: z.string().optional(),
   blocks: z.array(blockSchema).default([]),
 });
 
@@ -75,14 +87,19 @@ export function routineEnd(routine: Routine): string {
   return addMinutesToTime(routine.start, routineMinutes(routine));
 }
 
+export function isInForce(routine: Routine, date: IsoDate): boolean {
+  return (!routine.from || routine.from <= date) && (!routine.until || date <= routine.until);
+}
+
 export function isRoutineOn(routine: Routine, date: IsoDate): boolean {
-  return routine.active && isScheduledOn(routine.days, date);
+  return routine.active && isInForce(routine, date) && isScheduledOn(routine.days, date);
 }
 
 /** Lo que se lee del bloque: su título, o el nombre de la nota a la que apunta. */
 export function blockTitle(block: RoutineBlock): string {
   if (block.title) return block.title;
   if (block.kind === "break") return "Descanso";
+  if (block.kind === "activity") return "Actividad";
   return linkTarget(block.ref) ?? "";
 }
 
@@ -119,7 +136,7 @@ export function nextRoutineDay(routine: Routine, from: IsoDate): IsoDate | undef
   if (!routine.active) return undefined;
   for (let offset = 1; offset <= 7; offset++) {
     const day = addDays(from, offset);
-    if (isScheduledOn(routine.days, day)) return day;
+    if (isInForce(routine, day) && isScheduledOn(routine.days, day)) return day;
   }
   return undefined;
 }
@@ -127,6 +144,11 @@ export function nextRoutineDay(routine: Routine, from: IsoDate): IsoDate | undef
 export interface RoutineClash {
   title: string;
   days: Weekday[];
+}
+
+export interface TaskClash {
+  task: Task;
+  date: IsoDate;
 }
 
 /**
@@ -147,19 +169,44 @@ export function routineClashes(
     .filter((clash) => clash.days.length > 0);
 }
 
+/**
+ * Tareas pendientes con hora, de hoy en adelante, que caen dentro de la rutina el día que toca.
+ * Las que la propia rutina lleva en un bloque no cuentan: ya forman parte de ella.
+ */
+export function taskClashes(routine: Routine, tasks: Task[], today: IsoDate): TaskClash[] {
+  const own = new Set(routine.blocks.filter(({ kind }) => kind === "task").map(({ ref }) => ref));
+  const [start, end] = routineSpan(routine);
+  return tasks
+    .flatMap((task): TaskClash[] => {
+      const interval = taskInterval(task);
+      if (!interval || !task.scheduled || task.done || task.scheduled < today) return [];
+      if (own.has(String(task.id)) || !isRoutineOn(routine, task.scheduled)) return [];
+      const from = minutesBetween("00:00", interval.start);
+      const to = minutesBetween("00:00", interval.end);
+      return from < end && start < to ? [{ task, date: task.scheduled }] : [];
+    })
+    .sort((a, b) => a.date.localeCompare(b.date) || a.task.time!.localeCompare(b.task.time!));
+}
+
 function fixedDays(schedule: HabitSchedule): Weekday[] {
   if (schedule === "daily") return [...WEEKDAYS];
   return Array.isArray(schedule) ? schedule : [];
 }
 
+/** Desde y hasta qué minuto del día ocupa la rutina. */
+function routineSpan(routine: Routine): [number, number] {
+  const start = minutesBetween("00:00", routine.start);
+  return [start, start + routineMinutes(routine)];
+}
+
 function overlapsInTime(a: Routine, b: Routine): boolean {
-  const start = (routine: Routine) => minutesBetween("00:00", routine.start);
-  const end = (routine: Routine) => start(routine) + routineMinutes(routine);
-  return start(a) < end(b) && start(b) < end(a);
+  const [aStart, aEnd] = routineSpan(a);
+  const [bStart, bEnd] = routineSpan(b);
+  return aStart < bEnd && bStart < aEnd;
 }
 
 /** Un hábito de la rutina con lo apuntado en las dailies. */
-export interface RoutineHabit {
+interface RoutineHabit {
   habit: Habit;
   history: HabitHistory;
 }
@@ -225,7 +272,7 @@ export function moduleBlockTasks(
     tasks.push({
       ...base,
       text: `${prefix}: ver ${work.pendingResource.title}`,
-      counter: { kind: "minutes", current: 0, target: minutes },
+      duration: minutes,
     });
   }
 
@@ -234,13 +281,16 @@ export function moduleBlockTasks(
     tasks.push({
       ...base,
       text: `${prefix}: ${exercisesLabel(exercises)}`,
-      counter: { kind: "progress", current: 0, target: exercises.length },
+      steps: exercises.map(({ id, title }) => ({ text: `${id} — ${title}`, done: false })),
     });
   }
 
   if (tasks.length === 0) {
-    const counter: Counter = { kind: "minutes", current: 0, target: block.minutes };
-    tasks.push({ ...base, text: `${prefix}: repasar conceptos y criterio de dominado`, counter });
+    tasks.push({
+      ...base,
+      text: `${prefix}: repasar conceptos y criterio de dominado`,
+      duration: block.minutes,
+    });
   }
   return tasks;
 }
@@ -249,65 +299,3 @@ function exercisesLabel(exercises: { id: string; title: string }[]): string {
   if (exercises.length === 1) return `ejercicio ${exercises[0]!.id} — ${exercises[0]!.title}`;
   return `ejercicios ${exercises[0]!.id}–${exercises.at(-1)!.id}`;
 }
-
-export type RoutineTemplate = "morning" | "study" | "gym" | "evening" | "weekend";
-
-/** Puntos de partida: se crean como nota y luego cada uno los cambia a su gusto. */
-export const ROUTINE_TEMPLATES: Record<RoutineTemplate, RoutineInput> = {
-  morning: {
-    title: "Rutina de mañana",
-    kind: "morning",
-    days: ["mon", "tue", "wed", "thu", "fri"],
-    start: "07:30",
-    blocks: [
-      { kind: "custom", title: "Café", minutes: 10 },
-      { kind: "custom", title: "Escuchar inglés", minutes: 15 },
-      { kind: "custom", title: "Revisar Hoy", minutes: 5 },
-    ],
-  },
-  study: {
-    title: "Rutina de estudio",
-    kind: "study",
-    days: ["mon", "tue", "wed", "fri"],
-    start: "18:00",
-    blocks: [
-      { kind: "custom", title: "Repaso del tema anterior", minutes: 15 },
-      { kind: "module", title: "Tema de la ruta", minutes: 45 },
-      { kind: "break", minutes: 10 },
-      { kind: "module", title: "Tema de la ruta", minutes: 50 },
-    ],
-  },
-  gym: {
-    title: "Rutina de gym",
-    kind: "gym",
-    days: ["mon", "wed", "fri"],
-    start: "18:00",
-    blocks: [
-      { kind: "custom", title: "Calentamiento", minutes: 10 },
-      { kind: "custom", title: "Entrenamiento", minutes: 60 },
-      { kind: "custom", title: "Estiramientos", minutes: 10 },
-    ],
-  },
-  evening: {
-    title: "Rutina de noche",
-    kind: "evening",
-    days: "daily",
-    start: "21:30",
-    blocks: [
-      { kind: "custom", title: "Cerrar el día", minutes: 10 },
-      { kind: "custom", title: "Leer", minutes: 20 },
-      { kind: "custom", title: "Preparar mañana", minutes: 10 },
-    ],
-  },
-  weekend: {
-    title: "Rutina de fin de semana",
-    kind: "custom",
-    days: ["sat", "sun"],
-    start: "10:00",
-    blocks: [
-      { kind: "custom", title: "Proyecto en curso", minutes: 120 },
-      { kind: "break", minutes: 15 },
-      { kind: "custom", title: "Ejercicios del tema", minutes: 45 },
-    ],
-  },
-};

@@ -12,7 +12,7 @@ import { AreaIcon } from "@/components/AreaIcon";
 import { ProgressRing } from "@/components/ProgressRing";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useArea } from "@/hooks/useArea";
+import { useHabitLook } from "@/hooks/useHabitLook";
 import { capitalize, formatDayMonth, formatShortDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { HabitMenu } from "./HabitDialogs";
@@ -112,7 +112,7 @@ interface TrackerRowProps {
 
 function TrackerRow({ summary, days, today, onChange }: TrackerRowProps) {
   const { habit, history, streak, best, last30Days } = summary;
-  const area = useArea(habit.area);
+  const area = useHabitLook(habit);
   const unit = streak.unit === "weeks" ? "sem" : "días";
 
   return (

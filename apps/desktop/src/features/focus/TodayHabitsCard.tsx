@@ -3,7 +3,7 @@ import { FlameIcon } from "lucide-react";
 import { AreaIcon } from "@/components/AreaIcon";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { describeValue, HabitValueControl } from "@/features/habits/HabitValueControl";
-import { useArea } from "@/hooks/useArea";
+import { useHabitLook } from "@/hooks/useHabitLook";
 import { cn } from "@/lib/utils";
 
 interface TodayHabitsCardProps {
@@ -51,7 +51,7 @@ function HabitLine({
   onChange: TodayHabitsCardProps["onChange"];
 }) {
   const { habit, today } = summary;
-  const area = useArea(habit.area);
+  const area = useHabitLook(habit);
   const amount =
     habit.kind === "check"
       ? undefined

@@ -29,12 +29,31 @@ describe("parseModule", () => {
     expect(parseModule(moduleNote)).toEqual({
       criterion: "FizzBuzz me sale en menos de 5 minutos. Y de memoria.",
       concepts: [
-        { text: "for clásico", done: true, line: 13 },
-        { text: "while y do-while", done: false, line: 14 },
+        { text: "for clásico", done: true, line: 13, details: "", resources: [] },
+        { text: "while y do-while", done: false, line: 14, details: "", resources: [] },
       ],
       sessions: 1,
       lastSession: { date: "2026-10-14", what: "FizzBuzz", how: "Bien" },
     });
+  });
+});
+
+describe("concepts with details", () => {
+  it("reads the indented lines under a concept as its explanation and resources", () => {
+    const source = [
+      "## Conceptos a dominar",
+      "- [ ] Escritura técnica",
+      "  Documentos y runbooks que el cliente mantiene cuando te vas.",
+      "  - [Curso de Google](https://developers.google.com/tech-writing)",
+      "- [x] Demos",
+    ].join("\n");
+    const [writing, demos] = parseModule(source).concepts;
+    expect(writing).toMatchObject({
+      text: "Escritura técnica",
+      details: "Documentos y runbooks que el cliente mantiene cuando te vas.",
+      resources: [{ title: "Curso de Google", url: "https://developers.google.com/tech-writing" }],
+    });
+    expect(demos).toMatchObject({ text: "Demos", done: true, details: "", resources: [] });
   });
 });
 

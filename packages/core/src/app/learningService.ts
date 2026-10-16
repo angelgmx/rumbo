@@ -1,3 +1,4 @@
+import type { HabitRepository } from "../db/habitRepository";
 import { z } from "zod";
 import { WEEKDAYS, type IsoDate } from "../domain/dates";
 import {
@@ -16,6 +17,7 @@ import {
 } from "../domain/learning";
 import { challengeName, parseChallenge, type ChallengeContent } from "../domain/challenges";
 import { linkTarget, linkTargets } from "../domain/links";
+import { latestDay } from "../domain/idle";
 import { pace, type Pace } from "../domain/pace";
 import { pendingMinutes, planModules, weeklyMinutes, type StudySlot } from "../domain/planner";
 import { readResources, resourceSchema, type Resource } from "../domain/resources";
@@ -41,6 +43,8 @@ export interface NoteRef {
 
 export interface ModuleSummary extends NoteRef {
   title: string;
+  /** Para qué sirve, en una frase: «Entender un papel que no existía hace cinco años». */
+  purpose?: string;
   order: number;
   status: ModuleStatus;
   roadmap?: string;
@@ -81,6 +85,8 @@ export interface RoadmapSummary extends NoteRef {
   plan: RoadmapPlan;
   /** Si llegas a la fecha con tu horario. */
   pace: Pace;
+  /** El último día con una sesión apuntada o una tarea de la ruta trabajada. */
+  lastActivity?: IsoDate;
 }
 
 export interface RoadmapPlan {
@@ -146,10 +152,13 @@ export class LearningService {
     private readonly store: VaultStore,
     private readonly daily: DailyService,
     private readonly tasks: TaskService,
+    private readonly habits: HabitRepository,
   ) {}
 
   roadmaps(): RoadmapSummary[] {
     const modules = this.store.notesOfType("module").map((note) => this.toModule(note));
+    const today = this.daily.today();
+    const tasks = this.tasks.all();
 
     return this.store
       .notesOfType("roadmap")
@@ -166,6 +175,16 @@ export class LearningService {
         const schedule = scheduleSchema.parse(note.data.schedule ?? []);
         const plan = this.plan(own, schedule);
         const deadline = readDate(note.data.deadline);
+        const names = new Set(own.map((module) => module.name));
+        const lastActivity = latestDay(
+          [
+            ...own.map((module) => module.content.lastSession?.date),
+            ...tasks
+              .filter((task) => task.module && names.has(task.module) && (task.done || task.spent))
+              .map((task) => task.doneOn ?? task.scheduled ?? task.created),
+          ],
+          today,
+        );
         return {
           path: note.path,
           name: note.name,
@@ -185,10 +204,11 @@ export class LearningService {
             totalMinutes: plan.totalMinutes,
             remainingMinutes: plan.remainingMinutes,
             weeklyMinutes: plan.weeklyMinutes,
-            today: this.daily.today(),
+            today,
             deadline,
             projectedFinish: plan.finishes,
           }),
+          lastActivity,
         };
       })
       .sort((a, b) => a.title.localeCompare(b.title));
@@ -212,6 +232,15 @@ export class LearningService {
   module(path: string): ModuleSummary | undefined {
     const note = this.store.get(path);
     return note?.data.type === "module" ? this.toModule(note) : undefined;
+  }
+
+  /** El módulo con ese nombre y el tema de su ruta. */
+  findModule(name: string): { topic: TopicSummary; module: ModuleSummary } | undefined {
+    for (const topic of this.topics()) {
+      const module = topic.roadmap?.modules.find((candidate) => candidate.name === name);
+      if (module) return { topic, module };
+    }
+    return undefined;
   }
 
   async setStatus(module: ModuleSummary, status: ModuleStatus): Promise<void> {
@@ -256,6 +285,15 @@ export class LearningService {
   async setDeadline(roadmap: RoadmapSummary, deadline: IsoDate | undefined): Promise<void> {
     const source = await this.store.read(roadmap.path);
     await this.store.write(roadmap.path, setFrontmatter(source, ["deadline"], deadline));
+  }
+
+  /** Pausa o reanuda la ruta, o la marca como terminada. */
+  async setRoadmapStatus(roadmap: RoadmapSummary, status: RoadmapStatus): Promise<void> {
+    const source = await this.store.read(roadmap.path);
+    await this.store.write(
+      roadmap.path,
+      setFrontmatter(source, [this.ownKey(source, "status")], status),
+    );
   }
 
   /** Reducir el alcance: los módulos pasan a «saltado» y dejan de contar para la fecha. */
@@ -333,15 +371,11 @@ export class LearningService {
       .some((task) => !task.done && task.text === text && task.scheduled === today);
     if (alreadyToday) return text;
 
-    const habitNote = this.store
-      .notesOfType("habit")
-      .find((note) => roadmap.habit !== undefined && note.data.key === roadmap.habit);
-
     await this.tasks.create({
       text,
       scheduled: today,
       habit: roadmap.habit,
-      area: linkTarget(habitNote?.data.area),
+      area: this.habits.get(roadmap.habit)?.area,
     });
     return text;
   }
@@ -455,6 +489,7 @@ export class LearningService {
       path: note.path,
       name: note.name,
       title,
+      purpose: typeof note.data.purpose === "string" ? note.data.purpose : undefined,
       order: Number(note.data.order ?? 0),
       status: readStatus(note.data.status),
       roadmap: linkTarget(note.data.roadmap),

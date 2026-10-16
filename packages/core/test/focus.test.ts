@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { badDaysInMonth, badDaysOf, canMarkBadDay } from "../src/domain/badDays";
 import { chooseStart, streaksAtRisk, type RiskCandidate } from "../src/domain/focus";
-import { habitSchema } from "../src/domain/habits";
+import { makeHabit } from "./makeHabit";
 
-const english = habitSchema.parse({ key: "english", name: "Inglés", kind: "duration", target: 30 });
-const gym = habitSchema.parse({ key: "gym", name: "Gym" });
+const english = makeHabit({ key: "english", name: "Inglés", kind: "duration", target: 30 });
+const gym = makeHabit({ key: "gym", name: "Gym" });
 
 function candidate(overrides: Partial<RiskCandidate> & { habit?: RiskCandidate["habit"] } = {}) {
   return {

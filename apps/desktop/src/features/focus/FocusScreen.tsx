@@ -7,13 +7,17 @@ import {
   type RoutineStep,
   type Task,
 } from "@rumbo/core";
-import { toast } from "sonner";
+import { CheckIcon } from "lucide-react";
+import { Link } from "wouter";
 import { useRumbo } from "@/app/RumboContext";
+import { Button } from "@/components/ui/button";
 import { timeOf, useNow } from "@/hooks/useNow";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
-import { choiceMinutes, QUICK_MINUTES, type FocusChoice } from "./choice";
-import { dayEntries, routineOfHabits } from "./dayEntries";
+import { useSession } from "@/features/session/SessionProvider";
+import { choiceRequest, focusNumber, QUICK_MINUTES, type FocusChoice } from "./choice";
+import { dayCount, untimedTasks } from "./dayCount";
+import { dayEntries, nextEntry, routineOfHabits } from "./dayEntries";
 import { DayPlanCard } from "./DayPlanCard";
 import { FocusHeader } from "./FocusHeader";
 import { NowCard } from "./NowCard";
@@ -21,7 +25,6 @@ import { StreakRiskCard } from "./StreakRiskCard";
 import { TodayHabitsCard } from "./TodayHabitsCard";
 import { UntimedCard } from "./UntimedCard";
 import { useFocusDay, type RoutineGroup } from "./useFocusDay";
-import { useFocusTimer } from "./useFocusTimer";
 
 export function FocusScreen() {
   const rumbo = useRumbo();
@@ -29,7 +32,7 @@ export function FocusScreen() {
   const today = rumbo.daily.today();
   const now = useNow();
   const time = timeOf(now);
-  const timer = useFocusTimer(() => toast.success("Tiempo terminado. Descansa un poco."));
+  const session = useSession();
   const day = useFocusDay(today);
 
   const choice: FocusChoice | undefined = chooseStart({
@@ -40,29 +43,22 @@ export function FocusScreen() {
     nextStep: day.nextStep,
   });
   const around = blocksAround(day.plan, time);
+  const entries = dayEntries(day.plan, day.groups);
 
-  // Una tarea del foco con fecha de hoy saldría dos veces.
-  const otherTasks = day.todayTasks.filter(
-    (task) =>
-      // Las de un hábito ya salen dentro de su hábito.
-      !task.fields.habit && !day.focus.some((f) => f.path === task.path && f.line === task.line),
-  );
-  const blocks = day.plan.filter((item) => item.kind === "agenda");
-  const items = [...blocks, ...day.focus, ...otherTasks];
-  const doneCount =
-    items.filter((item) => item.done).length + day.habits.filter((h) => h.doneToday).length;
-  const total = items.length + day.habits.length;
+  const otherTasks = untimedTasks(day);
+  const { done: doneCount, total } = dayCount(day);
 
-  async function start() {
+  async function start(quick = false) {
     if (!choice) return;
-    if (choice.kind === "next-step" && choice.step.topic.roadmap) {
+    if (!quick && choice.kind === "next-step" && choice.step.topic.roadmap) {
       await rumbo.learning.planToday(choice.step.topic.roadmap);
     }
     const left =
       choice.kind === "routine-step"
         ? minutesBetween(time > choice.step.start ? time : choice.step.start, choice.step.end)
         : 0;
-    timer.start(choiceMinutes(choice, left));
+    const request = choiceRequest(rumbo, choice, left);
+    session.start(quick ? { ...request, minutes: QUICK_MINUTES } : request);
   }
 
   async function toggleBadDay() {
@@ -77,9 +73,17 @@ export function FocusScreen() {
 
   return (
     <>
-      <ScreenHeader title="Foco" />
+      <ScreenHeader
+        title="Foco"
+        actions={
+          <Button variant="outline" render={<Link href="/cerrar-el-dia" />}>
+            <CheckIcon data-icon="inline-start" />
+            Cerrar el día
+          </Button>
+        }
+      />
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6">
+        <div className="flex flex-col gap-6">
           <FocusHeader
             today={today}
             greeting={greeting(now)}
@@ -88,10 +92,10 @@ export function FocusScreen() {
             hasNow={choice !== undefined}
           />
 
-          <div className="grid grid-cols-[1fr_380px] items-start gap-6">
+          <div className="grid grid-cols-[1fr_460px] items-start gap-6">
             <div className="flex flex-col gap-6">
               <DayPlanCard
-                entries={dayEntries(day.plan, day.groups)}
+                entries={entries}
                 time={time}
                 current={around.now}
                 onToggleBlock={(item, done) => rumbo.agenda.setDone(today, item.block, done)}
@@ -103,20 +107,20 @@ export function FocusScreen() {
                 tasks={otherTasks}
                 onToggle={toggleTask}
                 onOpen={taskPanel.edit}
-                onCapture={async (text) => void (await rumbo.tasks.capture(text))}
               />
             </div>
             <div className="flex flex-col gap-6">
               <NowCard
                 choice={choice}
-                timer={timer}
+                focusNumber={focusNumber(choice, day.focus)}
+                next={nextEntry(entries, time)?.title}
                 badDay={{
                   active: day.badDay,
                   used: day.badDaysUsed,
                   left: MAX_BAD_DAYS_PER_MONTH - day.badDaysUsed,
                 }}
-                onStart={start}
-                onQuickStart={() => timer.start(QUICK_MINUTES)}
+                onStart={() => start()}
+                onQuickStart={() => start(true)}
                 onToggleBadDay={toggleBadDay}
               />
               {day.atRisk.length > 0 && <StreakRiskCard habits={day.atRisk} onSave={saveStreak} />}

@@ -1,4 +1,4 @@
-import { linkTarget, type BlockKind, type Routine, type RoutineTemplate } from "@rumbo/core";
+import type { BlockKind, Routine } from "@rumbo/core";
 import {
   BookOpenIcon,
   CheckIcon,
@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useRumbo } from "@/app/RumboContext";
+import { useHabitLook } from "@/hooks/useHabitLook";
 import { useArea, type AreaLook } from "@/hooks/useArea";
 
 // Colores de las láminas para las rutinas sin área: así cada tipo se reconoce de un vistazo.
@@ -33,45 +34,38 @@ export function useRoutineLook(routine: Routine): AreaLook {
 
 /** Color de un bloque: el del área de su hábito; los demás, el de la rutina o neutro. */
 export function useBlockColor(kind: BlockKind, ref: string | undefined, routineColor: string) {
-  const { store } = useRumbo();
-  const habitArea = store.findByName(linkTarget(ref) ?? "")?.data.area;
-  const area = useArea(typeof habitArea === "string" ? habitArea : undefined);
+  const { routines } = useRumbo();
+  const habit = kind === "habit" ? routines.habitOf(ref) : undefined;
+  const look = useHabitLook(habit);
 
-  if (kind === "habit") return habitArea ? area.color : routineColor;
-  if (kind === "module" || kind === "task") return routineColor;
-  return "var(--muted-foreground)";
+  if (kind === "habit") return habit?.color || habit?.area ? look.color : routineColor;
+  return kind === "break" ? "var(--muted-foreground)" : routineColor;
 }
 
 export const BLOCK_KIND_LABEL: Record<BlockKind, string> = {
   habit: "Hábito",
-  module: "Módulo",
+  module: "Estudio de ruta",
   task: "Tarea",
+  activity: "Actividad",
   break: "Descanso",
-  custom: "Libre",
+};
+
+export const BLOCK_KIND_HINT: Record<BlockKind, string> = {
+  habit: "Completar el bloque marca el hábito",
+  module: "Toca el tema en curso y crea las tareas del día",
+  task: "Una tarea que ya tienes",
+  activity: "Café, estirar… lo que quieras",
+  break: "Un respiro entre bloques",
 };
 
 export const BLOCK_KIND_ICON: Record<BlockKind, LucideIcon> = {
   habit: FlameIcon,
   module: BookOpenIcon,
   task: CheckIcon,
+  activity: PencilIcon,
   break: CoffeeIcon,
-  custom: PencilIcon,
 };
 
-/** Nombre corto de cada plantilla, como en la fila «Empieza con una plantilla». */
-export const TEMPLATE_LABEL: Record<RoutineTemplate, string> = {
-  morning: "Mañana",
-  study: "Estudio",
-  gym: "Gym",
-  evening: "Noche",
-  weekend: "Fin de semana",
-};
-
-/** Las plantillas no tienen tipo «fin de semana»: se pinta como una rutina libre. */
-export function templateKind(template: RoutineTemplate): Routine["kind"] {
-  return template === "weekend" ? "custom" : template;
-}
-
-/** Fondo rayado de los descansos, igual en la franja del día y en el editor. */
+/** Fondo rayado de los descansos, en la franja del día y en la tarjeta. */
 export const BREAK_PATTERN =
   "repeating-linear-gradient(135deg, color-mix(in oklab, var(--muted-foreground) 18%, transparent) 0 4px, transparent 4px 8px)";

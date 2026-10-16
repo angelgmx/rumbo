@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-export interface FilterOption {
+interface FilterOption {
   value: string;
+  /** Lo que se lee, si no es el propio valor (un proyecto se filtra por id y se lee su título). */
+  label?: string;
   count: number;
   icon?: ReactNode;
 }
@@ -28,7 +30,7 @@ export function FilterChip({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const visible = options.filter((option) =>
-    option.value.toLowerCase().includes(query.trim().toLowerCase()),
+    (option.label ?? option.value).toLowerCase().includes(query.trim().toLowerCase()),
   );
 
   function choose(next: string | undefined) {
@@ -45,7 +47,8 @@ export function FilterChip({
         <PopoverTrigger render={<Button variant="ghost" size="sm" className="rounded-r-none" />}>
           {value ? (
             <span>
-              <span className="text-muted-foreground">{label}:</span> {value}
+              <span className="text-muted-foreground">{label}:</span>{" "}
+              {options.find((option) => option.value === value)?.label ?? value}
             </span>
           ) : (
             <span className="flex items-center gap-1 text-muted-foreground">
@@ -100,7 +103,7 @@ export function FilterChip({
             >
               <Checkbox checked={option.value === value} tabIndex={-1} aria-hidden />
               {option.icon}
-              <span className="flex-1 truncate">{option.value}</span>
+              <span className="flex-1 truncate">{option.label ?? option.value}</span>
               <span className="font-mono text-xs text-muted-foreground">{option.count}</span>
             </button>
           ))}

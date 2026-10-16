@@ -15,22 +15,25 @@ interface TodayCardProps {
   date: IsoDate;
   today: RoutineSummary[];
   other: RoutineSummary[];
+  onOpen: (summary: RoutineSummary) => void;
 }
 
 /** «Tu jueves»: la franja del día a la izquierda y, a la derecha, cuánto hay hoy y qué viene. */
-export function TodayCard({ date, today, other }: TodayCardProps) {
+export function TodayCard({ date, today, other, onOpen }: TodayCardProps) {
   const now = timeOf(useNow());
   const next = today.find((summary) => summary.end > now);
   const total = today.reduce((sum, summary) => sum + summary.minutes, 0);
 
   return (
     <Card className="flex-row gap-0 p-0">
-      <div className="min-w-0 flex-1 p-5">
+      <div className="flex min-w-0 flex-1 flex-col p-5">
         <h2 className="mb-3 flex items-baseline gap-2">
           <span className="font-medium">Tu {weekdayFormat.format(new Date(`${date}T12:00`))}</span>
           <span className="text-sm text-muted-foreground">{formatDayMonth(date)}</span>
         </h2>
-        <DayTimeline today={today} other={other} />
+        <div className="my-auto">
+          <DayTimeline today={today} other={other} onOpen={onOpen} />
+        </div>
       </div>
 
       <aside className="flex w-72 shrink-0 flex-col gap-4 border-l p-5">
@@ -61,7 +64,7 @@ function TodayShare({ routines }: { routines: RoutineSummary[] }) {
   return (
     <div className="mt-3 flex h-1.5 gap-1">
       {routines.map((summary) => (
-        <ShareSegment key={summary.path} summary={summary} />
+        <ShareSegment key={summary.id} summary={summary} />
       ))}
     </div>
   );
@@ -88,10 +91,12 @@ function NextRoutine({ summary, started }: { summary: RoutineSummary; started: b
       </p>
       <div className="flex items-center gap-2.5">
         <AreaIcon area={look} />
-        <span className="flex-1 truncate font-medium">{summary.title}</span>
-        <span className="font-mono text-xs text-muted-foreground">
-          {summary.routine.start} · {formatMinutes(summary.minutes)}
-        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-medium">{summary.title}</p>
+          <p className="font-mono text-xs text-muted-foreground">
+            {summary.routine.start} – {summary.end} · {formatMinutes(summary.minutes)}
+          </p>
+        </div>
       </div>
       <Button className="w-full" onClick={() => start(summary)}>
         <PlayIcon data-icon="inline-start" />

@@ -11,7 +11,7 @@ export const WEEKDAY_LETTER: Record<Weekday, string> = {
   sun: "D",
 };
 
-const NAME: Record<Weekday, string> = {
+export const WEEKDAY_NAME: Record<Weekday, string> = {
   mon: "lunes",
   tue: "martes",
   wed: "miércoles",
@@ -48,7 +48,7 @@ export function WeekdayChips({ schedule, onChange }: WeekdayChipsProps) {
         );
         if (!onChange) {
           return (
-            <span key={day} className={className} aria-label={on ? NAME[day] : undefined}>
+            <span key={day} className={className} aria-label={on ? WEEKDAY_NAME[day] : undefined}>
               {WEEKDAY_LETTER[day]}
             </span>
           );
@@ -58,7 +58,7 @@ export function WeekdayChips({ schedule, onChange }: WeekdayChipsProps) {
             key={day}
             type="button"
             aria-pressed={on}
-            aria-label={NAME[day]}
+            aria-label={WEEKDAY_NAME[day]}
             className={className}
             onClick={() => toggle(day)}
           >

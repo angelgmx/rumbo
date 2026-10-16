@@ -1,5 +1,5 @@
 import { addMinutesToTime } from "./agenda";
-import { addDays, WEEKDAYS, weekdayOf, type IsoDate } from "./dates";
+import { addDays, SPANISH_WEEKDAYS, WEEKDAYS, weekdayOf, type IsoDate } from "./dates";
 import type { Priority } from "./tasks";
 
 // Captura rápida en lenguaje natural:
@@ -8,15 +8,13 @@ import type { Priority } from "./tasks";
 //   "idea para Citalash"          → tarea sin fecha en el inbox
 // El título del panel de tarea usa otra lectura: sin hora, con prioridad («!alta»).
 
-export interface Capture {
+interface Capture {
   text: string;
   date?: IsoDate;
   start?: string;
   end?: string;
   tags: string[];
 }
-
-const SPANISH_WEEKDAYS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
 
 const TAG = /\s#([\p{L}\p{N}_/-]+)(?=\s)/u;
 const DURATION = /\s(?:(\d+)h(\d{1,2})?|(\d+)\s?min|(\d+)m)(?=\s)/;

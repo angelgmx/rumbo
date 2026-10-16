@@ -1,16 +1,20 @@
-import type { Task, TaskDraft } from "@rumbo/core";
+import type { Task } from "@rumbo/core";
 import { PlayIcon } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
 import { Button } from "@/components/ui/button";
-import { CounterControl } from "@/features/counters/CounterControl";
-import { hasCounter } from "@/features/counters/countedTask";
+import { OrganizeAside } from "@/features/task-organizer/OrganizeAside";
+import { taskRequest } from "@/features/session/requests";
+import { useSession } from "@/features/session/SessionProvider";
+import { CompleteButton } from "./CompleteButton";
+import { CompletionSummary } from "./CompletionSummary";
 import { TaskMenu } from "./TaskMenu";
 import { TaskPanelBody } from "./TaskPanelBody";
 import { TaskPanelHeader } from "./TaskPanelHeader";
 import { useAutosavedTask } from "./useAutosavedTask";
+import { useTaskCompletion } from "./useTaskCompletion";
 import { useTaskContext } from "./useTaskContext";
+import { useTaskOptions } from "./useTaskOptions";
 
 /** El panel de una tarea que ya existe: cada cambio se guarda al momento, sin botón. */
 export function EditTaskPanel({
@@ -26,7 +30,9 @@ export function EditTaskPanel({
   const rumbo = useRumbo();
   const { task, draft, patch, flush } = useAutosavedTask(initial);
   const context = useTaskContext(draft);
-  const [started, setStarted] = useState(false);
+  const session = useSession();
+  const names = useTaskOptions();
+  const completion = useTaskCompletion(task, names, flush);
 
   async function attempt(action: () => Promise<void>) {
     try {
@@ -34,13 +40,6 @@ export function EditTaskPanel({
     } catch {
       toast.error("No se ha podido guardar el cambio");
     }
-  }
-
-  // El contador se guarda al momento y no con el resto: lo mueven también el cronómetro y el pomodoro.
-  function change(changes: Partial<TaskDraft>) {
-    const { counter, ...rest } = changes;
-    if ("counter" in changes) void attempt(() => rumbo.tasks.setCounter(task, counter));
-    if (Object.keys(rest).length > 0) patch(rest);
   }
 
   const duplicate = () =>
@@ -60,15 +59,38 @@ export function EditTaskPanel({
       onClose();
     });
 
-  const timed =
-    hasCounter(task) && (task.counter.kind === "minutes" || task.counter.kind === "pomodoro");
-  const live = started && timed;
+  const inFocus = task.focusOn === rumbo.daily.today();
+  const toggleFocus = () =>
+    attempt(async () => {
+      const done = await rumbo.tasks.setFocus(task, !inFocus);
+      if (!done) toast("El foco de hoy ya tiene 3 tareas");
+    });
+
+  function begin() {
+    flush();
+    session.start(taskRequest(rumbo, task));
+    onClose();
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <TaskPanelHeader context={context} last={context.module} onClose={onClose}>
-        <TaskMenu onDuplicate={() => void duplicate()} onDelete={() => void remove()} />
+        {!task.done && (
+          <CompleteButton
+            thinking={completion.thinking}
+            onClick={() => void completion.request()}
+          />
+        )}
+        <TaskMenu
+          inFocus={inFocus}
+          onToggleFocus={() => void toggleFocus()}
+          onDuplicate={() => void duplicate()}
+          onDelete={() => void remove()}
+        />
       </TaskPanelHeader>
+      <div className="flex justify-end px-6 pb-3 empty:hidden">
+        <OrganizeAside task={task} />
+      </div>
       <TaskPanelBody
         draft={draft}
         context={context}
@@ -76,14 +98,25 @@ export function EditTaskPanel({
           done: task.done,
           onChange: (done) => void attempt(() => rumbo.tasks.setDone(task, done)),
         }}
+        taskId={task.id}
         creating={false}
-        live={live && <CounterControl task={task} autoStart />}
-        onPatch={change}
+        banner={
+          completion.suggestion && (
+            <CompletionSummary
+              suggestion={completion.suggestion}
+              names={names}
+              onApply={() => void completion.apply(completion.suggestion!)}
+              onDiscard={completion.discard}
+            />
+          )
+        }
+        onPatch={patch}
+        onFlush={flush}
         onTitleChange={(text) => patch({ text })}
       />
-      {timed && !started && (
+      {!task.done && (
         <footer className="flex justify-end border-t px-6 py-4">
-          <Button onClick={() => setStarted(true)}>
+          <Button onClick={begin}>
             <PlayIcon data-icon="inline-start" />
             Empezar
           </Button>

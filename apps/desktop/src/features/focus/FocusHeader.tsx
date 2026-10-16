@@ -23,7 +23,7 @@ export function FocusHeader({ today, greeting, done, total, hasNow }: FocusHeade
           {greeting}{" "}
           {left === 0
             ? "Hoy no queda nada."
-            : `Te quedan ${left} ${left === 1 ? "cosa" : "cosas"}.`}
+            : `Te quedan ${left} ${left === 1 ? "cosa" : "cosas"}${hasNow ? "; la siguiente empieza ya" : ""}.`}
         </p>
       </div>
       <div className="flex w-72 flex-col gap-2">

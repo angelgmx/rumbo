@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useArea } from "@/hooks/useArea";
+import { useHabitLook } from "@/hooks/useHabitLook";
 import { cn } from "@/lib/utils";
 
 const WEEKDAY_NAMES = {
@@ -41,7 +41,7 @@ const LEVEL_OPACITY = [0, 0.3, 0.55, 0.8, 1];
 /** Mapa de calor de un hábito, estilo GitHub: una columna por semana, una fila por día. */
 export function YearHeatmap({ summary, today }: { summary: HabitSummary; today: IsoDate }) {
   const { habit, history, streak, best, challenge } = summary;
-  const area = useArea(habit.area);
+  const area = useHabitLook(habit);
   const years = yearsWithData(history, today);
   const [year, setYear] = useState(years[0]!);
   const doneDays = [...history].filter(

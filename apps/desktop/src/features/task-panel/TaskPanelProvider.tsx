@@ -51,13 +51,11 @@ export function TaskPanelProvider({ children }: { children: ReactNode }) {
   return (
     <TaskPanelContext value={{ create: () => setTarget({}), edit, target, close, dock: setDocked }}>
       {children}
-      {target && !docked && (
-        <TaskSheet key={panelKey(target)} task={target.task} onClose={close} onOpen={edit} />
-      )}
+      {!docked && <TaskSheet target={target} onClose={close} onOpen={edit} />}
     </TaskPanelContext>
   );
 }
 
 export function panelKey(target: { task?: Task }): string {
-  return target.task ? `${target.task.path}:${target.task.line}` : "new";
+  return target.task ? `task:${target.task.id}` : "new";
 }

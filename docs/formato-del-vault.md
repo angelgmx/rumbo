@@ -4,8 +4,8 @@ Rumbo lee y escribe un vault de Obsidian normal. No hay base de datos: cada nota
 
 ## Reglas
 
-1. **El tipo lo dice el frontmatter, no la carpeta.** `type: habit`, `type: goal`… Las notas se pueden mover de carpeta sin que nada se rompa.
-2. **Las relaciones son wikilinks.** `goal: "[[Inglés B2]]"`, para que Obsidian las enseñe en el grafo y en los backlinks.
+1. **El tipo lo dice el frontmatter, no la carpeta.** `type: area`, `type: roadmap`… Las notas se pueden mover de carpeta sin que nada se rompa.
+2. **Las relaciones son wikilinks.** `roadmap: "[[Java desde cero]]"`, para que Obsidian las enseñe en el grafo y en los backlinks.
 3. **Claves en inglés, valores en tu idioma.** Las claves son el formato público. Si tu vault usa otros nombres, se mapean con `aliases` en la config.
 4. **Solo se guardan hechos.** «Fui al gym el día X», «el módulo Y está dominado». Nunca `streak: 12`.
 5. **Lo desconocido se respeta.** La app nunca borra ni reordena frontmatter que no entiende. Al cambiar un valor, el resto del fichero queda igual byte a byte.
@@ -22,10 +22,8 @@ Rumbo lee y escribe un vault de Obsidian normal. No hay base de datos: cada nota
 folders:
   daily: 04 - Diario # carpeta de las dailies
   daily_format: YYYY/MM/YYYY-MM-DD # subcarpetas y nombre de cada daily
-  inbox: 00 - Inbox/Inbox.md # fichero donde caen las capturas
-  habits: Hábitos
-  goals: Objetivos
-  routines: 07 - Rutinas
+  inbox: 00 - Inbox/Inbox.md # solo para importar las tareas antiguas una vez
+  ideas: 00 - Inbox/Ideas.md # solo para importar las ideas antiguas una vez
   templates: 05 - Plantillas # aquí se busca la plantilla "Daily.md"
 
 pomodoro: # minutos de trabajo y descanso, y bloques por defecto
@@ -42,48 +40,27 @@ Todo es opcional; si falta, se usan valores por defecto. Las notas de la carpeta
 
 ## Tipos de nota
 
-### Hábito — `type: habit`
+### Hábitos
 
-La definición del hábito. Responde a tres preguntas: **cuándo**, **cómo sé que lo he cumplido** y **para qué es** (objetivo y área).
+Los hábitos viven en la base de datos de la app (tablas `habitos` y `registros_habito`, ver [Modelo de datos](modelo-de-datos.md)). Cada uno responde a tres preguntas: **cuándo**, **cómo sé que lo he cumplido** y **para qué es** (objetivo y área).
 
-```yaml
-type: habit
-key: programacion # identificador corto que usan las dailies y las tareas (no cambia nunca)
-name: Programación
-kind: tasks # check | count | duration | tasks
-schedule: daily # daily | [mon, wed, fri] | { times_per_week: 4 }
-start: "17:00" # opcional: franja horaria
-end: "19:00"
-goal: "[[Dominar un stack backend]]"
-area: "[[Desarrollo]]"
-started: 2026-10-15
-until: 2026-12-19 # opcional: último día, si es un reto (21, 30, 66, 90 días…)
-archived: false
-```
+| Tipo     | Se cumple cuando…                 | Qué se apunta cada día          |
+| -------- | --------------------------------- | ------------------------------- |
+| Sí o no  | lo marcas                         | hecho                           |
+| Cantidad | llegas al número (`meta`)         | la cantidad (20 páginas)        |
+| Duración | llegas a los minutos (`meta`)     | los minutos                     |
+| Tareas   | terminas todas sus tareas del día | nada: se calcula con sus tareas |
 
-| `kind`     | Se cumple cuando…                 | Campos                 | Dónde se apunta                                     |
-| ---------- | --------------------------------- | ---------------------- | --------------------------------------------------- |
-| `check`    | lo marcas                         | —                      | daily: `gym: true`                                  |
-| `count`    | llegas al número                  | `target`, `unit`       | daily: `lectura: 20`                                |
-| `duration` | llegas a los minutos              | `target` (`unit: min`) | daily: `meditar: 10`                                |
-| `tasks`    | terminas todas sus tareas del día | —                      | en las propias tareas, con `[habit:: programacion]` |
-
-**Versión mínima.** En los de cantidad y tiempo, `minimum: 10` es lo mínimo que salva la racha un día flojo (si no lo pones, la mitad de `target`). El hábito sigue sin darse por cumplido, pero la racha no se rompe. Foco la ofrece cuando una racha de 3 días o más corre peligro.
-
-**Hábitos de tareas.** El hábito es el hueco fijo de tu rutina («Programación, de lunes a viernes de 17:00 a 19:00») y lo que haces dentro cambia cada día: son tareas normales con fecha y el campo `[habit:: clave]`. Ese día cuenta como hecho si tenía tareas vinculadas y estaban todas terminadas. No se guarda nada en la daily: se calcula a partir de las tareas.
-
-```markdown
-- [x] Tema de hoy: Arrays ⏳ 2026-10-15 [area:: Desarrollo] [habit:: programacion]
-- [ ] Ejercicios 3-5 de Bucles ⏳ 2026-10-15 [area:: Desarrollo] [habit:: programacion]
-```
-
-- Desde la app se crean, editan, archivan y eliminan. Una nota nueva se llama `Hábito — Nombre.md` (con prefijo para que no choque con una nota de área del mismo nombre).
-- La `key` no cambia al editar: es lo que une el hábito con las dailies y las tareas.
-- **Archivar** (`archived: true`) lo oculta sin borrar nada. **Eliminar** borra la nota; lo marcado se queda.
-- Con `until` es un **reto**: la app enseña «día 15 de 66» y, al terminar, deja de salir en tu día.
-- La app calcula racha, mejor racha, % de los últimos 30 días, total acumulado (días, páginas, minutos…) y el día de la semana en que más lo cumples. Nada de eso se guarda.
-- Los días que no tocan no rompen la racha, ni los **días malos** de la daily. Con `times_per_week` la racha se cuenta en semanas cumplidas.
-- Con `start` y `end`, el hábito sale en **Tu día** como un bloque de la rutina los días que toca (no se escribe en la agenda: se dibuja a partir de la nota). Si es de tareas, sus tareas de hoy salen dentro del bloque.
+- **Clave fija** (`ingles-b2`): no cambia al editar. La usan las tareas (`habito`), las rutas (`habit:` en su nota) y los bloques de rutina (`ref`).
+- **Versión mínima.** En los de cantidad y tiempo, `minimo` salva la racha un día flojo (si no hay, la mitad de la meta). Foco la ofrece cuando una racha de 3 días o más corre peligro.
+- **Hábitos de tareas.** El hábito es el hueco fijo («Programación, de lunes a viernes de 17:00 a 19:00») y lo que haces dentro cambia cada día: son tareas con ese hábito. El día cuenta si tenía tareas y estaban todas terminadas.
+- **Icono y color** propios (de Lucide); si no tiene, los de su área.
+- **Archivar** lo oculta sin borrar nada y se recupera desde «Archivados». **Eliminar** lo borra con todo lo apuntado.
+- Con fecha `hasta` es un **reto**: la app enseña «día 15 de 66» y, al terminar, deja de salir en tu día.
+- Racha, mejor racha, % de 30 días, totales y mejor día de la semana se calculan; no se guardan.
+- Los días que no tocan no rompen la racha, ni los **días malos** de la daily. Con «N veces por semana» la racha va en semanas.
+- Con hora de inicio y fin, sale en **Tu día** como un bloque los días que toca.
+- **Lo que ya tenías:** las notas `type: habit` y el campo `habits:` de las dailies se importan una vez. Las notas no se tocan; las mal escritas no se importan.
 
 ### Daily — `type: daily`
 
@@ -94,15 +71,8 @@ Una nota por día con los hechos de ese día. Un fichero por día evita conflict
 type: daily
 date: 2026-10-15
 bad_day: true # opcional: día malo
-habits:
-  gym: true
-  ingles: 35
-  lectura: 20
+energy: medium # opcional: low | medium | high, al cerrar el día
 ---
-
-## Foco de hoy
-
-- [ ] Terminar los ejercicios de Strings
 
 ## Agenda
 
@@ -110,71 +80,32 @@ habits:
 - [ ] 17:00 - 19:00 Java · Bucles
 
 ## Notas del día
+
+## Lo que salió bien
+
+- Terminaste 2 tareas.
 ```
 
-- **Foco de hoy:** como mucho 3 tareas.
 - **Día malo:** con `bad_day: true` ese día los hábitos no rompen la racha (se salta, y si hiciste algo, cuenta). Como mucho 2 al mes: Foco no deja marcar más. Se quita borrando la línea.
 - **Agenda:** bloques con hora en el formato del plugin Day Planner (`HH:MM - HH:MM texto`). Se muestran ordenados por hora.
+- **Cerrar el día:** guarda la energía (`energy`) y «Lo que salió bien» en la daily de hoy. La hora de mañana y lo primero que harás van como un bloque de la agenda de la daily de mañana (`- [ ] 10:00 Abre Strings y lee 1 minuto`), así salen en Tu día y en «Ahora».
 - Si la daily no existe, la app la crea con la plantilla `Daily.md` de la carpeta de plantillas (rellenando las fechas de Templater) o con una por defecto.
 
 ### Tareas
 
-Casillas en el formato del plugin **Tasks**, así funcionan igual en Obsidian:
+Las tareas viven en la base de datos de la app (tabla `tareas`, ver [Modelo de datos](modelo-de-datos.md)): título, estado, fechas, prioridad, repetición, duración estimada y tiempo real, área, proyecto, módulo, hábito, pasos, notas, etiquetas y el día en que están en el foco (como mucho 3 por día).
 
-```markdown
-- [ ] Revisar PR de Citalash 📅 2026-10-16 #negocio
-- [ ] Reservar clases ⏳ 2026-10-18 🔁 every week
-- [x] Clase de conversación ✅ 2026-10-14
-- [ ] Leer la documentación [area:: Desarrollo]
-```
+| Vista     | Qué tareas salen                                                       |
+| --------- | ---------------------------------------------------------------------- |
+| Inbox     | Sin hacer, sin fecha, sin área y sin proyecto                          |
+| Hoy       | Con fecha de hoy o anterior, sin hacer                                 |
+| Próximas  | Con fecha futura                                                       |
+| Algún día | Sin fecha y ya procesadas (con área o proyecto)                        |
+| Hechas    | Las terminadas en los últimos 14 días; «Ver anteriores» añade el resto |
 
-| Marca             | Significado                                                      |
-| ----------------- | ---------------------------------------------------------------- |
-| `📅 fecha`        | Fecha límite                                                     |
-| `⏳ fecha`        | Fecha en la que la quiero hacer                                  |
-| `✅ fecha`        | Hecha ese día (la app la pone al marcar)                         |
-| `🔁 texto`        | Se repite                                                        |
-| `#etiqueta`       | Etiqueta                                                         |
-| `[clave:: valor]` | Campo de Dataview (`area`, `habit`, `project`, `module`, `due`…) |
+**Archivar hechas** las quita de «Hechas» sin borrarlas. Las de un hábito no se archivan: son su historial.
 
-**Contador.** Una tarea puede llevar un contador en el campo `counter`, con su tipo y `actual/objetivo`:
-
-```markdown
-- [ ] Leer [counter:: minutes 12/30] ⏳ 2026-10-16
-- [ ] Programar [counter:: pomodoro 1/4]
-- [ ] Beber agua [counter:: count 3/8]
-- [ ] Ejercicios 3-5 de Strings [counter:: progress 1/3]
-```
-
-| Tipo       | Para qué                               | Cómo cambia                                     |
-| ---------- | -------------------------------------- | ----------------------------------------------- |
-| `minutes`  | Cronómetro hacia arriba                | Se guardan los minutos que lleva                |
-| `pomodoro` | Ciclos de trabajo y descanso (config.) | +1 al terminar un ciclo, sin pasar del objetivo |
-| `count`    | Contar a mano (+1 / −1)                | Puede pasarse del objetivo (9 de 8 vasos)       |
-| `progress` | Pasos de un total                      | +1 / −1, sin pasar del objetivo                 |
-
-Sin el campo, la tarea no tiene contador: se marca hecha y ya. Llegar al objetivo **no** marca la tarea; eso lo decides tú. Al cambiar el contador solo se reescribe su campo, y si la tarea no lo tenía se pone antes de los emojis de Tasks (que los lee desde el final de la línea).
-
-`project` y `module` llevan un enlace a la nota: `[project:: [[Rumbo]]]`, `[module:: [[Dominio — Strings]]]`. Si la tarea no tiene `area`, el panel de tarea le pone la del módulo (la de su ruta) o, si no, la del proyecto.
-
-**Pasos y notas.** Lo que cuelga de una tarea con más sangría, hasta la primera línea en blanco, es suyo: las casillas son sus **pasos** (no cuentan como tareas aparte) y el resto de líneas, sus **notas**.
-
-```markdown
-- [ ] Preparar la demo del lunes [area:: Negocio] ⏳ 2026-10-19
-      Enviar el enlace antes de las 10:00
-  - [x] Guion de 5 minutos
-  - [ ] Ensayar
-```
-
-La app lee las tareas del **inbox**, de las **dailies** y de las notas de **proyecto**. Las casillas de otras notas (por ejemplo, la lista de conceptos de un tema) no son tareas.
-
-| Vista     | Qué tareas salen                                                  |
-| --------- | ----------------------------------------------------------------- |
-| Inbox     | En el inbox, sin fecha, sin área y sin proyecto                   |
-| Hoy       | Con fecha de hoy o anterior, sin hacer                            |
-| Próximas  | Con fecha futura                                                  |
-| Algún día | Sin fecha y ya procesada (con área o proyecto, o fuera del inbox) |
-| Hechas    | Marcadas                                                          |
+**Importar del vault.** La primera vez que Rumbo abre la base de datos copia las casillas del inbox, de las dailies y de las notas de proyecto (formato del plugin **Tasks**: `⏳`, `📅`, `✅`, `🔁`, `#etiqueta`, `[area:: …]`, `[project:: [[…]]]`, pasos y notas con sangría). Una tarea de una daily sin fecha queda para ese día; las de «Foco de hoy», en el foco de ese día. Las notas no se tocan.
 
 ### Vistas guardadas
 
@@ -192,7 +123,13 @@ project: Citalash # opcional
 
 Una tarea sale del inbox en cuanto tiene fecha, área o proyecto. Al procesar, la app añade esos datos a la propia línea (la tarea no se mueve de fichero), la marca como hecha o la borra junto con sus pasos.
 
+### Ideas
+
+Las ideas viven en la base de datos de la app (tabla `ideas`, ver [Modelo de datos](modelo-de-datos.md)). La nota `folders.ideas` (una viñeta por idea, `- App de recetas [created:: 2026-10-16]`) solo se lee una vez, para importarla; después no se toca.
+
 ### Captura rápida
+
+La captura rápida tiene un conmutador **Tarea | Idea**. Una idea se guarda tal cual en la nota de ideas; lo que sigue es para las tareas.
 
 Lo que escribes en la captura rápida se interpreta así:
 
@@ -203,6 +140,7 @@ Lo que escribes en la captura rápida se interpreta así:
 | `llamar al dentista el lunes` | Tarea en el inbox con `⏳` el próximo lunes     |
 | `examen 20/10`                | Tarea con `⏳` el 20 de octubre                 |
 | `idea para Citalash`          | Tarea en el inbox, sin fecha                    |
+| `repasar hoy 30m !alta #java` | Tarea de hoy con duración, prioridad y etiqueta |
 
 Palabras de fecha: `hoy`, `mañana`, `pasado mañana`, el nombre de un día (`lunes`… `domingo`) y `día/mes`.
 
@@ -220,18 +158,27 @@ color: "#E76F00"
 roadmap: "[[Java desde cero]]"
 ```
 
-### Objetivo — `type: goal`
+### Objetivos y proyectos
 
-```yaml
-type: goal
-title: Inglés B2 conversacional
-area: "[[Inglés]]"
-horizon: year # year | quarter
-period: 2027
-status: active # active | done | paused | dropped
-parent: "[[Visión]]"
-deadline: 2027-06-30
-```
+Viven en la base de datos de la app (tablas `objetivos` y `proyectos`, ver [Modelo de datos](modelo-de-datos.md)).
+
+- **Objetivo:** un resultado en una fecha. Qué, por qué, sus **resultados clave** (cada uno desde → hasta), qué te frenará (planes «si… entonces»), qué lo empuja (proyectos, hábitos y rutas), las notas del vault que lo acompañan y sus recursos (enlaces). El progreso se calcula: por sus resultados clave o, si no tiene, por lo que lo empuja. Sin nada, está «sin plan».
+- **Proyecto:** algo con un final y un **resultado** que dice cuándo está terminado. Tiene hitos, enlaces (repo, web) y sus tareas. El progreso sale de los hitos o, si no tiene, de sus tareas.
+- Las rutas y notas se conectan desde el objetivo (no se escribe nada en sus notas).
+- **Lo que ya tenías:** las notas `type: goal` y `type: project` se importan una vez. Las notas no se tocan.
+
+### Organizar el Inbox con IA
+
+«Procesar con IA» manda a la IA el texto de las tareas sin procesar del inbox, las áreas de arriba del todo y una semana de calendario. Por cada una propone qué es y no escribe nada hasta que aceptas:
+
+| Propone  | Al aceptar                                                                   |
+| -------- | ---------------------------------------------------------------------------- |
+| Tarea    | Le pone el área (`[area:: …]`) y la fecha (`⏳`); deja de estar sin procesar |
+| Idea     | Pasa a la nota de ideas                                                      |
+| Proyecto | Crea el proyecto, en marcha, y quita la tarea del inbox                      |
+| Objetivo | Crea el objetivo, activo, y quita la tarea del inbox                         |
+
+Un área que no existe o una fecha que no es real se descartan. Una tarea sin área ni fecha no se propone: no cambiaría nada.
 
 ### Jerarquía de Roadmaps
 
@@ -275,7 +222,6 @@ Java/
 ```yaml
 type: roadmap
 title: Java desde cero
-goal: "[[Dominar un stack backend]]"
 status: active
 habit: programacion # opcional: el hábito de tareas en el que se estudia
 schedule:
@@ -298,6 +244,7 @@ roadmap: "[[Java desde cero]]"
 order: 4
 track: fundamentos # opcional: su pista; si no dice ninguna, va a la primera
 title: Bucles # o "tema" con alias
+purpose: "Repetir sin copiar código." # opcional: para qué sirve, en una frase (entre comillas si lleva dos puntos)
 status: aprendiendo # sin-empezar | aprendiendo | dominado | saltado (o en inglés)
 ```
 
@@ -310,6 +257,8 @@ El cuerpo del tema:
 ## Conceptos a dominar
 
 - [ ] for clásico: cuándo necesito el índice
+      Recorre por posición; úsalo cuando necesites saber en qué vuelta vas.
+  - [Bucles en dev.java](https://dev.java/learn/language-basics/controlling-flow/)
 
 ## Registro de práctica
 
@@ -319,6 +268,7 @@ El cuerpo del tema:
 
 - El estado se escribe en la clave y el idioma que ya use la nota (`estado: dominado` o `status: mastered`).
 - Desde la app se marcan conceptos (la casilla de la nota) y se añaden filas al registro de práctica.
+- Bajo cada concepto, con sangría, va su **explicación** y sus **enlaces** (cursos, vídeos, artículos). La vista **Temario** de la ruta los enseña al desplegar el concepto; el tipo de recurso se adivina por la dirección.
 
 **Ejercicios** — una nota por tema, por niveles:
 
@@ -401,39 +351,26 @@ repaso:
 
 **Siguiente paso.** El tema que toca es el primero en `aprendiendo` (o, si no hay, el primero `sin-empezar`), y el ejercicio que toca es el primero sin hacer de ese tema. «Añadir a hoy» crea una tarea de hoy con `[habit:: <habit de la ruta>]`, así cuenta para cumplir el hábito.
 
-### Rutina — `type: routine`
+### Rutinas
 
-Un hueco del día con bloques en orden: une hábitos, temas de una ruta y tareas. Vive en la carpeta `routines` de la config.
+Un hueco del día con bloques en orden: une hábitos, temas de una ruta y tareas. Viven en la base de datos de la app (tabla `rutinas`, con sus bloques dentro; ver [Modelo de datos](modelo-de-datos.md)).
 
-```yaml
----
-type: routine
-title: Rutina de estudio Java
-area: "[[Desarrollo]]"
-kind: study # morning, afternoon, evening, study, gym o custom
-days: [mon, tue, wed, fri] # igual que los hábitos: daily, lista de días o { times_per_week: 3 }
-start: "18:00"
-active: true
-blocks:
-  - { kind: custom, title: Repaso del tema anterior, minutes: 15 }
-  - { kind: module, ref: "[[Java desde cero]]", minutes: 45 }
-  - { kind: break, minutes: 10 }
-  - { kind: habit, ref: "[[Hábito — Inglés]]", minutes: 15 }
----
-```
+| Bloque    | Apunta a                                   | Al terminarlo                                              |
+| --------- | ------------------------------------------ | ---------------------------------------------------------- |
+| Hábito    | La clave del hábito                        | Se apunta en el hábito (hecho, la cantidad o suma minutos) |
+| Estudio   | Una ruta (toca el tema en curso) o un tema | Si estaba sin empezar, pasa a aprendiendo                  |
+| Tarea     | El id de una tarea que ya existe           | La tarea se marca hecha                                    |
+| Actividad | — (nombre libre: «Café», «Estirar»)        | —                                                          |
+| Descanso  | —                                          | —                                                          |
 
-| Bloque   | `ref`                                        | Al terminarlo                                             |
-| -------- | -------------------------------------------- | --------------------------------------------------------- |
-| `habit`  | La nota del hábito                           | Se apunta en la daily (hecho, la cantidad o suma minutos) |
-| `module` | Un tema, o su ruta (y toca el tema en curso) | Si estaba sin empezar, pasa a aprendiendo                 |
-| `task`   | Una nota con la tarea                        | Nada: las tareas se marcan una a una                      |
-| `break`  | —                                            | —                                                         |
-| `custom` | —                                            | —                                                         |
+Todos llevan título (opcional salvo en la actividad, que es su nombre) y duración en minutos.
 
-- **La hora de cada bloque no se guarda:** empieza cuando acaba el anterior, a partir de `start`. Al reordenar, se recalcula.
-- **Bloque de un tema → tareas de hoy.** Genera el recurso pendiente que toca ver (contador de minutos) y los siguientes ejercicios sin hacer, como mucho 3 (contador de progreso). Si no queda nada, «repasar conceptos y criterio de dominado». Llevan `[habit:: …]` si la ruta tiene hábito, así cuentan para cumplirlo. Las que ya existen hoy no se repiten.
-- Plantillas para empezar: mañana, estudio, gym, noche y fin de semana.
+- **La hora de cada bloque no se guarda:** empieza cuando acaba el anterior, a partir de la hora de inicio. Al reordenar, se recalcula.
+- **Bloque de un tema → tareas de hoy.** Genera el recurso pendiente que toca ver (con su duración estimada) y los siguientes ejercicios sin hacer, como mucho 3 (cada uno, un paso de la tarea). Si no queda nada, «repasar conceptos y criterio de dominado». Llevan el hábito de la ruta si lo tiene, así cuentan para cumplirlo. Las que ya existen hoy no se repiten.
+- **Vigencia:** `from` y `until` (opcionales) acotan los días en que toca; pasada `until`, la rutina deja de tocar. Se crean y editan en la app, no en notas.
+- **Choques:** al editar una rutina, la app avisa (sin impedir guardar) si se solapa en hora con otra rutina activa algún día que comparten, o con una tarea pendiente con hora en un día que toca. Las tareas que la propia rutina lleva en un bloque no cuentan.
+- **Lo que ya tenías:** las notas `type: routine` se importan una vez; los bloques de hábito pasan del enlace a la nota del hábito a su clave, y `custom` (y `task` sin tarea) pasan a `activity`. Las notas no se tocan; las mal escritas no se importan.
 
 ### Tipos previstos
 
-`checkpoint`, `resource`, `project`, `review`, `vision`, `brief`, `research`, `system`, `playbook`. Se documentarán aquí cuando la app empiece a usarlos.
+`checkpoint`, `resource`, `review`, `vision`, `brief`, `research`, `system`, `playbook`. Se documentarán aquí cuando la app empiece a usarlos.

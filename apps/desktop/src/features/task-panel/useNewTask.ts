@@ -1,10 +1,11 @@
-import type { TaskDraft } from "@rumbo/core";
+import type { Task, TaskDraft } from "@rumbo/core";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
+import { useTaskOrganizer } from "@/features/task-organizer/TaskOrganizerProvider";
 import { applyTitle, EMPTY_DRAFT } from "./taskDraft";
 
-export interface NewTask {
+interface NewTask {
   draft: TaskDraft;
   canCreate: boolean;
   patch: (changes: Partial<TaskDraft>) => void;
@@ -16,6 +17,7 @@ export interface NewTask {
 /** El borrador de una tarea nueva: se rellena a mano o escribiendo el título en lenguaje natural. */
 export function useNewTask(onCreated: () => void, initial: TaskDraft = EMPTY_DRAFT): NewTask {
   const rumbo = useRumbo();
+  const organizer = useTaskOrganizer();
   const today = rumbo.daily.today();
   const [draft, setDraft] = useState<TaskDraft>(initial);
 
@@ -35,10 +37,12 @@ export function useNewTask(onCreated: () => void, initial: TaskDraft = EMPTY_DRA
     const text = finished.text.trim();
     if (!text) return;
 
+    let created: Task | undefined;
     try {
-      await rumbo.tasks.create({
+      created = await rumbo.tasks.create({
         ...finished,
         text,
+        time: finished.scheduled ? finished.time : undefined,
         area: finished.area ?? rumbo.tasks.inheritedArea(finished),
       });
     } catch {
@@ -46,6 +50,7 @@ export function useNewTask(onCreated: () => void, initial: TaskDraft = EMPTY_DRA
       return;
     }
     toast.success(finished.scheduled ? "Tarea creada" : "Tarea creada en el inbox");
+    if (created) void organizer.organizeNew(created);
     onCreated();
   }
 

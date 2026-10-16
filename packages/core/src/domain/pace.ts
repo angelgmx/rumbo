@@ -6,7 +6,7 @@ import { daysBetween, type IsoDate } from "./dates";
 
 export type PaceState = "ahead" | "on-track" | "behind" | "no-deadline";
 
-export interface PaceInput {
+interface PaceInput {
   /** Minutos que lleva la ruta entera, hechos y por hacer. */
   totalMinutes: number;
   remainingMinutes: number;
@@ -59,7 +59,7 @@ export function pace(input: PaceInput): Pace {
   };
 }
 
-export interface TrimCandidate {
+interface TrimCandidate {
   id: string;
   minutes: number;
 }

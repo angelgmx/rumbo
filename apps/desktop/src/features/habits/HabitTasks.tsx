@@ -3,7 +3,7 @@ import { PlusIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useRumbo } from "@/app/RumboContext";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CounterChip } from "@/features/counters/CounterChip";
+import { StepsChip } from "@/features/tasks/StepsChip";
 import {
   InputGroup,
   InputGroupAddon,
@@ -24,7 +24,7 @@ export function HabitTasks({ habit, tasks }: { habit: Habit; tasks: Task[] }) {
       text,
       scheduled: rumbo.daily.today(),
       habit: habit.key,
-      area: habit.area?.match(/\[\[([^\]|#]+)/)?.[1],
+      area: habit.area,
     });
     setText("");
   }
@@ -38,7 +38,7 @@ export function HabitTasks({ habit, tasks }: { habit: Habit; tasks: Task[] }) {
       )}
       {tasks.map((task) => (
         <label
-          key={`${task.path}:${task.line}`}
+          key={task.id}
           className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted"
         >
           <Checkbox
@@ -48,7 +48,7 @@ export function HabitTasks({ habit, tasks }: { habit: Habit; tasks: Task[] }) {
           <span className={cn("flex-1 text-sm", task.done && "text-muted-foreground line-through")}>
             {task.text}
           </span>
-          {task.counter && <CounterChip counter={task.counter} />}
+          <StepsChip steps={task.steps} />
         </label>
       ))}
       <form onSubmit={add} className="mt-1">

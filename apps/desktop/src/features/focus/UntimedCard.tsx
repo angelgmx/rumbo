@@ -1,59 +1,47 @@
 import type { Task } from "@rumbo/core";
 import { AnimatePresence, motion } from "motion/react";
-import { useState, type FormEvent } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { CounterChip } from "@/features/counters/CounterChip";
+import { CaptureBox } from "@/features/capture/CaptureBox";
+import { AreaDot } from "@/features/tasks/AreaDot";
+import { StepsChip } from "@/features/tasks/StepsChip";
+import { areaOf } from "@/features/tasks/taskFilters";
 import { listItem } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { formatFocusNumber } from "./choice";
 
 interface UntimedCardProps {
   focus: Task[];
   tasks: Task[];
   onToggle: (task: Task, done: boolean) => void;
   onOpen: (task: Task) => void;
-  onCapture: (text: string) => Promise<void>;
 }
 
 /** Lo que hay que hacer hoy pero sin hora: el foco del día y las tareas para hoy. */
-export function UntimedCard({ focus, tasks, onToggle, onOpen, onCapture }: UntimedCardProps) {
-  const [text, setText] = useState("");
-
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (!text.trim()) return;
-    await onCapture(text);
-    setText("");
-  }
-
+export function UntimedCard({ focus, tasks, onToggle, onOpen }: UntimedCardProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>
           Sin hora <span className="ml-1 text-muted-foreground">{focus.length + tasks.length}</span>
         </CardTitle>
-        <CardDescription>Tu foco del día y las tareas para hoy</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-1">
         <AnimatePresence initial={false}>
-          {[
-            ...focus.map((task) => ({ task, label: "Foco" })),
-            ...tasks.map((task) => ({ task, label: undefined })),
-          ].map(({ task, label }) => (
-            <motion.div key={`${task.path}:${task.text}`} {...listItem} className="overflow-hidden">
-              <TaskLine task={task} label={label} onToggle={onToggle} onOpen={onOpen} />
+          {[...focus, ...tasks].map((task, index) => (
+            <motion.div key={task.id} {...listItem} className="overflow-hidden">
+              <TaskLine
+                task={task}
+                label={index < focus.length ? formatFocusNumber(index) : undefined}
+                onToggle={onToggle}
+                onOpen={onOpen}
+              />
             </motion.div>
           ))}
         </AnimatePresence>
-        <form onSubmit={submit} className="mt-2">
-          <Input
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            placeholder="Captura rápida: escribe una tarea o idea · «gym mañana 18:00» le pone hora"
-            aria-label="Captura rápida"
-          />
-        </form>
+        <div className="mt-2">
+          <CaptureBox compact />
+        </div>
       </CardContent>
     </Card>
   );
@@ -70,6 +58,7 @@ function TaskLine({
   onToggle: UntimedCardProps["onToggle"];
   onOpen: UntimedCardProps["onOpen"];
 }) {
+  const area = areaOf(task);
   return (
     <div className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted">
       <Checkbox
@@ -77,7 +66,7 @@ function TaskLine({
         onCheckedChange={(checked) => onToggle(task, checked === true)}
         aria-label={task.text}
       />
-      {label && <span className="font-mono text-xs text-primary-text uppercase">{label}</span>}
+      {area && <AreaDot area={area} />}
       <button
         type="button"
         onClick={() => onOpen(task)}
@@ -87,8 +76,9 @@ function TaskLine({
         )}
       >
         {task.text}
+        {label && <span className="text-sm text-muted-foreground"> · {label}</span>}
       </button>
-      {task.counter && <CounterChip counter={task.counter} />}
+      <StepsChip steps={task.steps} />
     </div>
   );
 }

@@ -1,15 +1,13 @@
-import { startOfWeek, type ModuleSummary, type TopicSummary } from "@rumbo/core";
+import type { TopicSummary } from "@rumbo/core";
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { formatDayMonth } from "@/lib/format";
 import { moduleHref } from "./links";
-import { STATUS_LABEL, STATUS_STYLE } from "./moduleStatus";
 import { NoteReader } from "./NoteReader";
 import { RoadmapDiagram } from "./RoadmapDiagram";
 import { RoadmapLegend } from "./RoadmapLegend";
-import { Tag } from "./Tag";
+import { RoadmapWeeks } from "./weeks/RoadmapWeeks";
 
 type View = "diagram" | "weeks";
 
@@ -43,59 +41,11 @@ export function TopicRoadmap({ topic }: { topic: TopicSummary }) {
           />
         </Card>
       ) : (
-        <WeeksList topic={topic} />
+        <Card className="gap-0 p-4">
+          <RoadmapWeeks topic={topic} onOpenChallenge={setReading} />
+        </Card>
       )}
       <NoteReader path={reading} onClose={() => setReading(undefined)} />
-    </div>
-  );
-}
-
-/** Los módulos agrupados por la semana en que terminarías cada uno, según tu horario. */
-export function WeeksList({ topic }: { topic: TopicSummary }) {
-  const roadmap = topic.roadmap!;
-  const groups = new Map<string, ModuleSummary[]>();
-  for (const module of roadmap.modules) {
-    const finishes = roadmap.plan.modules.get(module.path);
-    const key =
-      module.status === "mastered" || module.status === "skipped"
-        ? "Hecho"
-        : finishes
-          ? `Semana del ${formatDayMonth(startOfWeek(finishes))}`
-          : "Sin fecha";
-    groups.set(key, [...(groups.get(key) ?? []), module]);
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      {[...groups.entries()].map(([week, modules]) => (
-        <Card key={week} className="gap-0 py-0">
-          <div className="border-b px-4 py-3 font-mono text-xs tracking-widest text-muted-foreground uppercase">
-            {week}
-          </div>
-          {modules.map((module) => {
-            const finishes = roadmap.plan.modules.get(module.path);
-            return (
-              <Link
-                key={module.path}
-                href={moduleHref(topic.path, module.name)}
-                className="flex items-center gap-4 border-b px-4 py-3 last:border-b-0 hover:bg-muted/40"
-              >
-                <span className="flex-1">
-                  {String(module.order).padStart(2, "0")} · {module.title}
-                </span>
-                {finishes && module.status !== "mastered" && (
-                  <span className="font-mono text-xs text-muted-foreground">
-                    ≈ {formatDayMonth(finishes)}
-                  </span>
-                )}
-                <Tag dot className={STATUS_STYLE[module.status]}>
-                  {STATUS_LABEL[module.status]}
-                </Tag>
-              </Link>
-            );
-          })}
-        </Card>
-      ))}
     </div>
   );
 }

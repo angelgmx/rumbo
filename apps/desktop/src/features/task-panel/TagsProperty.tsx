@@ -1,7 +1,7 @@
 import { XIcon } from "lucide-react";
 import { useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { PropertyRow } from "./PropertyRow";
+import { PropertyRow } from "@/components/panel/PropertyRow";
 
 /** Las etiquetas de la tarea: escribe una y Enter, o elige entre las que ya usas. */
 export function TagsProperty({
@@ -32,6 +32,7 @@ export function TagsProperty({
   return (
     <PropertyRow
       label="Etiquetas"
+      empty="Añadir etiquetas"
       value={tags.length > 0 ? <TagList tags={tags} /> : undefined}
       width="w-64 gap-2 p-2.5"
     >

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 interface PageTitleProps {
   backHref: string;
   icon: { icon?: string; color?: string };
-  title: string;
+  title: ReactNode;
   subtitle: ReactNode;
   /** Lo de la derecha: el estado. */
   aside?: ReactNode;

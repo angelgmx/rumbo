@@ -1,11 +1,10 @@
 import { minutesBetween, type RoutineSummary } from "@rumbo/core";
-import { Link } from "wouter";
 import { AreaIcon } from "@/components/AreaIcon";
 import { timeOf, useNow } from "@/hooks/useNow";
 import { formatMinutes, formatShortWeekday } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { BlockStrip } from "./BlockStrip";
 import { useRoutineLook } from "./look";
-import { routineHref } from "./links";
 
 // La franja empieza a las 07:00 salvo que alguna rutina empiece antes, y acaba a medianoche.
 const DEFAULT_FIRST_HOUR = 7;
@@ -17,10 +16,11 @@ interface DayTimelineProps {
   today: RoutineSummary[];
   /** Rutinas activas que hoy no tocan: salen punteadas, en su hora. */
   other: RoutineSummary[];
+  onOpen: (summary: RoutineSummary) => void;
 }
 
 /** El día de hoy en horas: cada rutina en su sitio, los huecos libres y la línea de ahora. */
-export function DayTimeline({ today, other }: DayTimelineProps) {
+export function DayTimeline({ today, other, onOpen }: DayTimelineProps) {
   const now = timeOf(useNow());
   const firstHour = Math.min(
     DEFAULT_FIRST_HOUR,
@@ -51,21 +51,26 @@ export function DayTimeline({ today, other }: DayTimelineProps) {
 
       <div className="relative h-7">
         {today.map((summary) => (
-          <RoutineLabel
-            key={summary.path}
-            summary={summary}
-            left={position(summary.routine.start)}
-          />
+          <RoutineLabel key={summary.id} summary={summary} left={position(summary.routine.start)} />
         ))}
       </div>
 
       <div className="relative h-16 rounded-xl border bg-muted/40">
+        {hours.slice(1).map((hour) => (
+          <span
+            key={hour}
+            aria-hidden
+            className="absolute inset-y-0 w-px bg-border/60"
+            style={{ left: `${position(`${pad(hour)}:00`)}%` }}
+          />
+        ))}
         {today.map((summary) => (
           <RoutineBar
-            key={summary.path}
+            key={summary.id}
             summary={summary}
             left={position(summary.routine.start)}
             width={position(summary.end) - position(summary.routine.start)}
+            onOpen={() => onOpen(summary)}
           />
         ))}
         {freeGaps(today).map((gap) => (
@@ -78,20 +83,28 @@ export function DayTimeline({ today, other }: DayTimelineProps) {
         ))}
       </div>
 
-      <div className="relative mt-2 h-7">
-        {other.map((summary) => (
-          <GhostRoutine
-            key={summary.path}
-            summary={summary}
-            left={position(summary.routine.start)}
-          />
-        ))}
-      </div>
+      {other.length > 0 && (
+        <div className="relative mt-2 h-7">
+          {other.map((summary) => (
+            <GhostRoutine
+              key={summary.id}
+              summary={summary}
+              left={position(summary.routine.start)}
+              onOpen={() => onOpen(summary)}
+            />
+          ))}
+        </div>
+      )}
 
       <div
-        className="pointer-events-none absolute top-6 bottom-9 w-px bg-primary"
+        className={cn(
+          "pointer-events-none absolute top-6 w-px bg-primary",
+          other.length > 0 ? "bottom-9" : "bottom-0",
+        )}
         style={{ left: `${position(now)}%` }}
-      />
+      >
+        <span className="absolute -bottom-1 -left-1 size-2 rounded-full bg-primary" />
+      </div>
     </div>
   );
 }
@@ -125,15 +138,18 @@ function RoutineBar({
   summary,
   left,
   width,
+  onOpen,
 }: {
   summary: RoutineSummary;
   left: number;
   width: number;
+  onOpen: () => void;
 }) {
   const look = useRoutineLook(summary.routine);
   return (
-    <Link
-      href={routineHref(summary.path)}
+    <button
+      type="button"
+      onClick={onOpen}
       aria-label={`${summary.title}, de ${summary.routine.start} a ${summary.end}`}
       className="absolute top-2 bottom-2 rounded-lg border p-1.5 transition-transform duration-(--dur-fast) hover:-translate-y-px"
       style={{
@@ -144,7 +160,7 @@ function RoutineBar({
       }}
     >
       <BlockStrip blocks={summary.routine.blocks} routineColor={look.color} className="h-full" />
-    </Link>
+    </button>
   );
 }
 
@@ -161,18 +177,27 @@ function FreeGap({ minutes, left, right }: { minutes: number; left: number; righ
   );
 }
 
-function GhostRoutine({ summary, left }: { summary: RoutineSummary; left: number }) {
+function GhostRoutine({
+  summary,
+  left,
+  onOpen,
+}: {
+  summary: RoutineSummary;
+  left: number;
+  onOpen: () => void;
+}) {
   const look = useRoutineLook(summary.routine);
   return (
-    <Link
-      href={routineHref(summary.path)}
+    <button
+      type="button"
+      onClick={onOpen}
       className="absolute flex h-7 items-center gap-1.5 rounded-md border border-dashed px-2 text-xs whitespace-nowrap text-muted-foreground hover:text-foreground"
       style={{ left: `${left}%` }}
     >
       <AreaIcon area={look} className="size-4 rounded-sm border-0 bg-transparent [&_svg]:size-3" />
       {summary.title}
       {summary.next && <span className="text-faint">· {formatShortWeekday(summary.next)}</span>}
-    </Link>
+    </button>
   );
 }
 

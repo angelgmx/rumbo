@@ -1,4 +1,11 @@
-import { FolderOpenIcon, MonitorIcon, MoonIcon, Settings2Icon, SunIcon } from "lucide-react";
+import {
+  BotIcon,
+  FolderOpenIcon,
+  MonitorIcon,
+  MoonIcon,
+  Settings2Icon,
+  SunIcon,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,11 +19,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useLocation } from "wouter";
 import { useChangeVault } from "@/app/VaultGate";
 
 export function SettingsMenu() {
   const { theme, setTheme } = useTheme();
   const changeVault = useChangeVault();
+  const [, navigate] = useLocation();
 
   return (
     <DropdownMenu>
@@ -46,6 +55,10 @@ export function SettingsMenu() {
           <DropdownMenuItem onClick={changeVault}>
             <FolderOpenIcon />
             Cambiar de vault
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate("/ajustes/ia")}>
+            <BotIcon />
+            Inteligencia artificial
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

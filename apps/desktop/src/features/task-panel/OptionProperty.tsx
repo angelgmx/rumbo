@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { OptionList, type PropertyOption } from "./OptionList";
-import { PropertyRow } from "./PropertyRow";
+import { OptionList, type PropertyOption } from "@/components/panel/OptionList";
+import { PropertyRow } from "@/components/panel/PropertyRow";
 
 /** Una propiedad que se elige de una lista (proyecto, módulo, repetición…). */
 export function OptionProperty({

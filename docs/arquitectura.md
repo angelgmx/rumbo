@@ -14,12 +14,16 @@
 │   app/     casos de uso (servicios)           │
 │   vault/   leer, indexar y escribir notas     │
 │   domain/  reglas puras (rachas, tareas…)     │
+│   db/      base de datos: esquema y tablas    │
+│   ai/      adaptadores de IA                  │
 │   ports.ts interfaces hacia fuera             │
 └──────────────────────┬────────────────────────┘
                        │ lee y escribe
-               ┌───────▼────────┐
-               │ Vault Obsidian │  (ficheros .md)
-               └────────────────┘
+          ┌────────────┴────────────┐
+  ┌───────▼────────┐        ┌───────▼────────┐
+  │ Vault Obsidian │        │   rumbo.db     │
+  │ conocimiento   │        │  organización  │
+  └────────────────┘        └────────────────┘
 ```
 
 ## La app de escritorio
@@ -34,12 +38,14 @@
 
 Cada capa solo usa las de debajo. Nunca al revés.
 
-| Capa         | Carpeta        | Qué hace                                                                                                                | Puede usar       |
-| ------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| Dominio      | `src/domain`   | Reglas puras: entra un dato, sale otro. Sin disco, sin reloj, sin efectos. Aquí está la lógica que más hay que testear. | nada             |
-| Vault        | `src/vault`    | Leer el frontmatter, cambiarlo sin romper el resto del fichero, cargar la config e indexar el vault.                    | dominio, puertos |
-| Casos de uso | `src/app`      | Lo que hace el usuario: marcar un hábito, capturar una tarea, añadir un bloque a la agenda. Juntan dominio y vault.     | todo lo anterior |
-| Puertos      | `src/ports.ts` | Interfaces `FileSystem` y `Clock`. La app les pasa la implementación real.                                              | —                |
+| Capa          | Carpeta        | Qué hace                                                                                                                | Puede usar       |
+| ------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| Dominio       | `src/domain`   | Reglas puras: entra un dato, sale otro. Sin disco, sin reloj, sin efectos. Aquí está la lógica que más hay que testear. | nada             |
+| Vault         | `src/vault`    | Leer el frontmatter, cambiarlo sin romper el resto del fichero, cargar la config e indexar el vault.                    | dominio, puertos |
+| Casos de uso  | `src/app`      | Lo que hace el usuario: marcar un hábito, capturar una tarea, añadir un bloque a la agenda. Juntan dominio y vault.     | todo lo anterior |
+| Base de datos | `src/db`       | El esquema por versiones y un repositorio por tabla. Cada escritura avisa a la UI.                                      | dominio, puertos |
+| Puertos       | `src/ports.ts` | Interfaces `FileSystem`, `Database`, `Clock` y `AiProvider`. La app les pasa la implementación real.                    | —                |
+| IA            | `src/ai`       | Adaptadores del puerto `AiProvider`. Reciben `fetch` desde fuera.                                                       | puertos          |
 
 ### Por qué así
 
@@ -51,50 +57,75 @@ Cada capa solo usa las de debajo. Nunca al revés.
 
 ### `domain/`
 
-| Fichero         | Responsabilidad                                                                                          |
-| --------------- | -------------------------------------------------------------------------------------------------------- |
-| `dates.ts`      | Fechas como texto `AAAA-MM-DD` (sin zonas horarias), días de la semana, sumar días.                      |
-| `habits.ts`     | Esquema Zod del hábito, si un valor cuenta como hecho, racha actual, mejor racha y cumplimiento.         |
-| `daily.ts`      | Ruta de la daily de un día, contenido de una daily nueva e historial de hábitos a partir de las dailies. |
-| `tasks.ts`      | Leer tareas en formato del plugin Tasks, marcarlas, añadirlas y decidir en qué vista sale cada una.      |
-| `agenda.ts`     | Leer y añadir bloques con hora bajo `## Agenda` (formato del plugin Day Planner).                        |
-| `capture.ts`    | Captura rápida en lenguaje natural («gym mañana 18:00 1h30 #gym») y título de tarea («hoy 45m !alta»).   |
-| `checkbox.ts`   | Marcar o desmarcar una casilla de Markdown en su línea.                                                  |
-| `links.ts`      | Sacar el nombre de nota de los wikilinks.                                                                |
-| `learning.ts`   | Leer un tema (criterio, conceptos, registro de práctica) y su nota de ejercicios por niveles.            |
-| `challenges.ts` | Leer un reto: de qué va, qué temas pone a prueba y cuántos requisitos llevas.                            |
-| `planner.ts`    | Repartir lo que queda de una ruta en el horario y calcular fechas.                                       |
-| `resources.ts`  | Recursos de un tema (cursos, vídeos, docs…) y adivinar tipo y fuente por la URL.                         |
-| `review.ts`     | FSRS en días: cuándo vuelve una tarjeta según cómo la recordaste.                                        |
-| `counters.ts`   | Contador de una tarea (minutos, pomodoros, cantidad, progreso): leerlo, escribirlo y sumar o restar.     |
-| `routines.ts`   | Rutinas: hora de cada bloque, si toca hoy, reordenar, plantillas y tareas de hoy de un bloque de tema.   |
-| `sections.ts`   | Líneas bajo un encabezado.                                                                               |
+| Fichero          | Responsabilidad                                                                                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `dates.ts`       | Fechas como texto `AAAA-MM-DD` (sin zonas horarias), días de la semana, sumar días.                                                                    |
+| `habits.ts`      | Esquema Zod del hábito, si un valor cuenta como hecho, racha actual, mejor racha y cumplimiento.                                                       |
+| `daily.ts`       | Ruta de la daily de un día, contenido de una daily nueva e historial de hábitos a partir de las dailies.                                               |
+| `tasks.ts`       | El modelo de tarea y en qué vista sale cada una.                                                                                                       |
+| `noteTasks.ts`   | Leer las casillas de las notas antiguas (formato del plugin Tasks) para importarlas.                                                                   |
+| `agenda.ts`      | Leer y añadir bloques con hora bajo `## Agenda` (formato del plugin Day Planner).                                                                      |
+| `capture.ts`     | Captura rápida en lenguaje natural («gym mañana 18:00 1h30 #gym») y título de tarea («hoy 45m !alta»).                                                 |
+| `checkbox.ts`    | Marcar o desmarcar una casilla de Markdown en su línea.                                                                                                |
+| `links.ts`       | Sacar el nombre de nota de los wikilinks.                                                                                                              |
+| `learning.ts`    | Leer un tema (criterio, conceptos, registro de práctica) y su nota de ejercicios por niveles.                                                          |
+| `challenges.ts`  | Leer un reto: de qué va, qué temas pone a prueba y cuántos requisitos llevas.                                                                          |
+| `planner.ts`     | Repartir lo que queda de una ruta en el horario y calcular fechas.                                                                                     |
+| `resources.ts`   | Recursos de un tema (cursos, vídeos, docs…) y adivinar tipo y fuente por la URL.                                                                       |
+| `review.ts`      | FSRS en días: cuándo vuelve una tarjeta según cómo la recordaste.                                                                                      |
+| `routines.ts`    | Rutinas: hora de cada bloque, si toca hoy, reordenar, vigencia, choques con otras rutinas y con tareas con hora, y tareas de hoy de un bloque de tema. |
+| `sections.ts`    | Líneas bajo un encabezado.                                                                                                                             |
+| `inboxTriage.ts` | Organizar el Inbox con IA: el mensaje para el modelo y leer su respuesta sin fiarse de ella.                                                           |
 
 ### `vault/`
 
-| Fichero          | Responsabilidad                                                                                                 |
-| ---------------- | --------------------------------------------------------------------------------------------------------------- |
-| `frontmatter.ts` | `parseNote` lee el frontmatter. `setFrontmatter` cambia un valor y deja el resto del fichero igual byte a byte. |
-| `config.ts`      | Carga `.rumbo/config.yml` (validado con Zod) y aplica los alias de claves (`estado` → `status`).                |
-| `vault.ts`       | Recorre el vault, lee cada nota y monta el índice en memoria (`Map<ruta, Nota>`).                               |
+| Fichero           | Responsabilidad                                                                                                 |
+| ----------------- | --------------------------------------------------------------------------------------------------------------- |
+| `paths.ts`        | Nombres de fichero válidos y rutas de carpeta.                                                                  |
+| `roadmapNotes.ts` | La nota de un módulo nuevo de una ruta.                                                                         |
+| `frontmatter.ts`  | `parseNote` lee el frontmatter. `setFrontmatter` cambia un valor y deja el resto del fichero igual byte a byte. |
+| `config.ts`       | Carga `.rumbo/config.yml` (validado con Zod) y aplica los alias de claves (`estado` → `status`).                |
+| `vault.ts`        | Recorre el vault, lee cada nota y monta el índice en memoria (`Map<ruta, Nota>`).                               |
 
 ### `app/`
 
-| Fichero               | Responsabilidad                                                                                                                                                                                     |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vaultStore.ts`       | Lee y escribe, mantiene el índice y avisa de los cambios (`subscribe`).                                                                                                                             |
-| `dailyService.ts`     | Fecha de hoy, ruta de la daily y crearla con la plantilla si falta.                                                                                                                                 |
-| `habitService.ts`     | Lista de hábitos con su estado de hoy, rachas y cumplimiento; guardar el valor del día; crear, editar, archivar y eliminar hábitos.                                                                 |
-| `taskService.ts`      | Tareas por vista, foco del día (máximo 3), marcar, crear, editar (con pasos y notas), duplicar, borrar, área heredada y captura rápida.                                                             |
-| `agendaService.ts`    | Bloques de un día, añadir y marcar.                                                                                                                                                                 |
-| `progressService.ts`  | Plan cumplido de cada día y de la semana (hábitos que tocaban + bloques de la agenda).                                                                                                              |
-| `newVault.ts`         | `createNewVault(fs)`: crea un vault nuevo con lo mínimo para empezar.                                                                                                                               |
-| `savedViewService.ts` | Vistas de tareas guardadas en `.rumbo/vistas/*.yml`.                                                                                                                                                |
-| `dayPlanService.ts`   | Tu día ordenado por hora: bloques de la agenda + hábitos con hora que tocan ese día.                                                                                                                |
-| `learningService.ts`  | Temas y rutas de aprendizaje tal como están en el vault (apuntes por carpeta, módulos, ejercicios, retos y recursos); estado, conceptos, ejercicios hechos, registro de práctica y la tarea de hoy. |
-| `reviewService.ts`    | Repaso espaciado de los conceptos que ya sabes (FSRS).                                                                                                                                              |
-| `routineService.ts`   | Rutinas: listar, las de hoy, activar, crear desde plantilla, reordenar bloques, crear las tareas de un bloque y terminar un bloque.                                                                 |
-| `rumbo.ts`            | `createRumbo(fs, clock)`: abre el vault y monta todos los servicios.                                                                                                                                |
+| Fichero                 | Responsabilidad                                                                                                                                                                                     |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vaultStore.ts`         | Lee y escribe, mantiene el índice y avisa de los cambios (`subscribe`).                                                                                                                             |
+| `dailyService.ts`       | Fecha de hoy, ruta de la daily y crearla con la plantilla si falta.                                                                                                                                 |
+| `habitService.ts`       | Lista de hábitos con su estado de hoy, rachas y cumplimiento; guardar el valor del día; crear, editar, archivar y eliminar hábitos.                                                                 |
+| `taskService.ts`        | Tareas por vista, foco del día (máximo 3), crear, editar, duplicar, borrar, archivar, área heredada y captura rápida. Sobre la base de datos.                                                       |
+| `agendaService.ts`      | Bloques de un día, añadir y marcar.                                                                                                                                                                 |
+| `progressService.ts`    | Plan cumplido de cada día y de la semana (hábitos que tocaban + bloques de la agenda).                                                                                                              |
+| `newVault.ts`           | `createNewVault(fs)`: crea un vault nuevo con lo mínimo para empezar.                                                                                                                               |
+| `savedViewService.ts`   | Vistas de tareas guardadas en `.rumbo/vistas/*.yml`.                                                                                                                                                |
+| `dayPlanService.ts`     | Tu día ordenado por hora: bloques de la agenda + hábitos con hora que tocan ese día.                                                                                                                |
+| `learningService.ts`    | Temas y rutas de aprendizaje tal como están en el vault (apuntes por carpeta, módulos, ejercicios, retos y recursos); estado, conceptos, ejercicios hechos, registro de práctica y la tarea de hoy. |
+| `reviewService.ts`      | Repaso espaciado de los conceptos que ya sabes (FSRS).                                                                                                                                              |
+| `routineService.ts`     | Rutinas: listar, las de hoy, activar, crear, guardar entera, avisar de choques, crear las tareas de un bloque y terminar un bloque.                                                                 |
+| `closeDayService.ts`    | Cerrar el día: lo que salió bien según los datos, la energía y el primer bloque de mañana.                                                                                                          |
+| `inboxTriageService.ts` | Propuestas de la IA para el Inbox (tarea, idea, proyecto u objetivo) y aplicar solo las aceptadas.                                                                                                  |
+| `rumbo.ts`              | `createRumbo(fs, clock)`: abre el vault y monta todos los servicios.                                                                                                                                |
+
+### `ai/`
+
+| Fichero               | Responsabilidad                                                                                      |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `openAiCompatible.ts` | `AiProvider` para cualquier API compatible con OpenAI: Ollama, LM Studio, Groq, Gemini, OpenRouter…  |
+| `aiError.ts`          | `AiError` con el motivo del fallo (no responde, clave mala, no encuentra el modelo, límite o error). |
+
+La app guarda proveedor, URL y modelo en sus ajustes y la clave en el llavero del sistema. Ver [ADR-0012](adr/0012-ia-con-un-puerto-y-proveedores-compatibles.md).
+
+### `db/`
+
+| Fichero             | Responsabilidad                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| `migrations.ts`     | El esquema en castellano, por versiones (ver [Modelo de datos](modelo-de-datos.md)).  |
+| `appDatabase.ts`    | Abre la base de datos, la sube a la última versión y avisa a la UI en cada escritura. |
+| `ideaRepository.ts` | Las ideas: listar, añadir, editar y borrar.                                           |
+| `taskRepository.ts` | Las tareas, con una copia en memoria que solo cambia cuando la escritura ha ido bien. |
+
+`changeFeed.ts` (en la raíz de `core`) es el canal de cambios común: el vault y la base de datos avisan por él y la UI repinta. `app/vaultImport.ts` copia una vez a la base de datos lo que antes vivía en notas.
 
 ## Flujo de un cambio
 
@@ -118,5 +149,7 @@ Si cambias la nota en Obsidian, el watcher de la app llama a `VaultStore.refresh
 | Foco del día                   | Casillas bajo `## Foco de hoy` en la daily                |
 | Agenda                         | Bloques con hora bajo `## Agenda` en la daily             |
 | Configuración                  | `.rumbo/config.yml` dentro del vault                      |
+| Ajustes de la IA               | `settings.json` de la app (fuera del vault)               |
+| Clave de la IA                 | Llavero del sistema                                       |
 
 Detalle completo en [Formato del vault](formato-del-vault.md).

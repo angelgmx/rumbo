@@ -44,18 +44,18 @@ export function formatDayMonth(date: IsoDate): string {
   return dayMonthFormat.format(toDate(date)).replace(".", "");
 }
 
-const listFormat = new Intl.ListFormat("es", { style: "long", type: "conjunction" });
-
-/** "Operadores, Strings y Bucles" */
-export function formatList(items: string[]): string {
-  return listFormat.format(items);
-}
-
 const weekdayFormat = new Intl.DateTimeFormat("es", { weekday: "short" });
 
 /** "vie" */
 export function formatShortWeekday(date: IsoDate): string {
   return weekdayFormat.format(toDate(date)).replace(".", "");
+}
+
+const longWeekdayFormat = new Intl.DateTimeFormat("es", { weekday: "long" });
+
+/** "viernes" */
+export function formatWeekday(date: IsoDate): string {
+  return longWeekdayFormat.format(toDate(date));
 }
 
 /** "19 – 22 oct", "28 oct – 2 nov" o "19 oct" */

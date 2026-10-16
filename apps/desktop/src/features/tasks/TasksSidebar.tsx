@@ -8,13 +8,17 @@ import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { cn } from "@/lib/utils";
 import { AreaDot } from "./AreaDot";
 import type { TaskFilter } from "./taskFilters";
-import { TASK_VIEWS, type TaskViewInfo } from "./taskViews";
+import { IDEAS_VIEW, TASK_VIEWS } from "./taskViews";
+import { useProjectTitle } from "./useProjectTitle";
 
 interface TasksSidebarProps {
-  current: TaskViewInfo;
+  /** El `slug` de la vista abierta. */
+  current: string;
+  /** Cuántas hay en cada vista, por `slug`; las vistas sin número no aparecen. */
   counts: Record<string, number>;
   /** [nombre, tareas pendientes] */
   areas: [string, number][];
+  /** [id del proyecto, tareas pendientes] */
   projects: [string, number][];
   filter: TaskFilter;
   onFilterChange: (filter: TaskFilter) => void;
@@ -36,6 +40,7 @@ export function TasksSidebar({
   onRemoveSavedView,
 }: TasksSidebarProps) {
   const { create } = useTaskPanel();
+  const projectTitle = useProjectTitle();
   const toggle = (key: "area" | "project", value: string) =>
     onFilterChange({ ...filter, [key]: filter[key] === value ? undefined : value });
 
@@ -48,17 +53,19 @@ export function TasksSidebar({
       </Button>
 
       <nav className="flex flex-col gap-0.5">
-        {TASK_VIEWS.map((info) => (
-          <SidebarLink
-            key={info.slug}
-            href={`/tareas/${info.slug}`}
-            active={info.slug === current.slug}
-            icon={<info.icon className="size-4" />}
-            label={info.label}
-            count={info.view === "done" ? undefined : counts[info.view]}
-            highlight={info.view === "inbox" && (counts.inbox ?? 0) > 0}
-          />
-        ))}
+        {TASK_VIEWS.flatMap((info) => (info.view === "inbox" ? [info, IDEAS_VIEW] : [info])).map(
+          (info) => (
+            <SidebarLink
+              key={info.slug}
+              href={`/tareas/${info.slug}`}
+              active={info.slug === current}
+              icon={<info.icon className="size-4" />}
+              label={info.label}
+              count={counts[info.slug]}
+              highlight={info.slug === "inbox" && (counts.inbox ?? 0) > 0}
+            />
+          ),
+        )}
       </nav>
 
       {areas.length > 0 && (
@@ -78,14 +85,14 @@ export function TasksSidebar({
 
       {projects.length > 0 && (
         <SidebarSection title="Proyectos">
-          {projects.map(([name, count]) => (
+          {projects.map(([id, count]) => (
             <FilterItem
-              key={name}
+              key={id}
               icon={<FolderKanbanIcon className="size-4" />}
-              label={name}
+              label={projectTitle(id)}
               count={count}
-              active={filter.project === name}
-              onClick={() => toggle("project", name)}
+              active={filter.project === id}
+              onClick={() => toggle("project", id)}
             />
           ))}
         </SidebarSection>

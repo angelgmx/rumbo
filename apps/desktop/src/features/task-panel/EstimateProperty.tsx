@@ -1,47 +1,42 @@
-import { PropertyRow } from "./PropertyRow";
+import type { TaskDraft } from "@rumbo/core";
+import { FieldRow, ReadOnlyRow } from "@/components/panel/PropertyRow";
 import { Progress } from "@/components/ui/progress";
 import { formatMinutes } from "@/lib/format";
-import { OptionList } from "./OptionList";
-import { durationOptions } from "./taskChoices";
+import { DurationChips } from "./DurationChips";
+import { DurationHint } from "./DurationHint";
+import { DurationInput } from "./DurationInput";
 
-/** Lo que calculaste que llevaría y lo que lleva de verdad según el cronómetro. */
+/** Lo que calculas que llevará (se escribe o se elige) y lo que lleva de verdad según las sesiones. */
 export function EstimateProperty({
-  estimated,
-  real,
+  draft,
+  taskId,
   onChange,
 }: {
-  estimated: number | undefined;
-  real: number | undefined;
+  draft: TaskDraft;
+  taskId: number | undefined;
   onChange: (duration: number | undefined) => void;
 }) {
+  const { duration, spent } = draft;
+
   return (
-    <PropertyRow
-      label="Estimado / real"
-      value={
-        <>
-          <span className="font-mono">
-            {estimated ? formatMinutes(estimated) : "—"}
-            <span className="text-muted-foreground"> / </span>
-            {real ? formatMinutes(real) : "—"}
-          </span>
-          {estimated && real !== undefined && (
-            <Progress value={Math.min(real / estimated, 1) * 100} className="ml-auto max-w-40" />
-          )}
-        </>
-      }
-      width="w-64"
-    >
-      {(close) => (
-        <OptionList
-          options={durationOptions(estimated)}
-          value={estimated?.toString()}
-          clearLabel="Sin duración"
-          onChoose={(value) => {
-            onChange(value ? Number(value) : undefined);
-            close();
-          }}
-        />
-      )}
-    </PropertyRow>
+    <>
+      <FieldRow label="Estimado">
+        <DurationInput key={duration ?? "none"} value={duration} onCommit={onChange} />
+        <DurationChips value={duration} onChoose={onChange} />
+        <DurationHint draft={draft} taskId={taskId} />
+      </FieldRow>
+      <ReadOnlyRow label="Real">
+        {spent ? (
+          <>
+            <span className="font-mono">{formatMinutes(spent)}</span>
+            {duration ? (
+              <Progress value={Math.min(spent / duration, 1) * 100} className="ml-auto max-w-40" />
+            ) : null}
+          </>
+        ) : (
+          <span className="text-muted-foreground/70">Sin sesiones todavía</span>
+        )}
+      </ReadOnlyRow>
+    </>
   );
 }

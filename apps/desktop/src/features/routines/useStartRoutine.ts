@@ -11,7 +11,7 @@ export function useStartRoutine() {
   const rumbo = useRumbo();
   const [, navigate] = useLocation();
 
-  return async (summary: RoutineSummary, { goToFocus = true } = {}) => {
+  return async (summary: RoutineSummary) => {
     let created = 0;
     for (const [index, block] of summary.routine.blocks.entries()) {
       if (block.kind !== "module") continue;
@@ -22,6 +22,6 @@ export function useStartRoutine() {
         ? `${summary.title}: ${created} ${created === 1 ? "tarea" : "tareas"} para hoy`
         : `${summary.title}: ya tenías sus tareas de hoy`,
     );
-    if (goToFocus) navigate("/");
+    navigate("/");
   };
 }

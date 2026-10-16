@@ -38,7 +38,7 @@ export class DayPlanService {
 
     const habits: DayPlanItem[] = this.habits
       .list()
-      .habits.filter(
+      .filter(
         ({ habit, challenge }) =>
           habit.start && isScheduledOn(habit.schedule, date) && !challenge?.finished,
       )

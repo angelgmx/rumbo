@@ -20,3 +20,32 @@ export interface Clock {
 }
 
 export const systemClock: Clock = { now: () => new Date() };
+
+export interface AiMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+/** Un modelo de IA. Core no sabe cuál es ni dónde está: se lo pasa la app. */
+export interface AiProvider {
+  /** Lo que responde el modelo a la conversación. Con `json`, se le pide que responda solo JSON. */
+  complete(messages: AiMessage[], options?: { json?: boolean }): Promise<string>;
+}
+
+/** Lo que core necesita de `fetch`: así vale el del navegador, el de Tauri o uno de prueba. */
+export type HttpFetch = (
+  url: string,
+  init: { method: "POST"; headers: Record<string, string>; body: string },
+) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
+
+export type SqlValue = string | number | null;
+
+/**
+ * Una base de datos SQLite. La app le pasa la suya (en su carpeta de datos) y los tests,
+ * una en memoria. Los parámetros van con `?`.
+ */
+export interface Database {
+  /** Devuelve el id de la fila que haya insertado, si ha insertado una. */
+  execute(sql: string, params?: SqlValue[]): Promise<{ lastInsertId?: number }>;
+  select<T>(sql: string, params?: SqlValue[]): Promise<T[]>;
+}

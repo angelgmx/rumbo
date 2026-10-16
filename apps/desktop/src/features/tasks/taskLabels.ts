@@ -5,8 +5,3 @@ export const PRIORITY_LABEL: Record<Priority, string> = {
   medium: "Media",
   low: "Baja",
 };
-
-/** «Inbox» de «00 - Inbox/Inbox.md»: la nota donde vive la tarea. */
-export function noteName(path: string): string {
-  return (path.split("/").pop() ?? path).replace(/\.md$/, "");
-}

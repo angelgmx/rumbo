@@ -1,26 +1,35 @@
 import type { Task } from "@rumbo/core";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { useState } from "react";
+import { SidePanel } from "@/components/panel/SidePanel";
 import { TaskPanel } from "./TaskPanel";
+import { panelKey, type PanelTarget } from "./TaskPanelProvider";
 
-/** El panel de tarea como hoja lateral, para las pantallas que no tienen sitio para él. */
+/**
+ * El panel de tarea como hoja lateral, para las pantallas que no tienen sitio para él.
+ * Siempre montada: así anima al abrir y al cerrar. Al cerrar sigue enseñando la última
+ * tarea mientras sale, en vez de quedarse vacía.
+ */
 export function TaskSheet({
-  task,
+  target,
   onClose,
   onOpen,
 }: {
-  task: Task | undefined;
+  target: PanelTarget;
   onClose: () => void;
   onOpen: (task: Task) => void;
 }) {
+  const [shown, setShown] = useState(target);
+  if (target && target !== shown) setShown(target);
+
   return (
-    <Sheet open onOpenChange={(open) => !open && onClose()}>
-      <SheetContent
-        showCloseButton={false}
-        className="gap-0 p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[560px]"
-      >
-        <SheetTitle className="sr-only">{task ? "Tarea" : "Nueva tarea"}</SheetTitle>
-        <TaskPanel task={task} onClose={onClose} onOpen={onOpen} />
-      </SheetContent>
-    </Sheet>
+    <SidePanel
+      open={target !== undefined}
+      title={shown?.task ? "Tarea" : "Nueva tarea"}
+      onClose={onClose}
+    >
+      {shown && (
+        <TaskPanel key={panelKey(shown)} task={shown.task} onClose={onClose} onOpen={onOpen} />
+      )}
+    </SidePanel>
   );
 }

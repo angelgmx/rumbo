@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { createRumbo, type Rumbo } from "../src";
-import { habitSchema } from "../src/domain/habits";
+import { createRumbo, type Rumbo, type Task } from "../src";
 import {
   blockTitle,
   insertBlock,
@@ -12,12 +11,15 @@ import {
   routineClashes,
   routineEnd,
   routineSchema,
+  taskClashes,
   timedBlocks,
   updateBlock,
   weeklyCompliance,
 } from "../src/domain/routines";
-import { parseNote } from "../src/vault/frontmatter";
+import { parseNoteRoutine } from "../src/domain/noteRoutines";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
+import { memoryDatabase } from "./memoryDatabase";
+import { makeHabit } from "./makeHabit";
 
 const routine = routineSchema.parse({
   start: "18:00",
@@ -37,6 +39,15 @@ describe("routine domain", () => {
       ["19:00", "19:10"],
     ]);
     expect(routineEnd(routine)).toBe("19:10");
+  });
+
+  it("runs only inside its validity, both days included", () => {
+    const limited = { ...routine, days: "daily" as const, from: "2026-10-19", until: "2026-10-21" };
+    expect(isRoutineOn(limited, "2026-10-18")).toBe(false);
+    expect(isRoutineOn(limited, "2026-10-19")).toBe(true);
+    expect(isRoutineOn(limited, "2026-10-21")).toBe(true);
+    expect(isRoutineOn(limited, "2026-10-22")).toBe(false);
+    expect(nextRoutineDay(limited, "2026-10-21")).toBeUndefined();
   });
 
   it("runs on its days only while active", () => {
@@ -76,7 +87,7 @@ describe("routine domain", () => {
 
   it("detects routines that overlap on a shared day", () => {
     const gym = routineSchema.parse({ start: "19:00", days: ["wed", "fri"], blocks: [] });
-    const gymWithBlocks = { ...gym, blocks: [{ kind: "custom" as const, minutes: 60 }] };
+    const gymWithBlocks = { ...gym, blocks: [{ kind: "activity" as const, minutes: 60 }] };
     const late = { ...gymWithBlocks, start: "20:00" };
     expect(routineClashes(routine, [{ title: "Gym", routine: gymWithBlocks }])).toEqual([
       { title: "Gym", days: ["wed"] },
@@ -84,8 +95,43 @@ describe("routine domain", () => {
     expect(routineClashes(routine, [{ title: "Gym", routine: late }])).toEqual([]);
   });
 
+  it("detects timed tasks that fall inside it on a day it runs", () => {
+    const task = (id: number, changes: Partial<Task>): Task => ({
+      id,
+      text: `Task ${id}`,
+      done: false,
+      tags: [],
+      spent: 0,
+      steps: [],
+      notes: "",
+      created: "2026-10-01",
+      ...changes,
+    });
+    const tasks = [
+      task(1, { scheduled: "2026-10-21", time: "18:30", duration: 15 }),
+      task(2, { scheduled: "2026-10-20", time: "18:30" }),
+      task(3, { scheduled: "2026-10-19", time: "19:10" }),
+      task(4, { scheduled: "2026-10-19", time: "18:05", done: true }),
+      task(5, { scheduled: "2026-10-12", time: "18:05" }),
+      task(6, { scheduled: "2026-10-19", time: "17:45" }),
+      task(7, { scheduled: "2026-10-19" }),
+      task(8, { scheduled: "2026-10-19", time: "18:20" }),
+    ];
+    const withOwnTask = {
+      ...routine,
+      blocks: [...routine.blocks, { kind: "task" as const, ref: "8", minutes: 10 }],
+    };
+    expect(taskClashes(routine, tasks, "2026-10-19").map((clash) => clash.task.id)).toEqual([
+      6, 8, 1,
+    ]);
+    expect(taskClashes(withOwnTask, tasks, "2026-10-19").map((clash) => clash.task.id)).toEqual([
+      6, 3, 1,
+    ]);
+    expect(taskClashes({ ...routine, active: false }, tasks, "2026-10-19")).toEqual([]);
+  });
+
   it("measures how often its habits were done on its days", () => {
-    const habit = habitSchema.parse({ key: "ingles", name: "Inglés" });
+    const habit = makeHabit({ key: "ingles", name: "Inglés" });
     // Semana del lunes 12: tocaba lunes 12 y miércoles 14, se hizo uno.
     const history = new Map([
       ["2026-10-12", true],
@@ -96,7 +142,7 @@ describe("routine domain", () => {
     expect(weeklyCompliance(routine, [], "2026-10-19")).toEqual([]);
   });
 
-  it("turns a topic block into today's tasks with counters", () => {
+  it("turns a topic block into today's tasks with their estimate and steps", () => {
     const tasks = moduleBlockTasks(
       {
         roadmapTitle: "Java",
@@ -119,14 +165,18 @@ describe("routine domain", () => {
         scheduled: "2026-10-19",
         habit: "programacion",
         area: undefined,
-        counter: { kind: "minutes", current: 0, target: 30 },
+        duration: 30,
       },
       {
         text: "Java · Strings: ejercicios 03–05",
         scheduled: "2026-10-19",
         habit: "programacion",
         area: undefined,
-        counter: { kind: "progress", current: 0, target: 3 },
+        steps: [
+          { text: "03 — a", done: false },
+          { text: "04 — b", done: false },
+          { text: "05 — c", done: false },
+        ],
       },
     ]);
   });
@@ -137,73 +187,205 @@ describe("routine domain", () => {
       routine.blocks[1]!,
       "2026-10-19",
     );
-    expect(task).toMatchObject({ counter: { kind: "minutes", target: 45 } });
+    expect(task).toMatchObject({ duration: 45 });
     expect(task!.text).toContain("repasar");
   });
 });
 
 // El 2026-10-16 es viernes: toca la rutina de ejemplo (lunes, miércoles y viernes).
 const clock = { now: () => new Date(2026, 9, 16, 10, 0) };
-const ROUTINE = "Routines/Evening study.md";
 
 let files: Map<string, string>;
 let rumbo: Rumbo;
 
 beforeEach(async () => {
   files = await loadDemoVault();
-  rumbo = await createRumbo(memoryFileSystem(files), clock);
+  rumbo = await createRumbo({
+    fs: memoryFileSystem(files),
+    database: memoryDatabase(),
+    clock: clock,
+  });
 });
 
+// La rutina de ejemplo, importada de su nota.
+const routineId = () => rumbo.routines.list()[0]!.id;
+
 describe("RoutineService", () => {
-  it("lists the routines with their blocks and times", () => {
-    const { routines, invalid } = rumbo.routines.list();
-    expect(invalid).toEqual([]);
+  it("imports the routine notes once, with habit blocks by key", () => {
+    const routines = rumbo.routines.list();
+    expect(routines).toHaveLength(1);
+    expect(routines[0]!.routine.blocks[0]).toEqual({ kind: "habit", ref: "reading", minutes: 15 });
     expect(routines[0]).toMatchObject({ title: "Evening study", minutes: 80, end: "19:20" });
     expect(rumbo.routines.today().map((summary) => summary.title)).toEqual(["Evening study"]);
   });
 
+  it("reads the old block kinds of a routine note as activities", () => {
+    const imported = parseNoteRoutine(
+      {
+        name: "Old",
+        data: {
+          start: "18:00",
+          blocks: [
+            { kind: "custom", title: "Stretch", minutes: 10 },
+            { kind: "task", title: "Tidy desk", minutes: 5 },
+            { kind: "task", ref: "7", minutes: 5 },
+          ],
+        },
+      },
+      () => undefined,
+    );
+    expect(imported!.blocks.map(({ kind }) => kind)).toEqual(["activity", "activity", "task"]);
+  });
+
   it("turns it on and off", async () => {
-    await rumbo.routines.setActive(ROUTINE, false);
+    await rumbo.routines.setActive(routineId(), false);
     expect(rumbo.routines.today()).toEqual([]);
   });
 
-  it("creates a routine from a template", async () => {
-    const path = await rumbo.routines.createFromTemplate("study", { area: "Python" });
-    expect(path).toBe("Routines/Rutina de estudio.md");
-    const note = parseNote(files.get(path)!);
-    expect(note.data).toMatchObject({ type: "routine", area: "[[Python]]", start: "18:00" });
-    expect(await rumbo.routines.createFromTemplate("study")).toBe(
-      "Routines/Rutina de estudio 2.md",
-    );
+  it("removes a routine", async () => {
+    const id = await rumbo.routines.create({ title: "Borrar", start: "07:00" });
+    await rumbo.routines.remove(id!);
+    expect(rumbo.routines.get(id!)).toBeUndefined();
+  });
+
+  it("replaces a routine with its validity, goal, habit and blocks", async () => {
+    const goal = await rumbo.goals.create({
+      title: "Inglés B2",
+      why: "",
+      keyResults: [],
+      obstacle: "",
+      plans: [],
+      resources: [],
+    });
+    await rumbo.routines.save(routineId(), {
+      title: " Mañanas ",
+      start: "07:00",
+      days: ["mon"],
+      from: "2026-10-01",
+      until: "2026-12-31",
+      goalId: goal,
+      habit: "reading",
+      active: false,
+      blocks: [{ kind: "break", minutes: 5 }],
+    });
+    expect(rumbo.routines.get(routineId())).toMatchObject({
+      title: "Mañanas",
+      end: "07:05",
+      routine: {
+        start: "07:00",
+        from: "2026-10-01",
+        until: "2026-12-31",
+        goalId: goal,
+        habit: "reading",
+        active: false,
+      },
+    });
+  });
+
+  it("counts the habit it marks even without habit blocks", async () => {
+    await rumbo.routines.save(routineId(), {
+      title: "Evening study",
+      start: "18:00",
+      habit: "reading",
+      blocks: [{ kind: "break", minutes: 5 }],
+    });
+    expect(rumbo.routines.get(routineId())!.habits.map(({ habit }) => habit.key)).toEqual([
+      "reading",
+    ]);
+  });
+
+  it("stops running once its validity is over", async () => {
+    const id = routineId();
+    const input = { title: "Evening study", start: "18:00", days: "daily" as const, blocks: [] };
+    await rumbo.routines.save(id, { ...input, until: "2026-10-15" });
+    expect(rumbo.routines.today()).toEqual([]);
+    expect(rumbo.routines.get(id)!.next).toBeUndefined();
+    await rumbo.routines.save(id, { ...input, from: "2026-10-17" });
+    expect(rumbo.routines.today()).toEqual([]);
+    expect(rumbo.routines.get(id)!.next).toBe("2026-10-17");
+    await rumbo.routines.save(id, { ...input, from: "2026-10-16", until: "2026-10-16" });
+    expect(rumbo.routines.today()).toHaveLength(1);
+  });
+
+  it("keeps everything after reopening, without importing twice", async () => {
+    const database = memoryDatabase();
+    const first = await createRumbo({ fs: memoryFileSystem(files), database, clock });
+    const input = {
+      title: "Evening study",
+      start: "18:00",
+      blocks: [{ kind: "break" as const, minutes: 5 }],
+    };
+    await first.routines.save(first.routines.list()[0]!.id, input);
+    const again = await createRumbo({ fs: memoryFileSystem(files), database, clock });
+    expect(again.routines.list()).toHaveLength(1);
+    expect(again.routines.list()[0]!.routine.blocks).toEqual([{ kind: "break", minutes: 5 }]);
   });
 
   it("knows its habits, its weeks and the routines it clashes with", () => {
-    const [summary] = rumbo.routines.list().routines;
+    const [summary] = rumbo.routines.list();
     expect(summary!.habits.map(({ habit }) => habit.key)).toEqual(["reading"]);
     expect(summary!.weeks).toHaveLength(4);
     expect(summary!.next).toBeUndefined();
-    expect(summary!.clashes).toEqual([]);
   });
 
-  it("changes its time and its blocks", async () => {
-    await rumbo.routines.update(ROUTINE, { start: "19:00" });
-    await rumbo.routines.addBlock(ROUTINE, { kind: "break", minutes: 5 }, 0);
-    await rumbo.routines.updateBlock(ROUTINE, 1, { minutes: 20 });
-    await rumbo.routines.removeBlock(ROUTINE, 4);
-    const [summary] = rumbo.routines.list().routines;
-    expect(summary!.blocks.map(({ kind, start }) => [kind, start])).toEqual([
-      ["break", "19:00"],
-      ["habit", "19:05"],
-      ["module", "19:25"],
-      ["break", "20:10"],
+  it("reports the routines and the timed tasks a draft clashes with", async () => {
+    const task = await rumbo.tasks.create({ text: "Call", scheduled: "2026-10-16", time: "18:30" });
+    const draft = routineSchema.parse({
+      start: "18:00",
+      blocks: [{ kind: "break", minutes: 60 }],
+    });
+    const clashes = rumbo.routines.clashes(draft);
+    expect(clashes.routines).toEqual([{ title: "Evening study", days: ["mon", "wed", "fri"] }]);
+    expect(clashes.tasks.map((clash) => clash.task.id)).toEqual([task!.id]);
+    expect(rumbo.routines.clashes(draft, routineId()).routines).toEqual([]);
+  });
+
+  it("names a habit block after its habit", async () => {
+    expect(rumbo.routines.blockName({ kind: "habit", ref: "reading", minutes: 20 })).toBe(
+      "Reading",
+    );
+    expect(rumbo.routines.blockName({ kind: "habit", ref: "nope", minutes: 20 })).toBe("Hábito");
+  });
+
+  it("saves activity and task blocks with what they point to", async () => {
+    const database = memoryDatabase();
+    rumbo = await createRumbo({ fs: memoryFileSystem(files), database, clock });
+    const task = await rumbo.tasks.create({ text: "Renew passport" });
+    await rumbo.routines.save(routineId(), {
+      title: "Evening study",
+      start: "18:00",
+      blocks: [
+        { kind: "activity", title: "Coffee", minutes: 10 },
+        { kind: "task", ref: String(task!.id), minutes: 20 },
+      ],
+    });
+    const again = await createRumbo({ fs: memoryFileSystem(files), database, clock });
+    expect(again.routines.list()[0]!.routine.blocks).toEqual([
+      { kind: "activity", title: "Coffee", minutes: 10 },
+      { kind: "task", ref: String(task!.id), minutes: 20 },
     ]);
-    expect(files.get(ROUTINE)).toContain("- kind: break\n    minutes: 5");
+    expect(rumbo.routines.blockName({ kind: "task", ref: String(task!.id), minutes: 20 })).toBe(
+      "Renew passport",
+    );
   });
 
-  it("reorders the blocks", async () => {
-    await rumbo.routines.moveBlock(ROUTINE, 3, 0);
-    const [first] = rumbo.routines.list().routines[0]!.blocks;
-    expect(first).toMatchObject({ kind: "custom", start: "18:00", end: "18:10" });
+  it("marks a task block done and lists it as a step", async () => {
+    const task = await rumbo.tasks.create({ text: "Renew passport" });
+    await rumbo.routines.save(routineId(), {
+      title: "Evening study",
+      start: "18:00",
+      blocks: [
+        { kind: "activity", title: "Coffee", minutes: 10 },
+        { kind: "task", ref: String(task!.id), minutes: 20 },
+      ],
+    });
+    const [summary] = rumbo.routines.today();
+    expect(rumbo.routines.steps(summary!)).toMatchObject([
+      { index: 1, title: "Renew passport", start: "18:10", done: false, completable: true },
+    ]);
+    await rumbo.routines.completeBlock(summary!, 1);
+    expect(rumbo.tasks.get(task!.id)!.done).toBe(true);
+    expect(rumbo.routines.steps(summary!)[0]).toMatchObject({ done: true, completable: false });
   });
 
   it("creates the tasks of a topic block once", async () => {
@@ -212,17 +394,16 @@ describe("RoutineService", () => {
     expect(created.map((task) => task.text)).toEqual([
       "Python basics · Variables: ejercicios 01–03",
     ]);
-    expect(files.get("Inbox/Inbox.md")).toContain(
-      "Python basics · Variables: ejercicios 01–03 [counter:: progress 0/3] ⏳ 2026-10-16",
-    );
+    const saved = rumbo.tasks.all().find((task) => task.text === created[0]!.text);
+    expect(saved).toMatchObject({ scheduled: "2026-10-16" });
+    expect(saved!.steps[0]!.text).toMatch(/^01 — /);
     expect(await rumbo.routines.planBlock(summary!, 1)).toEqual([]);
   });
 
-  it("logs the habit of a block in today's daily", async () => {
+  it("logs the habit of a block", async () => {
     const [summary] = rumbo.routines.today();
     await rumbo.routines.completeBlock(summary!, 0);
-    const daily = parseNote(files.get("Journal/2026/10/2026-10-16.md")!);
-    expect(daily.data.habits).toMatchObject({ reading: 20 });
+    expect(rumbo.habits.list().find((h) => h.habit.key === "reading")?.today).toBe(20);
   });
 
   it("starts the topic of a block that was not started", async () => {
@@ -232,7 +413,11 @@ describe("RoutineService", () => {
         .get("Areas/Python/Notes/01 - Variables/Mastery — Variables.md")!
         .replace("status: learning", "status: not-started"),
     );
-    rumbo = await createRumbo(memoryFileSystem(files), clock);
+    rumbo = await createRumbo({
+      fs: memoryFileSystem(files),
+      database: memoryDatabase(),
+      clock: clock,
+    });
     const [summary] = rumbo.routines.today();
     await rumbo.routines.completeBlock(summary!, 1);
     expect(files.get("Areas/Python/Notes/01 - Variables/Mastery — Variables.md")).toContain(

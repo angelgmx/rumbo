@@ -24,7 +24,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
-import { formatClock, useCountdown } from "@/hooks/useCountdown";
+import { QUICK_MINUTES } from "@/features/focus/choice";
+import { exerciseRequest } from "@/features/session/requests";
+import { useSession } from "@/features/session/SessionProvider";
+import { formatClock } from "@/hooks/useCountdown";
 import { Breadcrumb } from "@/features/roadmaps/Breadcrumb";
 import { copyToIde, fileName } from "@/features/roadmaps/ExerciseDetail";
 import { LEVEL_NAME, LEVEL_STYLE } from "@/features/roadmaps/moduleStatus";
@@ -161,7 +164,7 @@ function ExerciseNote({ topic, module, exercise }: NoteProps) {
           </Card>
 
           <aside className="flex flex-col gap-4">
-            <TimerCard minutes={exerciseMinutes(exercise.level)} />
+            <SessionCard topic={topic} module={module} exercise={exercise} />
             <CriterionCard module={module} />
             <HelpCard module={module} onOpenNote={setReading} />
             <NextCard topic={topic} module={module} exercise={exercise} />
@@ -262,16 +265,9 @@ function Solution({ code }: { code: string }) {
   );
 }
 
-function TimerCard({ minutes }: { minutes: number }) {
-  // Al acabar no hace falta avisar: el reloj a cero ya lo dice.
-  const timer = useCountdown(minutes, () => {});
-  const [started, setStarted] = useState(false);
-  const shown = started ? timer.secondsLeft : minutes * 60;
-
-  function start(length: number) {
-    timer.start(length);
-    setStarted(true);
-  }
+function SessionCard({ topic, module, exercise }: NoteProps) {
+  const session = useSession();
+  const request = exerciseRequest(topic, module, exercise);
 
   return (
     <Card className="gap-4 border border-primary/60 bg-linear-to-b from-primary-soft to-card px-5 ring-0">
@@ -279,21 +275,23 @@ function TimerCard({ minutes }: { minutes: number }) {
         Cuando quieras
       </span>
       <div className="flex items-baseline gap-3">
-        <span className="font-mono text-5xl font-semibold">{formatClock(shown)}</span>
+        <span className="font-mono text-5xl font-semibold">
+          {formatClock(request.minutes * 60)}
+        </span>
         <span className="text-muted-foreground">temporizador</span>
       </div>
-      <Button size="lg" onClick={() => (started ? timer.toggle() : start(minutes))}>
+      <Button size="lg" onClick={() => session.start(request)}>
         <PlayIcon data-icon="inline-start" />
-        {!started ? "Empezar" : timer.running ? "Pausar" : "Seguir"}
+        Empezar
       </Button>
       <div className="flex items-center justify-between text-sm">
         <button
           type="button"
-          onClick={() => start(5)}
+          onClick={() => session.start({ ...request, minutes: QUICK_MINUTES })}
           className="flex items-center gap-2 hover:text-foreground"
         >
           <TimerIcon className="size-4" />
-          Solo 5 minutos
+          Solo {QUICK_MINUTES} minutos
         </button>
         <span className="text-muted-foreground">regla de los 20 min</span>
       </div>

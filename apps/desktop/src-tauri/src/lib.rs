@@ -1,3 +1,5 @@
+mod keychain;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -8,6 +10,12 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::default().build())
         // Para abrir en el navegador los recursos de los temas (cursos, vídeos, documentación…).
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_sql::Builder::default().build())
+        .invoke_handler(tauri::generate_handler![
+            keychain::ai_key_get,
+            keychain::ai_key_set
+        ])
         .run(tauri::generate_context!())
         .expect("error while running Rumbo");
 }

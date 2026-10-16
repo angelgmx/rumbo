@@ -1,8 +1,8 @@
 import type { LayoutItem } from "@rumbo/core";
 
-export const NODE_WIDTH = 272;
-export const NODE_HEIGHT = 148;
-export const TRACK_HEIGHT = 44;
+const NODE_WIDTH = 272;
+const NODE_HEIGHT = 148;
+const TRACK_HEIGHT = 44;
 
 const COLUMN_GAP = 72;
 const ROW_GAP = 48;

@@ -1,5 +1,7 @@
+import type { ChangeFeed } from "../changeFeed";
 import type { FileSystem } from "../ports";
 import { loadConfig, type RumboConfig } from "../vault/config";
+import { joinPath, parentOf, safeFileName } from "../vault/paths";
 import {
   isTemplate,
   noteName,
@@ -10,25 +12,21 @@ import {
   type VaultIndex,
 } from "../vault/vault";
 
-type Listener = () => void;
-
 /**
  * Punto único de lectura y escritura del vault.
- * Mantiene el índice al día y avisa a quien escuche (la UI) cuando algo cambia.
+ * Mantiene el índice al día y avisa por el canal de cambios cuando algo cambia.
  */
 export class VaultStore {
-  private readonly listeners = new Set<Listener>();
-  private changes = 0;
-
   private constructor(
     private readonly fs: FileSystem,
+    private readonly changes: ChangeFeed,
     readonly config: RumboConfig,
     private index: VaultIndex,
   ) {}
 
-  static async open(fs: FileSystem): Promise<VaultStore> {
+  static async open(fs: FileSystem, changes: ChangeFeed): Promise<VaultStore> {
     const config = await loadConfig(fs);
-    return new VaultStore(fs, config, await scanVault(fs, config));
+    return new VaultStore(fs, changes, config, await scanVault(fs, config));
   }
 
   allNotes(): Note[] {
@@ -50,8 +48,23 @@ export class VaultStore {
       .sort((a, b) => a.path.split("/").length - b.path.split("/").length)[0];
   }
 
+  /** Los nombres de las áreas de más afuera, que son las que usan las tareas. */
+  areaNames(): string[] {
+    return this.notesOfType("area")
+      .filter((note) => this.rootArea(note) === note)
+      .map((note) => String(note.data.name ?? note.name));
+  }
+
   findByName(name: string): Note | undefined {
     return [...this.index.values()].find((note) => note.name === name);
+  }
+
+  /** Una ruta libre en la carpeta para una nota nueva: si ya existe, le añade « 2», « 3»… */
+  async freePath(folder: string, name: string): Promise<string> {
+    const fileName = joinPath(folder, safeFileName(name));
+    let path = `${fileName}.md`;
+    for (let n = 2; await this.exists(path); n++) path = `${fileName} ${n}.md`;
+    return path;
   }
 
   exists(path: string): Promise<boolean> {
@@ -104,22 +117,7 @@ export class VaultStore {
     this.notify();
   }
 
-  /** Sube cada vez que algo cambia. La UI lo usa para saber cuándo repintar. */
-  get version(): number {
-    return this.changes;
-  }
-
-  subscribe(listener: Listener): () => void {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
-
   private notify(): void {
-    this.changes++;
-    for (const listener of this.listeners) listener();
+    this.changes.notify();
   }
-}
-
-function parentOf(path: string): string {
-  return path.split("/").slice(0, -1).join("/");
 }

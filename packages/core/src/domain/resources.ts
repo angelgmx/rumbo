@@ -63,3 +63,21 @@ function safeHost(url: string): string {
     return "";
   }
 }
+
+/** Los enlaces de un texto como recursos: «[título](url)» o la dirección sola. Sin repetir. */
+export function resourcesInText(text: string): Resource[] {
+  const found = new Map<string, string>();
+  for (const [, title, url] of text.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g)) {
+    found.set(url!, title!.trim());
+  }
+  const bare = text.replace(/\[[^\]]*\]\([^)]*\)/g, "");
+  for (const [url] of bare.matchAll(/https?:\/\/[^\s)>\]]+/g)) {
+    if (!found.has(url)) found.set(url, safeHost(url) || url);
+  }
+  return [...found].map(([url, title]) => ({
+    title,
+    url,
+    ...guessFromUrl(url),
+    status: "pending",
+  }));
+}

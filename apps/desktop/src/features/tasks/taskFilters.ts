@@ -1,19 +1,19 @@
-import { linkTarget, type Task } from "@rumbo/core";
+import type { Task } from "@rumbo/core";
 
 /** Los filtros de la lista de tareas. Vacío = todas. */
 export interface TaskFilter {
   area?: string;
+  /** El id del proyecto, en texto como el resto de filtros. */
   project?: string;
   tag?: string;
 }
 
-/** El área y el proyecto pueden venir como «Negocio» o como «[[Negocio]]»: siempre el nombre. */
 export function areaOf(task: Task): string | undefined {
-  return linkTarget(task.fields.area) ?? task.fields.area;
+  return task.area;
 }
 
 export function projectOf(task: Task): string | undefined {
-  return linkTarget(task.fields.project) ?? task.fields.project;
+  return task.projectId === undefined ? undefined : String(task.projectId);
 }
 
 export function matchesFilter(task: Task, filter: TaskFilter): boolean {
@@ -21,10 +21,6 @@ export function matchesFilter(task: Task, filter: TaskFilter): boolean {
   if (filter.project && projectOf(task) !== filter.project) return false;
   if (filter.tag && !task.tags.includes(filter.tag)) return false;
   return true;
-}
-
-export function hasFilter(filter: TaskFilter): boolean {
-  return Boolean(filter.area || filter.project || filter.tag);
 }
 
 /** Cuántas tareas hay de cada valor (área, proyecto, etiqueta…), ordenado por nombre. */

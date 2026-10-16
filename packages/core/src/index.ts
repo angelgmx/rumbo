@@ -1,12 +1,31 @@
-export type { Clock, DirEntry, FileSystem } from "./ports";
-export { systemClock } from "./ports";
+export type {
+  AiMessage,
+  AiProvider,
+  Clock,
+  Database,
+  DirEntry,
+  FileSystem,
+  HttpFetch,
+  SqlValue,
+} from "./ports";
 
-export { createRumbo, type Rumbo } from "./app/rumbo";
+export { AiError, type AiFailure } from "./ai/aiError";
+export { anthropic } from "./ai/anthropic";
+export { openAiCompatible } from "./ai/openAiCompatible";
+
+export { createRumbo, type Rumbo, type RumboSources } from "./app/rumbo";
+
 export { createNewVault } from "./app/newVault";
+export type { TriageSuggestion } from "./app/inboxTriageService";
+export type { OrganizeSuggestion } from "./app/taskOrganizerService";
+export type { OrganizeProposal } from "./domain/taskOrganizing";
+export { isIncomplete } from "./domain/taskGaps";
+
+export { type Energy } from "./domain/closeDay";
+export type { TriageKind } from "./domain/inboxTriage";
 export type { SavedView } from "./app/savedViewService";
 export type { DayPlanItem } from "./app/dayPlanService";
 export type {
-  AreaRef,
   ChallengeSummary,
   ModuleSummary,
   NoteFolder,
@@ -14,14 +33,9 @@ export type {
   RoadmapSummary,
   TopicSummary,
 } from "./app/learningService";
-export {
-  exerciseMinutes,
-  sessionStart,
-  weekSessions,
-  type StudySlot,
-  type WeekSessions,
-} from "./domain/planner";
-export { capacityUntil, trimToFit, type Pace, type PaceState } from "./domain/pace";
+export { exerciseMinutes, sessionStart, weekSessions, type StudySlot } from "./domain/planner";
+export { capacityUntil, trimToFit } from "./domain/pace";
+export { idleDays, isStalled } from "./domain/idle";
 export type { RoadmapStatus, Track } from "./domain/roadmaps";
 export type { ReviewCard } from "./app/reviewService";
 export type { ReviewRating } from "./domain/review";
@@ -31,68 +45,55 @@ export {
   type Exercise,
   type ExerciseLevel,
 } from "./domain/exercises";
-export type { ModuleStatus } from "./domain/learning";
+export type { Concept, ModuleStatus } from "./domain/learning";
 export { linkTarget } from "./domain/links";
 export {
   layoutRoadmap,
   type LayoutItem,
-  type LayoutLink,
   type LinkSide,
   type RoadmapLayout,
 } from "./domain/roadmapLayout";
-export { guessFromUrl, RESOURCE_KINDS, type Resource, type ResourceKind } from "./domain/resources";
-export type { VaultStore } from "./app/vaultStore";
-export type { HabitList, HabitSummary } from "./app/habitService";
-export { MAX_FOCUS, type CaptureResult } from "./app/taskService";
-export type { DayProgress } from "./app/progressService";
-export type {
-  RoutineChanges,
-  RoutineList,
-  RoutineStep,
-  RoutineSummary,
-} from "./app/routineService";
-export { MAX_BAD_DAYS_PER_MONTH } from "./domain/badDays";
-export { chooseStart, type StartChoice } from "./domain/focus";
-export type { PomodoroSettings } from "./vault/config";
+export {
+  guessFromUrl,
+  resourcesInText,
+  type Resource,
+  type ResourceKind,
+} from "./domain/resources";
 
+export type { HabitSummary } from "./app/habitService";
+export { type CaptureResult } from "./app/taskService";
+
+export type { RoutineClashes, RoutineStep, RoutineSummary } from "./app/routineService";
+export { MAX_BAD_DAYS_PER_MONTH } from "./domain/badDays";
 export {
-  addMinutesToTime,
-  blocksAround,
-  minutesBetween,
-  type AgendaBlock,
-  type NewAgendaBlock,
-  type NowAndNext,
-  type Timed,
-} from "./domain/agenda";
+  DEFAULT_SESSION_MINUTES,
+  nextStudyStep,
+  sessionMinutes,
+  type StudyPlace,
+} from "./domain/session";
+export { chooseStart, type StartChoice } from "./domain/focus";
+
+export { addMinutesToTime, blocksAround, minutesBetween } from "./domain/agenda";
+export { parseDuration } from "./domain/duration";
+export { endTime, type BusySlot } from "./domain/taskClash";
+export type { TaskSlot } from "./app/taskClashService";
+export { addDays, startOfWeek, WEEKDAYS, type IsoDate, type Weekday } from "./domain/dates";
 export {
-  addDays,
-  daysBetween,
-  startOfWeek,
-  toIsoDate,
-  weekdayOf,
-  WEEKDAYS,
-  type IsoDate,
-  type Weekday,
-} from "./domain/dates";
-export {
-  challengeProgress,
   completionRate,
   habitProgress,
-  habitStats,
   isDone,
   isScheduledOn,
   minimumOf,
-  type Challenge,
   type Habit,
   type HabitInput,
   type HabitSchedule,
-  type HabitStats,
   type HabitValue,
   type Streak,
 } from "./domain/habits";
 export { weekProgress } from "./domain/habits";
 export {
   isInView,
+  isRecentlyDone,
   taskToDraft,
   type Priority,
   type Task,
@@ -101,29 +102,50 @@ export {
   type TaskStep,
   type TaskView,
 } from "./domain/tasks";
-export { parseCapture, parseTaskTitle, type Capture, type TaskTitle } from "./domain/capture";
-export {
-  COUNTER_KINDS,
-  formatCounter,
-  isCounterComplete,
-  parseCounter,
-  setCounterMinutes,
-  stepCounter,
-  type Counter,
-  type CounterKind,
-} from "./domain/counters";
+export type { Idea } from "./db/ideaRepository";
+export { parseTaskTitle, type TaskTitle } from "./domain/capture";
 export {
   BLOCK_KINDS,
   blockTitle,
+  insertBlock,
   isRoutineOn,
-  ROUTINE_KINDS,
-  ROUTINE_TEMPLATES,
+  moveBlock,
+  removeBlock,
+  routineEnd,
+  routineMinutes,
   routineSchema,
+  timedBlocks,
+  updateBlock,
   type BlockKind,
   type Routine,
   type RoutineBlock,
-  type RoutineClash,
   type RoutineInput,
-  type RoutineTemplate,
   type TimedBlock,
 } from "./domain/routines";
+export type { GoalDriverRefs, GoalLink, GoalSummary } from "./app/goalService";
+export type { ProjectSummary } from "./app/projectService";
+export {
+  GOAL_STATUSES,
+  groupByPeriod,
+  keyResultProgress,
+  periodChoices,
+  periodHorizon,
+  type Goal,
+  type GoalHorizon,
+  type GoalInput,
+  type GoalPace,
+  type GoalPaceState,
+  type KeyResult,
+  type GoalStatus,
+  type IfThen,
+  type PeriodGroup,
+} from "./domain/goals";
+export {
+  PROJECT_STATUSES,
+  type Milestone,
+  type UpcomingMilestone,
+  type Project,
+  type ProjectInput,
+  type ProjectLink,
+  type ProjectStatus,
+} from "./domain/projects";

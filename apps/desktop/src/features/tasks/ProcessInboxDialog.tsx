@@ -3,7 +3,8 @@ import {
   ArrowRightIcon,
   CheckIcon,
   ClockIcon,
-  FileTextIcon,
+  InboxIcon,
+  LightbulbIcon,
   Trash2Icon,
   type LucideIcon,
 } from "lucide-react";
@@ -23,14 +24,15 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
+import { formatDayMonth } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { noteName } from "./taskLabels";
 
-type Kind = "task" | "someday" | "delete";
+type Kind = "task" | "someday" | "idea" | "delete";
 
 const KINDS: { kind: Kind; label: string; icon: LucideIcon }[] = [
   { kind: "task", label: "Tarea", icon: CheckIcon },
   { kind: "someday", label: "Algún día", icon: ClockIcon },
+  { kind: "idea", label: "Es una idea", icon: LightbulbIcon },
   { kind: "delete", label: "Borrar", icon: Trash2Icon },
 ];
 
@@ -50,17 +52,15 @@ const DURATIONS = [
 export function ProcessInboxDialog() {
   const rumbo = useRumbo();
   const today = rumbo.daily.today();
-  const inboxPath = rumbo.store.config.folders.inbox;
   const [open, setOpen] = useState(false);
   // Las saltadas se quedan en el inbox; las recordamos para no volver a enseñarlas ahora.
-  const [skipped, setSkipped] = useState<string[]>([]);
+  const [skipped, setSkipped] = useState<number[]>([]);
   const [total, setTotal] = useState(0);
 
   const inbox =
-    useVaultQuery((r) => r.tasks.all()).data?.filter((task) =>
-      isInView(task, "inbox", today, inboxPath),
-    ) ?? [];
-  const pending = inbox.filter((task) => !skipped.includes(task.text));
+    useVaultQuery((r) => r.tasks.all()).data?.filter((task) => isInView(task, "inbox", today)) ??
+    [];
+  const pending = inbox.filter((task) => !skipped.includes(task.id));
   const current = pending[0];
   const position = total - pending.length + 1;
 
@@ -91,10 +91,10 @@ export function ProcessInboxDialog() {
         </header>
         {current ? (
           <TaskDecision
-            key={`${current.path}:${current.line}`}
+            key={current.id}
             task={current}
             today={today}
-            onSkip={() => setSkipped((list) => [...list, current.text])}
+            onSkip={() => setSkipped((list) => [...list, current.id])}
           />
         ) : (
           <Empty className="py-12">
@@ -122,10 +122,12 @@ function TaskDecision({ task, today, onSkip }: { task: Task; today: string; onSk
   // Para salir del inbox necesita fecha o área; si no, volvería a salir aquí.
   const canSave =
     kind === "delete" ||
+    kind === "idea" ||
     (kind === "someday" ? !!changes.area : !!(changes.scheduled || changes.area));
 
   async function save() {
     if (kind === "delete") return rumbo.tasks.remove(task);
+    if (kind === "idea") return rumbo.ideas.fromTask(task);
     // Algún día es solo el área, aunque antes se eligiera fecha como tarea.
     await rumbo.tasks.update(task, kind === "someday" ? { area: changes.area } : changes);
   }
@@ -136,14 +138,14 @@ function TaskDecision({ task, today, onSkip }: { task: Task; today: string; onSk
         <div className="rounded-xl border bg-muted/30 p-5">
           <p className="text-lg font-medium">{task.text}</p>
           <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-            <FileTextIcon className="size-3.5" />
-            Capturado en {noteName(task.path)}
+            <InboxIcon className="size-3.5" />
+            Capturada el {formatDayMonth(task.created)}
           </p>
         </div>
 
         <div className="flex flex-col gap-2">
           <span className="text-sm text-muted-foreground">¿Qué es?</span>
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="¿Qué es?">
+          <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="¿Qué es?">
             {KINDS.map(({ kind: option, label, icon: Icon }) => (
               <button
                 key={option}
@@ -163,7 +165,7 @@ function TaskDecision({ task, today, onSkip }: { task: Task; today: string; onSk
           </div>
         </div>
 
-        {kind !== "delete" && (
+        {kind !== "delete" && kind !== "idea" && (
           <div className="grid grid-cols-2 gap-4">
             <Field>
               <FieldLabel>Área</FieldLabel>

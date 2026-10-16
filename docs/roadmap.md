@@ -10,8 +10,8 @@ El proyecto avanza por fases. Una fase no empieza hasta que la anterior se usa d
 | 3. Rutinas y Foco sin fricción  | v0.3    | Rutinas, contadores por tarea, botón Empezar, modo 5 minutos, día malo, cerrar el día, modo enfoque | **Diseñada** · lógica en `core` |
 | 4. Calendario                   | v0.4    | Semana, día y mes con rutinas y hábitos, arrastrar tareas, avisos                                   | Pendiente                       |
 | 5. Notas y lectura fácil        | v0.5    | Árbol, lector, editor, búsqueda `Ctrl K`, modo dislexia                                             | Pendiente                       |
-| 6. Áreas, objetivos y proyectos | v0.6    | Áreas, visión, objetivos, proyectos y estimación de si llegas a tiempo                              | Pendiente                       |
-| 7. IA: motor y panel            | v0.7    | Propuestas con vista previa, panel `Ctrl J`, perfil, crear rutas, proponer el día, delegar tareas   | Pendiente                       |
+| 6. Áreas, objetivos y proyectos | v0.6    | Áreas, visión, objetivos, proyectos y estimación de si llegas a tiempo                              | **En curso**                    |
+| 7. IA: motor y panel            | v0.7    | Propuestas con vista previa, panel `Ctrl J`, perfil, crear rutas, proponer el día, delegar tareas   | **Base adelantada**             |
 | 8. IA tutor                     | v0.8    | Corregir ejercicios, preguntas socráticas, huecos de conocimiento, entrevistas                      | Pendiente                       |
 | 9. Métricas y coach             | v0.9    | Cinco bloques, métricas por área, coach con datos, revisiones                                       | Pendiente                       |
 | 10. Plugins                     | v0.10   | Colecciones, vistas y métricas declaradas en YAML                                                   | Pendiente                       |
@@ -60,7 +60,8 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] Planificador: repartir la ruta en el horario y fechas estimadas
 - [ ] Checkpoints con proyecto y pistas en paralelo
 - [x] Recursos de cualquier plataforma en cada tema (cursos, vídeos, repos, certificaciones)
-- [ ] Crear rutas y temas desde la app
+- [x] Editar rutas desde la app: renombrar, añadir, renombrar y eliminar módulos, y eliminar la ruta (los apuntes se quedan)
+- [ ] Crear rutas y temas desde la app (después de Objetivos y Proyectos, con el panel de IA)
 
 **Tanda 3 — pantallas de la UI v4 (hecha):**
 
@@ -77,23 +78,30 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 **Lógica en `core` (hecha):**
 
 - [x] Contador por tarea: `[counter:: minutes 12/30]`, `pomodoro`, `count` y `progress`
-- [x] Rutinas (`type: routine`): bloques con hora calculada, rutinas de hoy, plantillas, reordenar, activar y pausar
+- [x] Rutinas (`type: routine`): bloques con hora calculada, rutinas de hoy, vigencia, reordenar, activar y pausar
 - [x] Un bloque de tema genera las tareas del día; completar un bloque marca su hábito y empieza el tema
 
-- [x] Editar bloques (añadir, quitar, minutos, nombre), cumplimiento de las últimas 4 semanas y choques entre rutinas
+- [x] Bloques que hacen algo: hábito, estudio de ruta, tarea (completarlo la marca hecha), actividad (antes «libre») y descanso; migración de los bloques guardados
+- [x] Cumplimiento de las últimas 4 semanas y choques de una rutina con otras rutinas activas y con tareas con hora
 
 **Pantallas:**
 
-- [x] **Rutinas**: el día en una franja (rutinas, huecos libres, línea de ahora, la siguiente con «Empezar»), una tarjeta por rutina con sus días, bloques y cumplimiento, filtro por área y plantillas
-- [x] **Editor de rutina**: días y hora, bloques que se arrastran para ordenarlos, minutos y nombre en su sitio, las tareas que genera hoy cada bloque de tema, resumen y biblioteca de temas, hábitos y tareas para arrastrar
+- [x] **Rutinas**: el día en una franja (rutinas, huecos libres, línea de ahora, la siguiente con «Empezar»), una tarjeta por rutina con sus días, bloques y cumplimiento, filtro por área y un panel único para crear y editar con propiedades, bloques y aviso de choques
+- [x] Eliminar una rutina (con confirmación) desde su tarjeta
+- [x] **Panel de rutina**: pulsar una rutina (tarjeta o franja del día) abre su panel; «Añadir bloque» ofrece los tipos y, según el tipo, su selector; cada bloque se edita en línea (título, minutos, referencia), se arrastra para ordenarlo y se quita
 - [x] Interruptor rediseñado (encendido con halo, foco con anillo, deshabilitado)
 - [x] Contadores en la interfaz: elegir el contador al crear una tarea, verlo en las filas de Tareas y en Foco, y usarlo en el detalle de la tarea (cronómetro, pomodoro, −/+ y progreso)
 - [x] **Panel de tarea** lateral, estilo Notion, único para crear, ver y editar (`Ctrl N`, los botones «Nueva tarea» y pulsar una tarea): título grande (en lenguaje natural al crear, que rellena las propiedades), lista de propiedades (estado, cuándo, fecha límite, duración, prioridad, repetir, área heredada del módulo o proyecto, proyecto, módulo, etiquetas y contador), notas y pasos. Al editar cada cambio se guarda al momento en la línea de la tarea; hay «Duplicar» y «Eliminar» (con confirmación). Al crear, pie con «Crear tarea» (`Ctrl Enter`) y «Crear otra»
 - [x] Tareas igual al diseño: captura en la barra lateral, áreas y proyectos con su número, filtros por área, proyecto y etiqueta, columnas en cada fila, Próximas agrupadas por día y Procesar inbox con «¿Qué es?»
 - [x] «Ahora» en Foco enseña el contador de la primera tarea del foco cuando no hay un bloque de agenda en curso
+- [x] El progreso de una tarea son sus pasos (barra «n de m» en filas, Foco y detalle) y el tiempo real lo mide la sesión (`[spent:: 32]`, «Estimado / real»); el pomodoro es un modo del temporizador y el contador de tareas desaparece ([ADR 0011](adr/0011-progreso-por-pasos.md))
+- [x] **Sesión de trabajo** con temporizador flotante: «Empezar» (Foco, detalle de tarea y ejercicio) y «Solo 5 minutos» llevan a donde se trabaja (módulo o ejercicio) y abren un widget que sigue en cualquier página, encima de paneles y diálogos. Se arrastra a otra esquina, se oculta en un punto con el tiempo como anillo (ambas cosas se recuerdan), pausa, reinicia, suma 5 min y termina. Al acabar dice «Hecho» y propone el siguiente paso real (ejercicio pendiente, apunte o módulo). Apunta los minutos en el contador de la tarea solo al terminar o cerrar y guarda la sesión en curso para sobrevivir a una recarga
+- [x] Casillas vacías (de plantillas) fuera de las tareas; **Hechas** con los últimos 14 días por día y «Ver anteriores»; «Archivar hechas del inbox» a una nota de archivo
+- [x] **Ideas** (GTD): captura con conmutador Tarea | Idea y aviso con «Ver», vista Ideas en Tareas con «Convertir en tarea» y «Borrar», y «Es una idea» al procesar el inbox. Se guardan como viñetas con `[created:: fecha]` en `folders.ideas`
 - [ ] Registro de sesiones y estimado vs real (necesitan guardar el tiempo de cada sesión)
 - [x] Foco v2: botón único «Empezar» (rutina en curso, foco, racha en riesgo, siguiente paso), «Solo 5 minutos», día malo (2 al mes), racha en riesgo con versión mínima y rutinas como grupo en «Tu día»
-- [ ] Foco v2: cerrar el día y modo enfoque
+- [x] Modo enfoque: la sesión a pantalla completa con anillo, rondas de pomodoro, paso de ahora, progreso y lo siguiente del día
+- [x] Cerrar el día: hábitos que falten, energía, lo que salió bien (con tus datos, editable) y la hora y la micro-tarea de mañana
 
 **Nombres de la especificación (16 oct):**
 
@@ -103,3 +111,49 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] Página **Ejercicios** por niveles y retos, y la nota de ejercicio: código para el IDE, pistas, tests, solución tapada, temporizador y «Mi solución» guardada en la nota
 - [x] La página de tema vive en `/areas/…` (se enlazará desde Áreas cuando exista)
 - [ ] Diagrama de la ruta con el diseño definitivo (`feat/roadmap-diagram`)
+
+## Fase 6 en detalle
+
+**Diseño:** láminas en `docs/design/06-objetivos`.
+
+**Objetivos (hecha):**
+
+- [x] Página **Objetivos** en el raíl, con tres vistas y filtro por área: tablero por estado (arrastrar cambia el estado), lista tipo Notion con scroll y por periodo (año y trimestre)
+- [x] Página de un objetivo: propiedades editables en su sitio, porqué, resultados clave con su avance y lo vinculado filtrado a él (tareas, proyectos, hábitos, rutas, notas y recursos) o «Sin plan»
+- [x] Crear y editar un objetivo en el panel lateral, en cinco pasos: qué, por qué, cómo lo medirás, qué te frenará y cómo llegarás (conectar proyectos, hábitos, rutas y notas)
+
+**Pendiente:**
+
+- [ ] Abrir un proyecto desde el objetivo (llega con la página de Proyectos)
+- [ ] Visión (`02-vision.png`)
+- [ ] Áreas y proyectos
+
+## Fase 7 adelantada: base de la IA
+
+- [x] Puerto `AiProvider` en `core`: Claude (por defecto) y compatible con OpenAI (Ollama, LM Studio, Groq, Gemini, OpenRouter, OpenAI)
+- [x] Ajustes › Inteligencia artificial: proveedor, URL, modelo, clave en el llavero del sistema y «Probar»
+- [x] Organizar el Inbox con IA: propone si es tarea, idea, proyecto u objetivo, con área y fecha, y tú decides
+- [x] La IA organiza las tareas sueltas: pasos, prioridad, área, duración y día y hora elegidos entre los huecos libres de tu agenda real. Ajuste «Organizar tareas nuevas» (apagado · sugerir · automático); en Sugerir, propuesta en la fila y en el detalle con «Aceptar todas» y «Organizar con IA» en el Inbox; en Automático, toast con «Deshacer» y cada cambio guardado para revertirlo
+- [ ] La hora de una tarea aún no sale en Foco ni en la agenda del día
+
+## Base de datos (ADR-0013)
+
+Lo que organiza tu día pasa del vault a SQLite, una entidad por PR. Ver [Modelo de datos](modelo-de-datos.md).
+
+- [x] Infraestructura: puerto `Database`, esquema por versiones, canal de cambios e importación única
+- [x] Ideas
+- [x] Tareas, con sus pasos, etiquetas y el foco del día
+- [x] Hábitos y registros
+- [x] Rutinas y bloques
+- [x] Objetivos y planes si… entonces
+- [x] Proyectos e hitos
+- [ ] Sesiones, cierres del día y agenda
+- [ ] Exportar a Markdown y copia de seguridad en Ajustes
+
+## Apuntado para más adelante
+
+- [ ] **Vocabulario** (idea): una lista para apuntar palabras y frases de un idioma, con su traducción y ejemplo, conectada a su ruta y repasable.
+- [ ] **Iconos para diferenciar de un vistazo** (librería Lucide, la de toda la app):
+  - Selector de icono con buscador al crear o editar un área, una ruta o un hábito.
+  - Icono por tipo de tarea: estudio, ejercicio, lectura, vídeo, llamada, recado, revisión… (por su módulo, hábito o etiqueta, o elegido a mano).
+  - El icono se ve en las filas de Tareas, en Foco, en el calendario y en las rutas.

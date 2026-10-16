@@ -2,7 +2,6 @@ import type { Clock } from "../ports";
 import { badDaysInMonth, badDaysOf, canMarkBadDay } from "../domain/badDays";
 import { dailyPath, newDailyNote } from "../domain/daily";
 import { toIsoDate, type IsoDate } from "../domain/dates";
-import { habitSchema, type Habit } from "../domain/habits";
 import { setFrontmatter } from "../vault/frontmatter";
 import type { VaultStore } from "./vaultStore";
 
@@ -55,15 +54,8 @@ export class DailyService {
     const path = this.pathFor(date);
     if (await this.store.exists(path)) return path;
 
-    await this.store.write(path, newDailyNote(date, this.activeHabits(), await this.template()));
+    await this.store.write(path, newDailyNote(date, await this.template()));
     return path;
-  }
-
-  private activeHabits(): Habit[] {
-    return this.store
-      .notesOfType("habit")
-      .map((note) => habitSchema.safeParse(note.data))
-      .flatMap((result) => (result.success && !result.data.archived ? [result.data] : []));
   }
 
   private async template(): Promise<string | undefined> {

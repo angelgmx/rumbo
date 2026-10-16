@@ -1,10 +1,8 @@
-import { isRoutineOn, linkTarget, type RoutineSummary } from "@rumbo/core";
+import { isRoutineOn, type RoutineSummary } from "@rumbo/core";
 import { PlusIcon, RepeatIcon } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
-import { useLocation } from "wouter";
 import { useRumbo } from "@/app/RumboContext";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SegmentedControl } from "@/components/SegmentedControl";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -13,27 +11,40 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
-import { routineHref } from "./links";
 import { RoutineCard } from "./RoutineCard";
-import { TemplateGallery } from "./TemplateGallery";
 import { TodayCard } from "./TodayCard";
+import { RoutinePanel, type RoutineTarget } from "./panel/RoutinePanel";
 
 const ALL_AREAS = "all";
 
-/** Rutinas: lo que haces cada día y a qué hora. Cada bloque marca un hábito o avanza un tema. */
+/** Rutinas: lo que haces cada día y a qué hora. Pulsar una abre su panel para editarla. */
 export function RoutinesScreen() {
   const rumbo = useRumbo();
   const list = useVaultQuery((r) => r.routines.list()).data;
   const [area, setArea] = useState(ALL_AREAS);
+  const [target, setTarget] = useState<RoutineTarget>();
 
-  const header = <ScreenHeader title="Rutinas" actions={<NewRoutineButton />} />;
+  const header = (
+    <>
+      <ScreenHeader
+        title="Rutinas"
+        newTask={false}
+        actions={
+          <Button onClick={() => setTarget("new")}>
+            <PlusIcon data-icon="inline-start" />
+            Nueva rutina
+          </Button>
+        }
+      />
+      <RoutinePanel target={target} onClose={() => setTarget(undefined)} />
+    </>
+  );
   if (!list) return header;
 
   const today = rumbo.daily.today();
-  const { routines, invalid } = list;
+  const routines = list;
   const areas = [...new Set(routines.map(areaOf).filter((name) => name !== undefined))];
   const visible = area === ALL_AREAS ? routines : routines.filter((r) => areaOf(r) === area);
   const todays = routines.filter((summary) => isRoutineOn(summary.routine, today));
@@ -45,37 +56,27 @@ export function RoutinesScreen() {
     <>
       {header}
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6">
+        <div className="flex flex-col gap-6">
           <div className="flex items-end justify-between gap-4">
             <div>
               <h1 className="text-3xl font-semibold tracking-tight">Rutinas</h1>
               <p className="mt-1 text-muted-foreground">
-                Lo que haces cada día y a qué hora. Cada bloque marca un hábito o avanza un tema.
+                Lo que haces cada día y a qué hora. Cada bloque marca un hábito, avanza una ruta o
+                hace una tarea.
               </p>
             </div>
             {areas.length > 0 && (
-              <ToggleGroup
-                variant="outline"
-                size="sm"
-                value={[area]}
-                onValueChange={(values) => values[0] && setArea(values[0])}
-              >
-                <ToggleGroupItem value={ALL_AREAS}>Todas</ToggleGroupItem>
-                {areas.map((name) => (
-                  <ToggleGroupItem key={name} value={name}>
-                    {name}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
+              <SegmentedControl
+                label="Área"
+                options={[
+                  { value: ALL_AREAS, label: "Todas" },
+                  ...areas.map((name) => ({ value: name, label: name })),
+                ]}
+                value={area}
+                onChange={setArea}
+              />
             )}
           </div>
-
-          {invalid.length > 0 && (
-            <Alert variant="destructive">
-              <AlertTitle>Hay rutinas que no se pueden leer</AlertTitle>
-              <AlertDescription>Revisa el frontmatter de: {invalid.join(", ")}</AlertDescription>
-            </Alert>
-          )}
 
           {routines.length === 0 ? (
             <Empty className="border">
@@ -85,48 +86,31 @@ export function RoutinesScreen() {
                 </EmptyMedia>
                 <EmptyTitle>Todavía no tienes rutinas</EmptyTitle>
                 <EmptyDescription>
-                  Una rutina pone en orden y a su hora tus hábitos, tus temas y tus tareas. Empieza
-                  con una plantilla.
+                  Una rutina pone en orden y a su hora tus hábitos, tus rutas de estudio y tus
+                  tareas.
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
           ) : (
             <>
-              <TodayCard date={today} today={todays} other={others} />
+              <TodayCard date={today} today={todays} other={others} onOpen={setTarget} />
               <div className="grid grid-cols-2 gap-4">
                 {visible.map((summary) => (
-                  <RoutineCard key={summary.path} summary={summary} />
+                  <RoutineCard
+                    key={summary.id}
+                    summary={summary}
+                    onEdit={() => setTarget(summary)}
+                  />
                 ))}
               </div>
             </>
           )}
-
-          <TemplateGallery />
         </div>
       </main>
     </>
   );
 }
 
-/** Crea una rutina en blanco y abre su editor para ponerle nombre y bloques. */
-function NewRoutineButton() {
-  const rumbo = useRumbo();
-  const [, navigate] = useLocation();
-
-  async function create() {
-    const path = await rumbo.routines.create({ title: "Nueva rutina", start: "18:00" });
-    toast.success("Rutina creada: ponle nombre y bloques");
-    navigate(routineHref(path));
-  }
-
-  return (
-    <Button variant="outline" onClick={create}>
-      <PlusIcon data-icon="inline-start" />
-      Nueva rutina
-    </Button>
-  );
-}
-
 function areaOf(summary: RoutineSummary): string | undefined {
-  return linkTarget(summary.routine.area);
+  return summary.routine.area;
 }

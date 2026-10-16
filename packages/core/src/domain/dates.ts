@@ -5,12 +5,26 @@ export type IsoDate = string;
 
 export const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 export type Weekday = (typeof WEEKDAYS)[number];
+export const SPANISH_WEEKDAYS = [
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábado",
+  "domingo",
+];
 
 export function toIsoDate(date: Date): IsoDate {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+/** La hora de un instante como «HH:MM». */
+export function toTime(date: Date): string {
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
 export function addDays(date: IsoDate, days: number): IsoDate {
@@ -23,6 +37,11 @@ export function weekdayOf(date: IsoDate): Weekday {
   // getDay() empieza en domingo y nuestras semanas empiezan en lunes.
   const index = (new Date(year!, month! - 1, day!).getDay() + 6) % 7;
   return WEEKDAYS[index]!;
+}
+
+/** El nombre del día de la semana en castellano: «lunes». */
+export function spanishWeekday(date: IsoDate): string {
+  return SPANISH_WEEKDAYS[WEEKDAYS.indexOf(weekdayOf(date))]!;
 }
 
 export function startOfWeek(date: IsoDate): IsoDate {

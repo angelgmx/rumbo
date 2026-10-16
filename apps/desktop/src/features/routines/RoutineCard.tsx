@@ -1,6 +1,5 @@
 import type { RoutineSummary } from "@rumbo/core";
 import { ClockIcon } from "lucide-react";
-import { Link } from "wouter";
 import { useRumbo } from "@/app/RumboContext";
 import { AreaIcon } from "@/components/AreaIcon";
 import { Card } from "@/components/ui/card";
@@ -9,13 +8,13 @@ import { formatMinutes } from "@/lib/format";
 import { BlockStrip } from "./BlockStrip";
 import { ComplianceBars } from "./ComplianceBars";
 import { useRoutineLook } from "./look";
-import { routineHref } from "./links";
 import { RoutineDayStatus } from "./RoutineDayStatus";
+import { RoutineMenu } from "./RoutineMenu";
 import { useRoutinePurpose } from "./useRoutinePurpose";
 import { WeekdayChips } from "./WeekdayChips";
 
 /** Una rutina en la lista: cuándo es, sus bloques y cómo se está cumpliendo. */
-export function RoutineCard({ summary }: { summary: RoutineSummary }) {
+export function RoutineCard({ summary, onEdit }: { summary: RoutineSummary; onEdit: () => void }) {
   const rumbo = useRumbo();
   const look = useRoutineLook(summary.routine);
   const purpose = useRoutinePurpose(summary);
@@ -27,12 +26,13 @@ export function RoutineCard({ summary }: { summary: RoutineSummary }) {
         <div className="flex items-start gap-3">
           <AreaIcon area={look} className="size-10 rounded-xl [&_svg]:size-[18px]" />
           <div className="min-w-0 flex-1">
-            <Link
-              href={routineHref(summary.path)}
+            <button
+              type="button"
+              onClick={onEdit}
               className="font-medium after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none"
             >
               {summary.title}
-            </Link>
+            </button>
             <p className="truncate text-sm text-muted-foreground">{purpose}</p>
           </div>
           <label className="relative z-10 flex items-center gap-2.5 text-sm">
@@ -41,9 +41,10 @@ export function RoutineCard({ summary }: { summary: RoutineSummary }) {
             </span>
             <Switch
               checked={routine.active}
-              onCheckedChange={(active) => rumbo.routines.setActive(summary.path, active)}
+              onCheckedChange={(active) => rumbo.routines.setActive(summary.id, active)}
             />
           </label>
+          <RoutineMenu summary={summary} onEdit={onEdit} className="relative z-10 -mr-2" />
         </div>
 
         <div className="flex items-center gap-4 text-sm">

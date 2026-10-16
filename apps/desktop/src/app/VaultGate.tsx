@@ -1,6 +1,7 @@
 import { createNewVault, createRumbo, type Rumbo } from "@rumbo/core";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { WelcomeScreen } from "@/features/welcome/WelcomeScreen";
+import { openAppDatabase } from "@/platform/sqliteDatabase";
 import { tauriFileSystem } from "@/platform/tauriFileSystem";
 import { pickVaultFolder, savedVaultPath, saveVaultPath } from "@/platform/vaultLocation";
 import { watchVault } from "@/platform/watchVault";
@@ -30,7 +31,10 @@ export function VaultGate({ children }: { children: ReactNode }) {
 
   const openVault = useCallback(async (root: string) => {
     try {
-      const rumbo = await createRumbo(tauriFileSystem(root));
+      const rumbo = await createRumbo({
+        fs: tauriFileSystem(root),
+        database: await openAppDatabase(root),
+      });
       setState({ status: "ready", rumbo, root });
     } catch (error) {
       setState({ status: "welcome", error: `No he podido abrir el vault: ${String(error)}` });

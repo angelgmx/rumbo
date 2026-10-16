@@ -1,7 +1,6 @@
 import { minutesBetween, type DayPlanItem, type HabitValue, type RoutineStep } from "@rumbo/core";
 import { CalendarPlusIcon } from "lucide-react";
 import { AreaIcon } from "@/components/AreaIcon";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -13,11 +12,12 @@ import {
 } from "@/components/ui/empty";
 import { HabitTasks } from "@/features/habits/HabitTasks";
 import { HabitValueControl } from "@/features/habits/HabitValueControl";
-import { useArea } from "@/hooks/useArea";
+import { useHabitLook } from "@/hooks/useHabitLook";
 import { formatMinutes } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { DayEntry } from "./dayEntries";
 import { RoutineRow } from "./RoutineRow";
+import { TimelineRow } from "./TimelineRow";
 import type { RoutineGroup } from "./useFocusDay";
 
 interface DayPlanCardProps {
@@ -44,7 +44,7 @@ export function DayPlanCard({
         <CardTitle>Tu día</CardTitle>
         <CardDescription>Tus rutinas y lo que toca, por hora</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-1">
+      <CardContent className="flex flex-col">
         {entries.length === 0 ? (
           <Empty>
             <EmptyHeader>
@@ -61,7 +61,7 @@ export function DayPlanCard({
           entries.map((entry) =>
             entry.kind === "routine" ? (
               <RoutineRow
-                key={entry.group.summary.path}
+                key={entry.group.summary.id}
                 group={entry.group}
                 time={time}
                 onCompleteStep={onCompleteStep}
@@ -89,82 +89,50 @@ interface PlanRowProps extends Pick<DayPlanCardProps, "onToggleBlock" | "onHabit
 
 function PlanRow({ item, isCurrent, onToggleBlock, onHabitChange }: PlanRowProps) {
   const minutes = item.end ? minutesBetween(item.start, item.end) : undefined;
-
+  const area = useHabitLook(item.kind === "habit" ? item.habit.habit : undefined);
   const habitTasks =
     item.kind === "habit" && item.habit.habit.kind === "tasks" ? item.habit : undefined;
 
   return (
-    <div
-      className={cn(
-        "flex flex-col rounded-lg border border-transparent px-3 py-2.5 transition-colors duration-(--dur-fast)",
-        isCurrent && "border-primary/60 bg-primary-soft",
-      )}
-    >
-      <div className="flex items-center gap-4">
-        <span
-          className={cn(
-            "w-12 font-mono text-sm text-muted-foreground",
-            isCurrent && "text-primary-text",
-          )}
-        >
-          {item.start}
-        </span>
-        {item.kind === "agenda" ? (
+    <TimelineRow
+      time={item.start}
+      current={isCurrent}
+      marker={
+        item.kind === "agenda" ? (
           <Checkbox
             checked={item.done}
             onCheckedChange={(checked) => onToggleBlock(item, checked === true)}
             aria-label={item.text}
           />
         ) : (
-          <HabitControl item={item} onChange={onHabitChange} />
-        )}
-        <span
-          className={cn(
-            "min-w-0 flex-1 truncate",
-            item.done && "text-muted-foreground line-through",
-          )}
-        >
+          <HabitValueControl
+            habit={item.habit.habit}
+            value={item.habit.today}
+            todayTasks={habitTasks?.todayTasks}
+            color={area.color}
+            onChange={(value) => onHabitChange(item.habit.habit.key, value)}
+          />
+        )
+      }
+    >
+      <AreaIcon area={area} className="size-10" />
+      <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
+        <p className={cn("truncate", item.done && "text-muted-foreground line-through")}>
           {item.text}
-        </span>
-        {item.kind === "habit" && <Badge variant="outline">hábito</Badge>}
-        {minutes !== undefined && (
-          <span className="font-mono text-sm text-muted-foreground">{formatMinutes(minutes)}</span>
-        )}
-        {item.done && (
-          <Badge variant="secondary" className="text-success">
-            Hecho
-          </Badge>
+        </p>
+        {item.kind === "habit" && <p className="text-sm text-muted-foreground">Hábito</p>}
+        {/* Lo que vas a hacer hoy dentro de este hábito. */}
+        {habitTasks && (
+          <div className="mt-2 border-l pl-3">
+            <HabitTasks habit={habitTasks.habit} tasks={habitTasks.todayTasks} />
+          </div>
         )}
       </div>
-      {/* Lo que vas a hacer hoy dentro de este hábito. */}
-      {habitTasks && (
-        <div className="mt-2 ml-16 border-l pl-3">
-          <HabitTasks habit={habitTasks.habit} tasks={habitTasks.todayTasks} />
-        </div>
+      {minutes !== undefined && (
+        <span className="pt-2.5 font-mono text-sm text-muted-foreground">
+          {formatMinutes(minutes)}
+        </span>
       )}
-    </div>
-  );
-}
-
-function HabitControl({
-  item,
-  onChange,
-}: {
-  item: Extract<DayPlanItem, { kind: "habit" }>;
-  onChange: DayPlanCardProps["onHabitChange"];
-}) {
-  const { habit, today } = item.habit;
-  const area = useArea(habit.area);
-  return (
-    <div className="flex items-center gap-2">
-      <HabitValueControl
-        habit={habit}
-        value={today}
-        todayTasks={habit.kind === "tasks" ? item.habit.todayTasks : undefined}
-        color={area.color}
-        onChange={(value) => onChange(habit.key, value)}
-      />
-      <AreaIcon area={area} />
-    </div>
+    </TimelineRow>
   );
 }
