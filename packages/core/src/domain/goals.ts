@@ -1,8 +1,9 @@
 // Objetivos: un resultado que quieres en una fecha, medido por sus resultados clave. Los
 // empujan proyectos, hábitos y rutas. El progreso se calcula al leer; solo se guarda lo que
 // apuntas (dónde va cada resultado clave).
-import { daysBetween, type IsoDate } from "./dates";
+import { addDays, daysBetween, type IsoDate } from "./dates";
 import type { Resource } from "./resources";
+import type { Priority } from "./tasks";
 
 export const GOAL_STATUSES = [
   "not-started",
@@ -41,6 +42,7 @@ export interface Goal {
   start?: IsoDate;
   deadline?: IsoDate;
   status: GoalStatus;
+  priority?: Priority;
   keyResults: KeyResult[];
   obstacle: string;
   plans: IfThen[];
@@ -82,7 +84,8 @@ export function daysLeft(goal: Goal, today: IsoDate): number | undefined {
   return goal.deadline ? daysBetween(today, goal.deadline) : undefined;
 }
 
-export type GoalPaceState = "ahead" | "on-track" | "behind";
+/** `at-risk`: la fecha límite ya pasó o tu ritmo no llega ni a la mitad del necesario. */
+export type GoalPaceState = "ahead" | "on-track" | "behind" | "at-risk";
 
 /** Avance por semana, de 0 a 1: lo que llevas de media y lo que hace falta para llegar. */
 export interface GoalPace {
@@ -91,11 +94,17 @@ export interface GoalPace {
   actualPerWeek?: number;
   /** Sin él, la fecha límite ya ha pasado. */
   requiredPerWeek?: number;
+  /** Cuánto se aparta tu ritmo del necesario, en %: -45 va un 45 % por detrás; 20, un 20 % por delante. */
+  differencePercent?: number;
+  /** El día en que terminarías si mantienes tu ritmo; sin avance no hay día. */
+  projectedFinish?: IsoDate;
 }
 
-// Menos de una semana de datos no dice nada del ritmo; un 10 % de margen cuenta como ir al día.
+// Menos de una semana de datos no dice nada del ritmo; un 10 % de margen cuenta como ir al día;
+// con menos de la mitad del ritmo necesario ya hay riesgo de no llegar.
 const MIN_DAYS_FOR_PACE = 7;
 const PACE_MARGIN = 0.1;
+const AT_RISK_RATIO = 0.5;
 
 /** El ritmo real frente al necesario; solo para un objetivo en marcha, con fecha límite y sin terminar. */
 export function goalPace(
@@ -110,12 +119,26 @@ export function goalPace(
   const elapsed = goal.start ? daysBetween(goal.start, today) : 0;
   const requiredPerWeek = left > 0 ? ((1 - progress) / left) * 7 : undefined;
   const actualPerWeek = elapsed >= MIN_DAYS_FOR_PACE ? (progress / elapsed) * 7 : undefined;
-  if (requiredPerWeek === undefined) return { state: "behind", actualPerWeek };
+  if (requiredPerWeek === undefined) return { state: "at-risk", actualPerWeek };
   if (actualPerWeek === undefined) return { requiredPerWeek };
 
   const ratio = actualPerWeek / requiredPerWeek;
-  const state = ratio < 1 - PACE_MARGIN ? "behind" : ratio > 1 + PACE_MARGIN ? "ahead" : "on-track";
-  return { state, actualPerWeek, requiredPerWeek };
+  return {
+    state: paceState(ratio),
+    actualPerWeek,
+    requiredPerWeek,
+    differencePercent: Math.round((ratio - 1) * 100),
+    projectedFinish:
+      actualPerWeek > 0
+        ? addDays(today, Math.ceil(((1 - progress) / actualPerWeek) * 7))
+        : undefined,
+  };
+}
+
+function paceState(ratio: number): GoalPaceState {
+  if (ratio < AT_RISK_RATIO) return "at-risk";
+  if (ratio < 1 - PACE_MARGIN) return "behind";
+  return ratio > 1 + PACE_MARGIN ? "ahead" : "on-track";
 }
 
 /** «2027» es de todo el año; «2027-T1», de un trimestre. */
@@ -132,32 +155,6 @@ export function periodChoices(today: IsoDate): string[] {
     return `${year + Math.floor(offset / 4)}-T${(offset % 4) + 1}`;
   });
   return [String(year), String(year + 1), ...quarters];
-}
-
-export interface PeriodGroup<T> {
-  /** `undefined` agrupa lo que no tiene periodo. */
-  year?: string;
-  /** Primero lo de todo el año (sin trimestre) y después T1 a T4. */
-  quarters: { quarter?: string; items: T[] }[];
-}
-
-/** Agrupa por año y, dentro, por trimestre; los años de menor a mayor y «sin periodo» al final. */
-export function groupByPeriod<T extends { goal: Goal }>(items: T[]): PeriodGroup<T>[] {
-  const years = new Map<string | undefined, Map<string | undefined, T[]>>();
-  for (const item of items) {
-    const [year, quarter] = item.goal.period?.split("-") ?? [];
-    const quarters = years.get(year) ?? new Map<string | undefined, T[]>();
-    quarters.set(quarter, [...(quarters.get(quarter) ?? []), item]);
-    years.set(year, quarters);
-  }
-  return [...years]
-    .sort(([a], [b]) => (a ?? "9999").localeCompare(b ?? "9999"))
-    .map(([year, quarters]) => ({
-      year,
-      quarters: [...quarters]
-        .sort(([a], [b]) => (a ?? "").localeCompare(b ?? ""))
-        .map(([quarter, grouped]) => ({ quarter, items: grouped })),
-    }));
 }
 
 function average(values: number[]): number {

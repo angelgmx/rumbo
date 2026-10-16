@@ -3,7 +3,7 @@ import type { Goal, GoalStatus, IfThen, KeyResult } from "../domain/goals";
 import type { Resource, ResourceKind } from "../domain/resources";
 import type { SqlValue } from "../ports";
 import type { AppDatabase } from "./appDatabase";
-import { invert, withoutUndefined } from "./rows";
+import { invert, PRIORITY_FROM_ROW, PRIORITY_TO_ROW, withoutUndefined } from "./rows";
 
 interface GoalRow {
   id: number;
@@ -15,6 +15,7 @@ interface GoalRow {
   inicio: string | null;
   fecha_limite: string | null;
   estado: string;
+  prioridad: string | null;
   resultados_clave: string;
   obstaculo: string;
   planes: string;
@@ -172,6 +173,7 @@ function toRow(goal: Goal): Record<string, SqlValue> {
     inicio: goal.start ?? null,
     fecha_limite: goal.deadline ?? null,
     estado: STATUS_TO_ROW[goal.status],
+    prioridad: goal.priority ? PRIORITY_TO_ROW[goal.priority] : null,
     resultados_clave: JSON.stringify(goal.keyResults.map(keyResultToRow)),
     obstaculo: goal.obstacle,
     planes: JSON.stringify(goal.plans.map((plan) => ({ si: plan.if, entonces: plan.then }))),
@@ -190,6 +192,7 @@ function fromRow(row: GoalRow): Goal {
     start: row.inicio ?? undefined,
     deadline: row.fecha_limite ?? undefined,
     status: STATUS_FROM_ROW[row.estado] ?? "active",
+    priority: row.prioridad ? PRIORITY_FROM_ROW[row.prioridad] : undefined,
     keyResults: (JSON.parse(row.resultados_clave) as KeyResultRow[]).map(keyResultFromRow),
     obstacle: row.obstaculo,
     plans: plans.map((plan): IfThen => ({ if: plan.si, then: plan.entonces })),

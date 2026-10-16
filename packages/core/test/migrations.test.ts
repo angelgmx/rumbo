@@ -15,7 +15,7 @@ async function databaseAt(version: number) {
 
 describe("migrations", () => {
   it("turns saved free and task blocks into activities", async () => {
-    const database = await databaseAt(MIGRATIONS.length - 1);
+    const database = await databaseAt(MIGRATIONS.length - 2);
     const blocks = [
       { tipo: "habito", habito: "ingles", minutos: 15 },
       { tipo: "libre", titulo: "Café", minutos: 10 },
@@ -40,5 +40,20 @@ describe("migrations", () => {
       { tipo: "descanso", minutos: 5 },
     ]);
     expect(rows[1]!.bloques).toBe("[]");
+  });
+
+  it("gives saved goals an empty priority", async () => {
+    const database = await databaseAt(MIGRATIONS.length - 1);
+    await database.execute("INSERT INTO objetivos (titulo, creado) VALUES (?, ?)", [
+      "Inglés",
+      "2026-10-01",
+    ]);
+
+    await AppDatabase.open(database, new ChangeFeed());
+
+    const rows = await database.select<{ prioridad: string | null }>(
+      "SELECT prioridad FROM objetivos",
+    );
+    expect(rows).toEqual([{ prioridad: null }]);
   });
 });

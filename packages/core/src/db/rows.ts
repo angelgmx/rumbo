@@ -1,6 +1,7 @@
 // Traducciones comunes entre el código (en inglés) y las columnas (en castellano).
 import type { Weekday } from "../domain/dates";
 import type { HabitSchedule } from "../domain/habits";
+import type { Priority } from "../domain/tasks";
 
 const WEEKDAY_TO_ROW: Record<Weekday, string> = {
   mon: "lun",
@@ -27,6 +28,13 @@ export function scheduleFromRow(row: ScheduleRow): HabitSchedule {
   if (Array.isArray(row)) return row.flatMap((day) => WEEKDAY_FROM_ROW[day] ?? []);
   return { times_per_week: row.veces_por_semana };
 }
+
+export const PRIORITY_TO_ROW: Record<Priority, string> = {
+  high: "alta",
+  medium: "media",
+  low: "baja",
+};
+export const PRIORITY_FROM_ROW = invert(PRIORITY_TO_ROW);
 
 export function invert<K extends string>(map: Record<K, string>): Record<string, K> {
   return Object.fromEntries(Object.entries(map).map(([key, value]) => [value, key]));
