@@ -7,6 +7,7 @@ export function createAiProvider(settings: AiSettings, key: string | undefined):
     baseUrl: settings.baseUrl,
     model: settings.model,
     apiKey: AI_PROVIDERS[settings.provider].needsKey ? key : undefined,
+    skipReasoning: settings.provider === "local",
     fetch: httpFetch,
   };
   return settings.provider === "anthropic" ? anthropic(options) : openAiCompatible(options);

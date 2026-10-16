@@ -39,6 +39,26 @@ describe("openAiCompatible", () => {
     expect(calls[0]!.body).toMatchObject({ response_format: { type: "json_object" } });
   });
 
+  it("asks local models to answer without reasoning first", async () => {
+    const calls: Call[] = [];
+    const ai = openAiCompatible({
+      baseUrl: "u",
+      model: "qwen3:8b",
+      skipReasoning: true,
+      fetch: fakeFetch(200, answer, calls),
+    });
+    await ai.complete(messages);
+
+    expect(calls[0]!.body).toMatchObject({ reasoning_effort: "none" });
+  });
+
+  it("drops the reasoning a model writes inside think tags", async () => {
+    const thinking = { choices: [{ message: { content: "<think>a ver…</think>\n\nok" } }] };
+    const ai = openAiCompatible({ baseUrl: "u", model: "m", fetch: fakeFetch(200, thinking) });
+
+    expect(await ai.complete(messages)).toBe("ok");
+  });
+
   it("sends the key as a bearer token only when there is one", async () => {
     const calls: Call[] = [];
     const options = { baseUrl: "https://api.groq.com/openai/v1", model: "m" };

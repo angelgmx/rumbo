@@ -11,6 +11,11 @@ interface OpenAiCompatibleOptions {
   model: string;
   /** Los modelos locales no la piden. */
   apiKey?: string;
+  /**
+   * Pide la respuesta directa, sin razonar antes. Los modelos locales que razonan (qwen3)
+   * tardan decenas de segundos en pensar incluso para un «ok». Solo Ollama acepta «none».
+   */
+  skipReasoning?: boolean;
   fetch: HttpFetch;
 }
 
@@ -32,11 +37,17 @@ export function openAiCompatible(options: OpenAiCompatibleOptions): AiProvider {
           messages,
           stream: false,
           ...(json && { response_format: { type: "json_object" } }),
+          ...(options.skipReasoning && { reasoning_effort: "none" }),
         },
       );
       const parsed = completionSchema.safeParse(answer);
       if (!parsed.success) throw new AiError("failed", "Unexpected completion");
-      return parsed.data.choices[0]!.message.content;
+      return withoutThinking(parsed.data.choices[0]!.message.content);
     },
   };
+}
+
+/** Algunos modelos meten su razonamiento en el texto entre <think> y </think>. */
+function withoutThinking(content: string): string {
+  return content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 }
