@@ -10,6 +10,7 @@ import {
   type GoalStatus,
   type KeyResult,
 } from "../domain/goals";
+import type { Resource } from "../domain/resources";
 import { nearestMilestone, type UpcomingMilestone } from "../domain/projects";
 import type { Task } from "../domain/tasks";
 import type { Note } from "../vault/vault";
@@ -39,13 +40,17 @@ export interface GoalSummary {
   notes: Note[];
 }
 
-/** Una cosa que se conecta a un objetivo: un proyecto o una tarea por id, un hábito por clave, una ruta o una nota por nombre. */
+/**
+ * Una cosa que se conecta a un objetivo: un proyecto o una tarea por id, un hábito por clave,
+ * una ruta o una nota por nombre y un recurso por su dirección (o su título, si no tiene).
+ */
 export type GoalLink =
   | { kind: "project"; id: number }
   | { kind: "task"; id: number }
   | { kind: "habit"; key: string }
   | { kind: "roadmap"; name: string }
-  | { kind: "note"; name: string };
+  | { kind: "note"; name: string }
+  | { kind: "resource"; resource: Resource };
 
 /** Lo que se conecta al crear un objetivo: proyectos por id, hábitos por clave, rutas y notas por su nota. */
 export interface GoalDriverRefs {
@@ -169,6 +174,11 @@ export class GoalService {
         return goalId === undefined
           ? this.goals.unlink(id, link.name)
           : this.goals.link(id, link.name, link.kind);
+      case "resource":
+        return this.change(id, (goal) => ({
+          ...goal,
+          resources: withResource(goal.resources, link.resource, goalId !== undefined),
+        }));
     }
   }
 
@@ -208,6 +218,14 @@ export class GoalService {
       notes: notes.flatMap((name) => this.store.findByName(name) ?? []),
     };
   }
+}
+
+const sameResource = (a: Resource, b: Resource) => (a.url ?? a.title) === (b.url ?? b.title);
+
+function withResource(resources: Resource[], resource: Resource, present: boolean): Resource[] {
+  const linked = resources.some((other) => sameResource(other, resource));
+  if (!present) return resources.filter((other) => !sameResource(other, resource));
+  return linked ? resources : [...resources, resource];
 }
 
 function byDate(a: Task, b: Task): number {

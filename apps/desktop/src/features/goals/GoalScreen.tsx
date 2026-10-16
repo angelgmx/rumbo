@@ -10,6 +10,7 @@ import { DeleteGoalButton } from "./page/DeleteGoalButton";
 import { GoalKeyResults } from "./page/GoalKeyResults";
 import { GoalObstacle } from "./page/GoalObstacle";
 import { GoalPaceCard } from "./page/GoalPaceCard";
+import { GoalLinks } from "./page/links/GoalLinks";
 import { GoalPlan } from "./page/plan/GoalPlan";
 import { GoalProgressCard } from "./page/GoalProgressCard";
 import { GoalProperties } from "./page/GoalProperties";
@@ -67,6 +68,7 @@ export function GoalScreen() {
             />
             <GoalKeyResults summary={summary} />
             <GoalPlan summary={summary} />
+            <GoalLinks summary={summary} />
             <GoalObstacle goal={goal} />
           </div>
           <aside className="flex flex-col gap-4">

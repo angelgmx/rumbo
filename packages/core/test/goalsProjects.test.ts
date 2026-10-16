@@ -270,6 +270,29 @@ describe("goals", () => {
     expect([empty.projects, empty.roadmaps, empty.notes, empty.tasks]).toEqual([[], [], [], []]);
   });
 
+  it("connects a resource once and disconnects it by its address", async () => {
+    const id = (await rumbo.goals.create(goal))!;
+    const docs = {
+      title: "Docs",
+      url: "https://dev.java",
+      kind: "docs",
+      status: "pending",
+    } as const;
+    const book = { title: "Libro", kind: "book", status: "pending" } as const;
+
+    for (const resource of [docs, book, docs]) {
+      await rumbo.goals.connect(id, { kind: "resource", resource });
+    }
+    expect(rumbo.goals.get(id)!.goal.resources.map(({ title }) => title)).toEqual([
+      "Docs",
+      "Libro",
+    ]);
+
+    await rumbo.goals.disconnect(id, { kind: "resource", resource: docs });
+    await rumbo.goals.disconnect(id, { kind: "resource", resource: book });
+    expect(rumbo.goals.get(id)!.goal.resources).toEqual([]);
+  });
+
   it("changes only what it is given", async () => {
     const id = await rumbo.goals.create({ ...goal, title: "B2", area: "Python", why: "Viajar" });
     await rumbo.goals.update(id!, { area: undefined, period: "2027-T1", horizon: "quarter" });
