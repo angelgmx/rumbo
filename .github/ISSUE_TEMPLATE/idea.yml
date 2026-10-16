@@ -1,0 +1,12 @@
+name: Idea
+description: Propón algo para Rumbo
+labels: [idea]
+body:
+  - type: textarea
+    attributes:
+      label: Qué problema resuelve
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Cómo te lo imaginas

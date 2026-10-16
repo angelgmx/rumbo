@@ -1,0 +1,43 @@
+Rumbo
+Copyright (c) 2026 Angel Gómez. Todos los derechos reservados.
+All rights reserved.
+
+ES — Código visible, no libre
+
+El código de Rumbo se publica para que se pueda leer, estudiar y valorar.
+Sin permiso previo y por escrito del autor NO se permite:
+
+  1. Modificar el código ni publicar versiones derivadas.
+  2. Copiar, redistribuir o volver a publicar el código, entero o en parte.
+  3. Sublicenciarlo, venderlo o usarlo con fines comerciales.
+  4. Enviar contribuciones (pull requests) que no hayan sido pedidas o
+     aceptadas antes por el autor.
+
+Se permite, sin pedir permiso:
+
+  - Ver el código y descargarlo para leerlo.
+  - Compilar y usar la app sin modificar, para uso personal y no comercial.
+  - Abrir issues para avisar de errores o proponer ideas.
+
+Para pedir permiso: abre un issue en el repositorio o escribe al autor.
+
+EN — Source available, not open source
+
+The source code of Rumbo is published so it can be read, studied and
+evaluated. Without the author's prior written permission you may NOT:
+
+  1. Modify the code or publish derivative works.
+  2. Copy, redistribute or republish the code, in whole or in part.
+  3. Sublicense, sell or use it for commercial purposes.
+  4. Submit contributions (pull requests) not previously requested or
+     approved by the author.
+
+You may, without asking:
+
+  - View the code and download it to read it.
+  - Build and use the unmodified app for personal, non-commercial use.
+  - Open issues to report bugs or suggest ideas.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
