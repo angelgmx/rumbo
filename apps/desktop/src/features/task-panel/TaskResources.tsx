@@ -2,13 +2,12 @@ import type { Resource } from "@rumbo/core";
 import { ExternalLinkIcon } from "lucide-react";
 import { ResourceIcon } from "@/features/roadmaps/ResourceIcon";
 import { openUrl } from "@/platform/openUrl";
-import { SectionLabel } from "@/components/panel/SectionLabel";
+import { PanelSection } from "@/components/panel/PanelSection";
 
 /** Lo que usas para hacer la tarea: los enlaces de sus notas y los recursos de su módulo. */
 export function TaskResources({ resources }: { resources: Resource[] }) {
   return (
-    <section className="flex flex-col gap-2">
-      <SectionLabel>Recursos</SectionLabel>
+    <PanelSection title="Recursos">
       {resources.map((resource) => (
         <button
           key={`${resource.title}:${resource.url}`}
@@ -23,6 +22,6 @@ export function TaskResources({ resources }: { resources: Resource[] }) {
           <span className="ml-auto truncate text-xs text-muted-foreground">{resource.source}</span>
         </button>
       ))}
-    </section>
+    </PanelSection>
   );
 }

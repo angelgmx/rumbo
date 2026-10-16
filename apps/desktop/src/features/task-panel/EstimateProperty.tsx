@@ -17,17 +17,26 @@ export function EstimateProperty({
   return (
     <PropertyRow
       label="Estimado / real"
+      empty="Sin estimar"
       value={
-        <>
-          <span className="font-mono">
-            {estimated ? formatMinutes(estimated) : "—"}
-            <span className="text-muted-foreground"> / </span>
-            {real ? formatMinutes(real) : "—"}
-          </span>
-          {estimated && real !== undefined && (
-            <Progress value={Math.min(real / estimated, 1) * 100} className="ml-auto max-w-40" />
-          )}
-        </>
+        (estimated || real) && (
+          <>
+            {estimated ? (
+              <span className="font-mono">{formatMinutes(estimated)}</span>
+            ) : (
+              <span className="text-muted-foreground">Sin estimar</span>
+            )}
+            {real ? (
+              <span className="text-muted-foreground">
+                {" / "}
+                <span className="font-mono">{formatMinutes(real)}</span>
+              </span>
+            ) : null}
+            {estimated && real ? (
+              <Progress value={Math.min(real / estimated, 1) * 100} className="ml-auto max-w-40" />
+            ) : null}
+          </>
+        )
       }
       width="w-64"
     >

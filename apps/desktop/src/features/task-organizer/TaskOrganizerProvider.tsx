@@ -1,4 +1,4 @@
-import { isLooseTask, type OrganizeSuggestion, type Task } from "@rumbo/core";
+import type { OrganizeSuggestion, Task } from "@rumbo/core";
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
@@ -13,8 +13,8 @@ export interface TaskOrganizer {
   busy: boolean;
   /** Según el ajuste: propone o aplica, sin avisar de errores. Para una tarea recién creada. */
   organizeNew: (task: Task) => Promise<void>;
-  /** Pide propuesta para todas las tareas sueltas que ya existen. */
-  organizePending: () => Promise<void>;
+  /** Rellena lo que falta a las tareas dadas: propone o aplica, según el ajuste. */
+  organize: (tasks: Task[]) => Promise<void>;
   accept: (suggestion: OrganizeSuggestion) => Promise<void>;
   acceptAll: (suggestions: OrganizeSuggestion[]) => Promise<void>;
   dismiss: (suggestion: OrganizeSuggestion) => Promise<void>;
@@ -29,7 +29,7 @@ export function useTaskOrganizer(): TaskOrganizer {
 }
 
 /**
- * Las propuestas de la IA para las tareas sueltas y qué tareas está pensando. Viven aquí, por encima
+ * Las propuestas de la IA para las tareas y qué tareas está pensando. Viven aquí, por encima
  * de las pantallas, para que la propuesta de una tarea recién creada llegue sea cual sea la vista.
  */
 export function TaskOrganizerProvider({ children }: { children: ReactNode }) {
@@ -76,7 +76,7 @@ export function TaskOrganizerProvider({ children }: { children: ReactNode }) {
   async function organizeNew(task: Task) {
     const ai = await loadAi();
     const mode = ai?.settings.organizeTasks;
-    if (!ai || mode === "off" || !isLooseTask(task)) return;
+    if (!ai || mode === "off") return;
 
     // La tarea ya está creada: si la IA falla, se queda como estaba y no hay nada que contar.
     const proposed = await whileThinking([task], () =>
@@ -86,15 +86,16 @@ export function TaskOrganizerProvider({ children }: { children: ReactNode }) {
     else remember(proposed);
   }
 
-  async function organizePending() {
+  async function organize(visible: Task[]) {
     const ai = await loadAi();
     if (!ai) return;
     try {
-      const tasks = await rumbo.organizer.pending();
+      const tasks = await rumbo.organizer.pending(visible);
       const proposed = await whileThinking(tasks, () =>
         rumbo.organizer.propose(ai.provider, tasks),
       );
-      remember(proposed);
+      if (ai.settings.organizeTasks === "auto") await Promise.all(proposed.map(applyAndOfferUndo));
+      else remember(proposed);
       if (proposed.length === 0) toast("La IA no tiene nada que proponer");
     } catch (error) {
       toast.error(describeAiError(error));
@@ -112,12 +113,11 @@ export function TaskOrganizerProvider({ children }: { children: ReactNode }) {
   }
 
   const organizer: TaskOrganizer = {
-    suggestionFor: (task) =>
-      isLooseTask(task) ? suggestions.find((s) => s.task.id === task.id) : undefined,
+    suggestionFor: (task) => suggestions.find((s) => s.task.id === task.id),
     isThinking: (task) => thinking.includes(task.id),
     busy: thinking.length > 0,
     organizeNew,
-    organizePending,
+    organize,
     accept: applyAndOfferUndo,
     acceptAll,
     dismiss,

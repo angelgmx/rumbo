@@ -4,12 +4,13 @@ import type { OrganizeSuggestion } from "@rumbo/core";
 
 /** Lo que va a pasar si se acepta, en una línea: «Mañana 18:00 · Alta · 3 pasos». */
 export function describeSuggestion({ proposal }: OrganizeSuggestion, today: string): string {
-  const { date, time, duration, priority, area, steps } = proposal;
+  const { date, time, duration, priority, area, projectId, module, steps } = proposal;
   return [
-    date && `${formatRelativeDay(date, today)} ${time}`,
+    date ? `${formatRelativeDay(date, today)} ${time}` : time,
     duration && formatMinutes(duration),
     priority && PRIORITY_LABEL[priority],
     area,
+    (projectId || module) && "vinculada",
     steps && `${steps.length} pasos`,
   ]
     .filter(Boolean)

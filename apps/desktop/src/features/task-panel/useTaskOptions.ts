@@ -5,10 +5,11 @@ export interface TaskOptions {
   areas: PropertyOption[];
   projects: PropertyOption[];
   modules: PropertyOption[];
+  goals: PropertyOption[];
   tags: string[];
 }
 
-const NONE: TaskOptions = { areas: [], projects: [], modules: [], tags: [] };
+const NONE: TaskOptions = { areas: [], projects: [], modules: [], goals: [], tags: [] };
 
 /** Lo que se puede elegir en las propiedades: lo que ya existe en el vault y en la base de datos. */
 export function useTaskOptions(): TaskOptions {
@@ -29,6 +30,7 @@ export function useTaskOptions(): TaskOptions {
           hint: roadmap.title,
         })),
       ),
+      goals: rumbo.goals.list().map(({ id, goal }) => ({ value: String(id), label: goal.title })),
       tags: [...new Set(rumbo.tasks.all().flatMap((task) => task.tags))].sort((a, b) =>
         a.localeCompare(b),
       ),

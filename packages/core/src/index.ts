@@ -18,7 +18,8 @@ export { createRumbo, type Rumbo, type RumboSources } from "./app/rumbo";
 export { createNewVault } from "./app/newVault";
 export type { TriageSuggestion } from "./app/inboxTriageService";
 export type { OrganizeSuggestion } from "./app/taskOrganizerService";
-export { isLooseTask, type OrganizeProposal } from "./domain/taskOrganizing";
+export type { OrganizeProposal } from "./domain/taskOrganizing";
+export { isIncomplete } from "./domain/taskGaps";
 
 export { type Energy } from "./domain/closeDay";
 export type { TriageKind } from "./domain/inboxTriage";

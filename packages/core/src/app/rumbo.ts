@@ -111,6 +111,7 @@ async function open({ fs, database, clock = systemClock }: RumboSources): Promis
     tasks,
     dayPlan,
     routines,
+    { projects, learning, goals },
     new TaskOrganizationRepository(db),
   );
 

@@ -1,5 +1,6 @@
 import { resourcesInText, type TaskDraft } from "@rumbo/core";
-import { TaskChips } from "./TaskChips";
+import type { ReactNode } from "react";
+import { PanelSection } from "@/components/panel/PanelSection";
 import { TaskNotes } from "./TaskNotes";
 import { TaskProperties } from "./TaskProperties";
 import { TaskResources } from "./TaskResources";
@@ -10,12 +11,13 @@ import { useInheritance } from "./useInheritance";
 import type { TaskContext } from "./useTaskContext";
 import { useTaskOptions } from "./useTaskOptions";
 
-/** Lo que se ve en el panel, igual al crear y al editar: título, notas, propiedades, pasos y recursos. */
+/** Lo que se ve en el panel, igual al crear y al editar: título, descripción, propiedades, pasos y recursos. */
 export function TaskPanelBody({
   draft,
   context,
   status,
   creating,
+  banner,
   onPatch,
   onTitleChange,
   onTitleBlur,
@@ -24,6 +26,8 @@ export function TaskPanelBody({
   context: TaskContext;
   status: TaskStatus | undefined;
   creating: boolean;
+  /** Algo que va justo bajo el título, como la propuesta de la IA. */
+  banner?: ReactNode;
   onPatch: (changes: Partial<TaskDraft>) => void;
   onTitleChange: (title: string) => void;
   onTitleBlur?: () => void;
@@ -34,18 +38,18 @@ export function TaskPanelBody({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 pb-6">
-      <div className="flex flex-col gap-3">
-        <TaskTitle
-          value={draft.text}
-          done={status?.done}
-          autoFocus={creating}
-          onChange={onTitleChange}
-          onBlur={onTitleBlur}
-          onToggleDone={(done) => status?.onChange(done)}
-        />
+      <TaskTitle
+        value={draft.text}
+        done={status?.done}
+        autoFocus={creating}
+        onChange={onTitleChange}
+        onBlur={onTitleBlur}
+        onToggleDone={(done) => status?.onChange(done)}
+      />
+      {banner}
+      <PanelSection title="Descripción">
         <TaskNotes value={draft.notes ?? ""} onChange={(notes) => onPatch({ notes })} />
-        <TaskChips draft={draft} status={status} onChange={onPatch} />
-      </div>
+      </PanelSection>
       <TaskProperties
         draft={draft}
         context={context}

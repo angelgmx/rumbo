@@ -115,7 +115,7 @@ export function TasksScreen() {
           showIdeas ? undefined : current.view === "inbox" ? (
             <>
               <AcceptAllButton suggestions={suggestions} />
-              <OrganizeButton />
+              <OrganizeButton tasks={tasks} />
               <TriageButton
                 ready={triage.ready}
                 thinking={triage.thinking}
@@ -126,8 +126,10 @@ export function TasksScreen() {
           ) : (
             <>
               <AcceptAllButton suggestions={suggestions} />
-              {current.view === "done" && (
+              {current.view === "done" ? (
                 <ArchiveDoneButton count={all.filter((task) => task.done && !task.habit).length} />
+              ) : (
+                <OrganizeButton tasks={tasks} />
               )}
               <SaveViewButton
                 view={{
