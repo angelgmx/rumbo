@@ -66,7 +66,6 @@ Cada capa solo usa las de debajo. Nunca al revés.
 | `planner.ts`    | Repartir lo que queda de una ruta en el horario y calcular fechas.                                       |
 | `resources.ts`  | Recursos de un tema (cursos, vídeos, docs…) y adivinar tipo y fuente por la URL.                         |
 | `review.ts`     | FSRS en días: cuándo vuelve una tarjeta según cómo la recordaste.                                        |
-| `counters.ts`   | Contador de una tarea (minutos, pomodoros, cantidad, progreso): leerlo, escribirlo y sumar o restar.     |
 | `routines.ts`   | Rutinas: hora de cada bloque, si toca hoy, reordenar, plantillas y tareas de hoy de un bloque de tema.   |
 | `sections.ts`   | Líneas bajo un encabezado.                                                                               |
 

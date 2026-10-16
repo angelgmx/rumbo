@@ -137,23 +137,13 @@ Casillas en el formato del plugin **Tasks**, así funcionan igual en Obsidian:
 | `#etiqueta`       | Etiqueta                                                         |
 | `[clave:: valor]` | Campo de Dataview (`area`, `habit`, `project`, `module`, `due`…) |
 
-**Contador.** Una tarea puede llevar un contador en el campo `counter`, con su tipo y `actual/objetivo`:
+**Tiempo real.** La sesión de trabajo apunta en la tarea los minutos que ha medido, sumados, en el campo `spent`. Junto a `duration` (lo estimado) forman «Estimado / real» en el detalle de la tarea:
 
 ```markdown
-- [ ] Leer [counter:: minutes 12/30] ⏳ 2026-10-16
-- [ ] Programar [counter:: pomodoro 1/4]
-- [ ] Beber agua [counter:: count 3/8]
-- [ ] Ejercicios 3-5 de Strings [counter:: progress 1/3]
+- [ ] Leer [duration:: 30m] [spent:: 12] ⏳ 2026-10-16
 ```
 
-| Tipo       | Para qué                               | Cómo cambia                                     |
-| ---------- | -------------------------------------- | ----------------------------------------------- |
-| `minutes`  | Cronómetro hacia arriba                | Se guardan los minutos que lleva                |
-| `pomodoro` | Ciclos de trabajo y descanso (config.) | +1 al terminar un ciclo, sin pasar del objetivo |
-| `count`    | Contar a mano (+1 / −1)                | Puede pasarse del objetivo (9 de 8 vasos)       |
-| `progress` | Pasos de un total                      | +1 / −1, sin pasar del objetivo                 |
-
-Sin el campo, la tarea no tiene contador: se marca hecha y ya. Llegar al objetivo **no** marca la tarea; eso lo decides tú. Al cambiar el contador solo se reescribe su campo, y si la tarea no lo tenía se pone antes de los emojis de Tasks (que los lee desde el final de la línea).
+El progreso de una tarea son sus pasos (ver abajo): «2 de 3 pasos». Sin pasos, la tarea es una casilla. Las tareas de vaults anteriores pueden llevar `[counter:: minutes 12/30]`: la app ya no lo usa ni lo escribe, pero lo respeta al editar la tarea.
 
 `project` y `module` llevan un enlace a la nota: `[project:: [[Rumbo]]]`, `[module:: [[Dominio — Strings]]]`. Si la tarea no tiene `area`, el panel de tarea le pone la del módulo (la de su ruta) o, si no, la del proyecto.
 
@@ -431,7 +421,7 @@ blocks:
 | `custom` | —                                            | —                                                         |
 
 - **La hora de cada bloque no se guarda:** empieza cuando acaba el anterior, a partir de `start`. Al reordenar, se recalcula.
-- **Bloque de un tema → tareas de hoy.** Genera el recurso pendiente que toca ver (contador de minutos) y los siguientes ejercicios sin hacer, como mucho 3 (contador de progreso). Si no queda nada, «repasar conceptos y criterio de dominado». Llevan `[habit:: …]` si la ruta tiene hábito, así cuentan para cumplirlo. Las que ya existen hoy no se repiten.
+- **Bloque de un tema → tareas de hoy.** Genera el recurso pendiente que toca ver (con su duración estimada) y los siguientes ejercicios sin hacer, como mucho 3 (cada uno, un paso de la tarea). Si no queda nada, «repasar conceptos y criterio de dominado». Llevan `[habit:: …]` si la ruta tiene hábito, así cuentan para cumplirlo. Las que ya existen hoy no se repiten.
 - Plantillas para empezar: mañana, estudio, gym, noche y fin de semana.
 
 ### Tipos previstos
