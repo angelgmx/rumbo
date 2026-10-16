@@ -101,6 +101,7 @@ export {
 export { weekProgress } from "./domain/habits";
 export {
   isInView,
+  isRecentlyDone,
   taskToDraft,
   type Priority,
   type Task,

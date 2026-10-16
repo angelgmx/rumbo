@@ -17,7 +17,9 @@ import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { formatDay } from "@/lib/format";
+import { ArchiveDoneButton } from "./ArchiveDoneButton";
 import { AreaDot } from "./AreaDot";
+import { DoneList } from "./DoneList";
 import { FilterChip } from "./FilterChip";
 import { groupByDay } from "./groupByDay";
 import { ProcessInboxDialog } from "./ProcessInboxDialog";
@@ -75,7 +77,14 @@ export function TasksScreen() {
           current.view === "inbox" ? (
             <ProcessInboxDialog />
           ) : (
-            <SaveViewButton view={{ view: current.view, ...filter }} />
+            <>
+              {current.view === "done" && (
+                <ArchiveDoneButton
+                  count={all.filter((task) => task.done && task.path === inboxPath).length}
+                />
+              )}
+              <SaveViewButton view={{ view: current.view, ...filter }} />
+            </>
           )
         }
       />
@@ -147,6 +156,8 @@ export function TasksScreen() {
               <EmptyList view={current.view} />
             ) : current.view === "upcoming" ? (
               <GroupedTaskList groups={groupByDay(tasks, today)} {...listProps} />
+            ) : current.view === "done" ? (
+              <DoneList tasks={tasks} {...listProps} />
             ) : (
               <TaskList tasks={tasks} {...listProps} />
             )}

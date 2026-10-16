@@ -4,12 +4,13 @@ import type { FileSystem } from "../ports";
 
 export const CONFIG_PATH = ".rumbo/config.yml";
 
-const configSchema = z.object({
+const rawSchema = z.object({
   folders: z
     .object({
       daily: z.string().default("Daily"),
       daily_format: z.string().default("YYYY-MM-DD"),
       inbox: z.string().default("Inbox.md"),
+      archive: z.string().optional(),
       habits: z.string().default("Habits"),
       goals: z.string().default("Goals"),
       routines: z.string().default("Routines"),
@@ -27,6 +28,20 @@ const configSchema = z.object({
   // Los vaults antiguos pueden usar sus propios nombres: { estado: status }.
   aliases: z.record(z.string(), z.string()).default({}),
 });
+
+// El archivo de tareas, si no se dice, vive junto a la nota del inbox.
+const configSchema = rawSchema.transform((config) => ({
+  ...config,
+  folders: {
+    ...config.folders,
+    archive: config.folders.archive ?? besideInbox(config.folders.inbox, "Archivo de tareas.md"),
+  },
+}));
+
+function besideInbox(inbox: string, name: string): string {
+  const folder = inbox.slice(0, inbox.lastIndexOf("/") + 1);
+  return `${folder}${name}`;
+}
 
 export type RumboConfig = z.infer<typeof configSchema>;
 export type PomodoroSettings = RumboConfig["pomodoro"];

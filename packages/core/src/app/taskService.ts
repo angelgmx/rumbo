@@ -4,6 +4,7 @@ import { linkTarget } from "../domain/links";
 import { sectionLines } from "../domain/sections";
 import { creditSession } from "../domain/session";
 import {
+  appendLines,
   appendTask,
   appendTaskDraft,
   duplicateTask,
@@ -11,6 +12,7 @@ import {
   parseTasks,
   removeTask,
   setTaskDone,
+  takeDoneTasks,
   taskToDraft,
   updateTask,
   type Task,
@@ -128,9 +130,28 @@ export class TaskService {
     return copied && parseTasks(task.path, copied.source).find(({ line }) => line === copied!.line);
   }
 
-  async addToInbox(text: string): Promise<void> {
-    const source = await this.readIfExists(this.inboxPath);
-    await this.store.write(this.inboxPath, appendTask(source, text));
+  /** Añade la tarea al inbox y la devuelve tal como ha quedado. */
+  async addToInbox(text: string): Promise<Task | undefined> {
+    const source = appendTask(await this.readIfExists(this.inboxPath), text);
+    await this.store.write(this.inboxPath, source);
+    return parseTasks(this.inboxPath, source).at(-1);
+  }
+
+  /**
+   * Mueve las tareas hechas del inbox a la nota de archivo, con sus pasos y notas.
+   * Las de las dailies y los proyectos se quedan donde están. Devuelve cuántas ha movido.
+   */
+  async archiveDone(): Promise<number> {
+    let archived = 0;
+    await this.edit(this.inboxPath, async (source) => {
+      const { source: rest, taken } = takeDoneTasks(source);
+      if (taken.length === 0) return source;
+      archived = parseTasks("", taken.join("\n")).length;
+      const archivePath = this.store.config.folders.archive;
+      await this.store.write(archivePath, appendLines(await this.readIfExists(archivePath), taken));
+      return rest;
+    });
+    return archived;
   }
 
   /** Crea una tarea hecha con el formulario. Va al inbox; desde ahí se procesa. */
@@ -162,9 +183,9 @@ export class TaskService {
    * Cambia una nota leyéndola del disco justo antes de escribirla, de una en una:
    * dos cambios seguidos (cada tecla de un título) no se pisan.
    */
-  private edit(path: string, change: (source: string) => string): Promise<void> {
+  private edit(path: string, change: (source: string) => string | Promise<string>): Promise<void> {
     const run = this.writes.then(async () =>
-      this.store.write(path, change(await this.store.read(path))),
+      this.store.write(path, await change(await this.store.read(path))),
     );
     this.writes = run.catch(() => {});
     return run;

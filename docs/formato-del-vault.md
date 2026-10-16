@@ -23,6 +23,7 @@ folders:
   daily: 04 - Diario # carpeta de las dailies
   daily_format: YYYY/MM/YYYY-MM-DD # subcarpetas y nombre de cada daily
   inbox: 00 - Inbox/Inbox.md # fichero donde caen las capturas
+  archive: 00 - Inbox/Archivo de tareas.md # opcional; por defecto, junto al inbox
   habits: Hábitos
   goals: Objetivos
   routines: 07 - Rutinas
@@ -165,6 +166,12 @@ La app lee las tareas del **inbox**, de las **dailies** y de las notas de **proy
 | Próximas  | Con fecha futura                                                  |
 | Algún día | Sin fecha y ya procesada (con área o proyecto, o fuera del inbox) |
 | Hechas    | Marcadas                                                          |
+
+Las casillas sin texto (las de una plantilla, con solo espacios, fechas o campos) no son tareas y no salen en ninguna vista.
+
+**Hechas** enseña las completadas (con `✅ fecha`) en los últimos 14 días, agrupadas por día; «Ver anteriores» añade el resto. Las hechas sin `✅` solo salen con «Ver anteriores».
+
+**Archivar hechas del inbox** mueve las tareas hechas de la nota del inbox, con sus pasos y notas, al final de `folders.archive` (por defecto `Archivo de tareas.md`, junto al inbox). No toca ninguna otra línea del inbox ni las tareas hechas de dailies y proyectos.
 
 ### Vistas guardadas
 

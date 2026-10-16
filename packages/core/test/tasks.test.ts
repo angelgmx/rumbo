@@ -5,9 +5,11 @@ import {
   duplicateTask,
   habitHistoryFromTasks,
   isInView,
+  isRecentlyDone,
   parseTasks,
   removeTask,
   setTaskDone,
+  takeDoneTasks,
   taskToDraft,
   updateTask,
 } from "../src/domain/tasks";
@@ -307,5 +309,61 @@ describe("time spent", () => {
     const old = "- [ ] Leer [counter:: minutes 12/30] ⏳ 2026-10-16";
     expect(parseTasks("x.md", old)[0]).toMatchObject({ text: "Leer" });
     expect(updateTask(old, 0, { text: "Leer más" })).toContain("[counter:: minutes 12/30]");
+  });
+});
+
+describe("empty checkboxes", () => {
+  const source = "- [ ] \n- [x]   ✅ 2026-10-13\n- [ ] [area:: Python]\n- [ ] Real task\n";
+
+  it("are not tasks", () => {
+    expect(parseTasks("Daily.md", source).map((task) => task.text)).toEqual(["Real task"]);
+  });
+
+  it("can still be rewritten by line", () => {
+    expect(updateTask("- [ ] \n", 0, { text: "Now with text" })).toBe("- [ ] Now with text\n");
+  });
+});
+
+describe("isRecentlyDone", () => {
+  const done = (doneOn?: string) =>
+    parseTasks("", `- [x] Task${doneOn ? ` ✅ ${doneOn}` : ""}`)[0]!;
+
+  it("covers the last 14 days, today included", () => {
+    expect(isRecentlyDone(done("2026-10-15"), "2026-10-15")).toBe(true);
+    expect(isRecentlyDone(done("2026-10-02"), "2026-10-15")).toBe(true);
+    expect(isRecentlyDone(done("2026-10-01"), "2026-10-15")).toBe(false);
+  });
+
+  it("leaves out tasks without a done date and pending ones", () => {
+    expect(isRecentlyDone(done(), "2026-10-15")).toBe(false);
+    expect(isRecentlyDone(parseTasks("", "- [ ] Task")[0]!, "2026-10-15")).toBe(false);
+  });
+});
+
+describe("takeDoneTasks", () => {
+  const source = [
+    "# Inbox",
+    "- [ ] Pending",
+    "- [x] Done one ✅ 2026-10-13",
+    "    A note",
+    "    - [x] A step",
+    "- [ ] Another pending",
+    "- [x] Done two ✅ 2026-10-14",
+    "",
+  ].join("\n");
+
+  it("takes done tasks with their steps and notes and keeps every other line", () => {
+    const { source: rest, taken } = takeDoneTasks(source);
+    expect(rest).toBe("# Inbox\n- [ ] Pending\n- [ ] Another pending\n");
+    expect(taken).toEqual([
+      "- [x] Done one ✅ 2026-10-13",
+      "    A note",
+      "    - [x] A step",
+      "- [x] Done two ✅ 2026-10-14",
+    ]);
+  });
+
+  it("changes nothing when there is nothing done", () => {
+    expect(takeDoneTasks("- [ ] Pending\n")).toEqual({ source: "- [ ] Pending\n", taken: [] });
   });
 });

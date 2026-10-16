@@ -1,5 +1,5 @@
 import { CHECKBOX } from "./checkbox";
-import type { IsoDate } from "./dates";
+import { addDays, type IsoDate } from "./dates";
 import { linkTarget } from "./links";
 
 // Las tareas son casillas normales con el formato del plugin "Tasks" de
@@ -58,6 +58,9 @@ export interface TaskDraft {
   spent?: number;
 }
 
+/** Los días que enseña «Hechas» antes de pedir «Ver anteriores». */
+export const RECENT_DONE_DAYS = 14;
+
 const PRIORITY_EMOJI: Record<Priority, string> = { high: "⏫", medium: "🔼", low: "🔽" };
 
 const DATE = String.raw`(\d{4}-\d{2}-\d{2})`;
@@ -65,7 +68,12 @@ const DONE_MARK = new RegExp(`\\s*✅\\s*${DATE}`, "u");
 // [clave:: valor]. El valor puede llevar wikilinks: [project:: [[Citalash]]].
 const DATAVIEW_FIELD = /\[([\w-]+)::\s*((?:\[\[[^\]]*\]\]|[^\]])*)\]/g;
 
+/** Las tareas de una nota. Las casillas vacías (las de una plantilla) no cuentan. */
 export function parseTasks(path: string, source: string): Task[] {
+  return parseCheckboxes(path, source).filter((task) => task.text !== "");
+}
+
+function parseCheckboxes(path: string, source: string): Task[] {
   const tasks: Task[] = [];
   const lines = source.split("\n");
   let inAgenda = false;
@@ -176,6 +184,20 @@ export function appendTaskDraft(source: string, draft: TaskDraft): string {
 }
 
 /**
+ * Saca de una nota las tareas hechas con sus pasos y notas, sin tocar el resto de líneas.
+ * Devuelve la nota que queda y las líneas sacadas, en el orden en que estaban.
+ */
+export function takeDoneTasks(source: string): { source: string; taken: string[] } {
+  const lines = source.split("\n");
+  const done = parseTasks("", source).filter((task) => task.done);
+  const taken: string[][] = [];
+  for (const { line } of done.reverse()) {
+    taken.unshift(lines.splice(line, blockEnd(lines, line) - line));
+  }
+  return { source: lines.join("\n"), taken: taken.flat() };
+}
+
+/**
  * Notas y pasos bajo una tarea, con sangría. Las líneas en blanco de las notas se quitan:
  * una línea en blanco corta el bloque y lo de debajo dejaría de ser de la tarea.
  */
@@ -212,7 +234,7 @@ export function formatTaskText(draft: TaskDraft): string {
     .join(" ");
 }
 
-function appendLines(source: string, lines: string[]): string {
+export function appendLines(source: string, lines: string[]): string {
   const base = source === "" || source.endsWith("\n") ? source : `${source}\n`;
   return `${base}${lines.join("\n")}\n`;
 }
@@ -232,6 +254,11 @@ export function isInView(task: Task, view: TaskView, today: IsoDate, inboxPath: 
       // Sin fecha y ya procesada: con área o proyecto, aunque siga en la nota del inbox.
       return !task.done && date === undefined && !isUnprocessed(task, inboxPath);
   }
+}
+
+/** Hecha en los últimos `days` días, hoy incluido. Sin fecha de ✅ no se puede saber, así que no. */
+export function isRecentlyDone(task: Task, today: IsoDate, days = RECENT_DONE_DAYS): boolean {
+  return task.done && task.doneOn !== undefined && task.doneOn > addDays(today, -days);
 }
 
 /** Sin procesar: sigue en el inbox y no tiene fecha, área ni proyecto. */
@@ -271,7 +298,7 @@ export function updateTask(source: string, line: number, changes: TaskChanges): 
   if (!match) return source;
 
   const end = blockEnd(lines, line);
-  const current = parseTasks("", lines.slice(line, end).join("\n"))[0]!;
+  const current = parseCheckboxes("", lines.slice(line, end).join("\n"))[0]!;
   const draft: TaskDraft = { ...taskToDraft(current), ...changes };
   const kept = Object.entries(current.fields)
     .filter(([key]) => !DRAFT_FIELDS.has(key))

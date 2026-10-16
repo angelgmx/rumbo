@@ -96,6 +96,44 @@ describe("editing tasks", () => {
   });
 });
 
+describe("archiving done tasks", () => {
+  const inbox = "# Inbox\n- [ ] Buy a new notebook\n- [x] Old thing ✅ 2026-10-01\n";
+
+  beforeEach(() => files.set("Inbox/Inbox.md", inbox));
+
+  it("moves the done tasks of the inbox to the archive note, next to it", async () => {
+    rumbo = await createRumbo(memoryFileSystem(files), clock);
+    expect(await rumbo.tasks.archiveDone()).toBe(1);
+    expect(files.get("Inbox/Inbox.md")).toBe("# Inbox\n- [ ] Buy a new notebook\n");
+    expect(files.get("Inbox/Archivo de tareas.md")).toBe("- [x] Old thing ✅ 2026-10-01\n");
+  });
+
+  it("appends to the archive instead of replacing it", async () => {
+    files.set("Inbox/Archivo de tareas.md", "- [x] Older ✅ 2026-09-01\n");
+    rumbo = await createRumbo(memoryFileSystem(files), clock);
+    await rumbo.tasks.archiveDone();
+    expect(files.get("Inbox/Archivo de tareas.md")).toBe(
+      "- [x] Older ✅ 2026-09-01\n- [x] Old thing ✅ 2026-10-01\n",
+    );
+  });
+
+  it("leaves the done tasks of daily notes where they are", async () => {
+    const daily = "Journal/2026/10/2026-10-15.md";
+    const before = files.get(daily)!;
+    files.set(daily, `${before}\n- [x] Daily thing ✅ 2026-10-15\n`);
+    rumbo = await createRumbo(memoryFileSystem(files), clock);
+    await rumbo.tasks.archiveDone();
+    expect(files.get(daily)).toContain("Daily thing");
+  });
+
+  it("does nothing when the inbox has no done tasks", async () => {
+    files.set("Inbox/Inbox.md", "- [ ] Only pending\n");
+    rumbo = await createRumbo(memoryFileSystem(files), clock);
+    expect(await rumbo.tasks.archiveDone()).toBe(0);
+    expect(files.has("Inbox/Archivo de tareas.md")).toBe(false);
+  });
+});
+
 describe("inherited area", () => {
   it("comes from the roadmap of the module", () => {
     expect(rumbo.tasks.inheritedArea({ module: "Mastery — Variables" })).toBe("Python");
