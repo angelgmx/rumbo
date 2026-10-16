@@ -153,6 +153,25 @@ export const MIGRATIONS: string[][] = [
     "ALTER TABLE tareas ADD COLUMN objetivo_id INTEGER REFERENCES objetivos (id) ON DELETE SET NULL",
   ],
   [
+    // La hora a la que toca una tarea el día en que está programada ("18:00").
+    "ALTER TABLE tareas ADD COLUMN hora TEXT",
+    // Lo que la IA ha hecho con una tarea suelta y qué pasó después. `antes` y `despues` guardan
+    // solo los campos que tocó, con los nombres de los campos de la tarea, para poder devolverlos
+    // a como estaban:
+    //   antes:   {"steps": [], "priority": null, "scheduled": null, "time": null}
+    //   despues: {"steps": [{"text": "Buscar precios", "done": false}], "priority": "high", …}
+    // Una descartada o revertida no vuelve a proponerse; no lleva ni antes ni después.
+    `CREATE TABLE organizaciones_tarea (
+      id INTEGER PRIMARY KEY,
+      tarea_id INTEGER NOT NULL REFERENCES tareas (id) ON DELETE CASCADE,
+      estado TEXT NOT NULL CHECK (estado IN ('aplicada', 'revertida', 'descartada')),
+      antes TEXT CHECK (antes IS NULL OR json_valid(antes)),
+      despues TEXT CHECK (despues IS NULL OR json_valid(despues)),
+      creada TEXT NOT NULL
+    )`,
+    "CREATE INDEX organizaciones_tarea_por_tarea ON organizaciones_tarea (tarea_id, estado)",
+  ],
+  [
     // Una rutina puede tener vigencia (pasado `vigente_hasta` deja de tocar), empujar un
     // objetivo y marcar un hábito, que se señala por su clave.
     "ALTER TABLE rutinas ADD COLUMN vigente_desde TEXT",

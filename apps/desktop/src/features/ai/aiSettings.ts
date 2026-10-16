@@ -1,10 +1,20 @@
 export type AiProviderKind = "anthropic" | "openai" | "local";
 
+export type OrganizeMode = "off" | "suggest" | "auto";
+
+export const ORGANIZE_MODES: Record<OrganizeMode, { label: string; description: string }> = {
+  off: { label: "Apagado", description: "Las tareas se quedan como las escribes" },
+  suggest: { label: "Sugerir", description: "Propone pasos, prioridad y hora; tú aceptas" },
+  auto: { label: "Automático", description: "Lo aplica al crear la tarea, con «Deshacer»" },
+};
+
 /** Qué IA usa la app. La clave no va aquí: vive en el llavero del sistema. */
 export interface AiSettings {
   provider: AiProviderKind;
   baseUrl: string;
   model: string;
+  /** Qué hace la IA con las tareas sueltas que creas. */
+  organizeTasks: OrganizeMode;
 }
 
 interface AiProviderInfo {
@@ -36,10 +46,13 @@ export const AI_PROVIDERS: Record<AiProviderKind, AiProviderInfo> = {
   },
 };
 
+export const AI_SETTINGS_KEY = "ai";
+
 export const DEFAULT_AI_SETTINGS: AiSettings = {
   provider: "anthropic",
   baseUrl: AI_PROVIDERS.anthropic.baseUrl,
   model: "",
+  organizeTasks: "suggest",
 };
 
 /** Sin modelo no hay a quién preguntar. */

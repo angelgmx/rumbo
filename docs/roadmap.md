@@ -132,6 +132,8 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] Puerto `AiProvider` en `core`: Claude (por defecto) y compatible con OpenAI (Ollama, LM Studio, Groq, Gemini, OpenRouter, OpenAI)
 - [x] Ajustes › Inteligencia artificial: proveedor, URL, modelo, clave en el llavero del sistema y «Probar»
 - [x] Organizar el Inbox con IA: propone si es tarea, idea, proyecto u objetivo, con área y fecha, y tú decides
+- [x] La IA organiza las tareas sueltas: pasos, prioridad, área, duración y día y hora elegidos entre los huecos libres de tu agenda real. Ajuste «Organizar tareas nuevas» (apagado · sugerir · automático); en Sugerir, propuesta en la fila y en el detalle con «Aceptar todas» y «Organizar con IA» en el Inbox; en Automático, toast con «Deshacer» y cada cambio guardado para revertirlo
+- [ ] La hora de una tarea aún no sale en Foco ni en la agenda del día
 
 ## Base de datos (ADR-0013)
 

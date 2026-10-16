@@ -105,7 +105,9 @@ function DateChip({
       width="w-auto p-1"
       className={cn(CHIP, !date && "border-dashed text-muted-foreground")}
       trigger={
-        date ? `${field === "due" ? "Vence " : ""}${formatRelativeDay(date, today)}` : "Sin fecha"
+        date
+          ? `${field === "due" ? "Vence " : ""}${formatRelativeDay(date, today)}${field === "scheduled" && draft.time ? ` ${draft.time}` : ""}`
+          : "Sin fecha"
       }
     >
       {(close) => (

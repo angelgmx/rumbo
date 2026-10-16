@@ -43,6 +43,9 @@ export function TaskRow({
   const late = !task.done && date !== undefined && date < today;
   const area = areaOf(task);
   const project = projectOf(task);
+  const dateLabel =
+    showDate && date ? `${task.due && !task.scheduled ? "vence " : ""}${formatShortDay(date)}` : "";
+  const when = [dateLabel, task.time].filter(Boolean).join(" ");
 
   return (
     <div className="flex items-center gap-3 px-4 py-3 transition-colors duration-(--dur-fast) hover:bg-muted/40">
@@ -88,7 +91,7 @@ export function TaskRow({
           </span>
         )}
         {task.recurrence && <RepeatIcon className="size-3.5" aria-label={task.recurrence} />}
-        {showDate && date && (
+        {when && (
           <span
             className={cn(
               "flex items-center gap-1.5 font-mono text-xs",
@@ -96,8 +99,7 @@ export function TaskRow({
             )}
           >
             <ClockIcon className="size-3.5" />
-            {task.due && !task.scheduled ? "vence " : ""}
-            {formatShortDay(date)}
+            {when}
           </span>
         )}
         <StepsChip steps={task.steps} />

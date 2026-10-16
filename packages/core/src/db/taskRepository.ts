@@ -14,6 +14,7 @@ interface TaskRow {
   etiquetas: string;
   prioridad: string | null;
   programada: string | null;
+  hora: string | null;
   vence: string | null;
   repeticion: string | null;
   duracion_min: number | null;
@@ -39,6 +40,7 @@ const COLUMNS = {
   tags: "etiquetas",
   priority: "prioridad",
   scheduled: "programada",
+  time: "hora",
   due: "vence",
   recurrence: "repeticion",
   duration: "duracion_min",
@@ -171,6 +173,7 @@ function fromRow(row: TaskRow): Task {
     done: row.estado === "hecha",
     doneOn: row.hecha_el ?? undefined,
     scheduled: row.programada ?? undefined,
+    time: row.hora ?? undefined,
     due: row.vence ?? undefined,
     recurrence: row.repeticion ?? undefined,
     priority: row.prioridad ? PRIORITY_FROM_ROW[row.prioridad] : undefined,

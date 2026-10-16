@@ -2,7 +2,8 @@
 // La IA solo propone; aplicar cada propuesta lo decide el usuario.
 import { z } from "zod";
 import type { AiMessage } from "../ports";
-import { addDays, SPANISH_WEEKDAYS, toIsoDate, WEEKDAYS, weekdayOf, type IsoDate } from "./dates";
+import { jsonIn, knownArea } from "./aiAnswer";
+import { addDays, spanishWeekday, toIsoDate, type IsoDate } from "./dates";
 
 export const TRIAGE_KINDS = ["task", "idea", "project", "goal"] as const;
 export type TriageKind = (typeof TRIAGE_KINDS)[number];
@@ -48,8 +49,7 @@ export function triageMessages(items: string[], context: TriageContext): AiMessa
 function calendar(today: IsoDate): string[] {
   return Array.from({ length: CALENDAR_DAYS }, (_, offset) => {
     const date = addDays(today, offset);
-    const name = SPANISH_WEEKDAYS[WEEKDAYS.indexOf(weekdayOf(date))];
-    return `- ${offset === 0 ? "hoy, " : ""}${name} ${date}`;
+    return `- ${offset === 0 ? "hoy, " : ""}${spanishWeekday(date)} ${date}`;
   });
 }
 
@@ -95,23 +95,6 @@ export function parseTriage(
 /** Una tarea sin área ni fecha seguiría en el Inbox: aceptarla no haría nada. */
 export function changesSomething(proposal: TriageProposal): boolean {
   return proposal.kind !== "task" || proposal.area !== undefined || proposal.date !== undefined;
-}
-
-// Algunos modelos envuelven el JSON en texto o en un bloque de código.
-function jsonIn(answer: string): unknown {
-  const start = answer.indexOf("{");
-  const end = answer.lastIndexOf("}");
-  if (start === -1 || end < start) return undefined;
-  try {
-    return JSON.parse(answer.slice(start, end + 1));
-  } catch {
-    return undefined;
-  }
-}
-
-function knownArea(area: string | null | undefined, areas: string[]): string | undefined {
-  const wanted = area?.trim().toLowerCase();
-  return wanted ? areas.find((name) => name.toLowerCase() === wanted) : undefined;
 }
 
 function validDate(date: string | null | undefined): IsoDate | undefined {

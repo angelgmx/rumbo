@@ -22,6 +22,11 @@ export function toIsoDate(date: Date): IsoDate {
   return `${year}-${month}-${day}`;
 }
 
+/** La hora de un instante como «HH:MM». */
+export function toTime(date: Date): string {
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
 export function addDays(date: IsoDate, days: number): IsoDate {
   const [year, month, day] = date.split("-").map(Number);
   return toIsoDate(new Date(year!, month! - 1, day! + days));
@@ -32,6 +37,11 @@ export function weekdayOf(date: IsoDate): Weekday {
   // getDay() empieza en domingo y nuestras semanas empiezan en lunes.
   const index = (new Date(year!, month! - 1, day!).getDay() + 6) % 7;
   return WEEKDAYS[index]!;
+}
+
+/** El nombre del día de la semana en castellano: «lunes». */
+export function spanishWeekday(date: IsoDate): string {
+  return SPANISH_WEEKDAYS[WEEKDAYS.indexOf(weekdayOf(date))]!;
 }
 
 export function startOfWeek(date: IsoDate): IsoDate {

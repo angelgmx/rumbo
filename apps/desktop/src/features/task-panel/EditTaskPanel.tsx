@@ -3,6 +3,7 @@ import { PlayIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
 import { Button } from "@/components/ui/button";
+import { OrganizeAside } from "@/features/task-organizer/OrganizeAside";
 import { taskRequest } from "@/features/session/requests";
 import { useSession } from "@/features/session/SessionProvider";
 import { TaskMenu } from "./TaskMenu";
@@ -75,6 +76,9 @@ export function EditTaskPanel({
           onDelete={() => void remove()}
         />
       </TaskPanelHeader>
+      <div className="flex justify-end px-6 pb-3 empty:hidden">
+        <OrganizeAside task={task} />
+      </div>
       <TaskPanelBody
         draft={draft}
         context={context}
