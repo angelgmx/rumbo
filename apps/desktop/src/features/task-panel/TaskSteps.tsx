@@ -1,5 +1,5 @@
 import type { TaskStep } from "@rumbo/core";
-import { PlusIcon, XIcon } from "lucide-react";
+import { ListChecksIcon, PlusIcon, XIcon } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,6 +28,7 @@ export function TaskSteps({
 
   return (
     <PanelSection
+      icon={ListChecksIcon}
       title={`Pasos${steps.length > 0 ? ` · ${doneCount} de ${steps.length}` : ""}`}
       action={
         <Button

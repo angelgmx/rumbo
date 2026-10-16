@@ -41,3 +41,20 @@ export function projectProgress(project: Project, tasks: { done: boolean }[]): n
   if (steps.length === 0) return 0;
   return steps.filter((step) => step.done).length / steps.length;
 }
+
+export interface UpcomingMilestone {
+  project: string;
+  title: string;
+  date: IsoDate;
+}
+
+/** El hito sin hacer con fecha más cercano de entre varios proyectos. */
+export function nearestMilestone(projects: Project[]): UpcomingMilestone | undefined {
+  return projects
+    .flatMap((project) =>
+      project.milestones.flatMap(({ title, date, done }) =>
+        done || !date ? [] : [{ project: project.title, title, date }],
+      ),
+    )
+    .sort((a, b) => a.date.localeCompare(b.date))[0];
+}

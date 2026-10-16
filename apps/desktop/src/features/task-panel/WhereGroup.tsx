@@ -1,6 +1,6 @@
 import type { TaskDraft } from "@rumbo/core";
-import { BookOpenIcon } from "lucide-react";
-import { PropertyGroup } from "@/components/panel/PropertyGroup";
+import { BookOpenIcon, MapPinIcon } from "lucide-react";
+import { PanelSection } from "@/components/panel/PanelSection";
 import { AreaProperty } from "./AreaProperty";
 import { GoalProperty } from "./GoalProperty";
 import { OptionProperty } from "./OptionProperty";
@@ -24,7 +24,7 @@ export function WhereGroup({
   onChange: (changes: Partial<TaskDraft>) => void;
 }) {
   return (
-    <PropertyGroup title="Dónde">
+    <PanelSection title="Dónde" icon={MapPinIcon}>
       {options.areas.length > 0 && (
         <AreaProperty
           value={draft.area}
@@ -67,6 +67,6 @@ export function WhereGroup({
         known={options.tags}
         onChange={(tags) => onChange({ tags })}
       />
-    </PropertyGroup>
+    </PanelSection>
   );
 }

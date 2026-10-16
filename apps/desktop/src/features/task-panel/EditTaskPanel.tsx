@@ -98,6 +98,7 @@ export function EditTaskPanel({
           done: task.done,
           onChange: (done) => void attempt(() => rumbo.tasks.setDone(task, done)),
         }}
+        taskId={task.id}
         creating={false}
         banner={
           completion.suggestion && (
@@ -110,6 +111,7 @@ export function EditTaskPanel({
           )
         }
         onPatch={patch}
+        onFlush={flush}
         onTitleChange={(text) => patch({ text })}
       />
       {!task.done && (

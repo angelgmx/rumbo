@@ -74,6 +74,9 @@ export {
 export { chooseStart, type StartChoice } from "./domain/focus";
 
 export { addMinutesToTime, blocksAround, minutesBetween } from "./domain/agenda";
+export { parseDuration } from "./domain/duration";
+export { endTime, type BusySlot } from "./domain/taskClash";
+export type { TaskSlot } from "./app/taskClashService";
 export { addDays, startOfWeek, WEEKDAYS, type IsoDate, type Weekday } from "./domain/dates";
 export {
   completionRate,
@@ -119,7 +122,7 @@ export {
   type RoutineInput,
   type TimedBlock,
 } from "./domain/routines";
-export type { GoalDriverRefs, GoalSummary } from "./app/goalService";
+export type { GoalDriverRefs, GoalLink, GoalSummary } from "./app/goalService";
 export type { ProjectSummary } from "./app/projectService";
 export {
   GOAL_STATUSES,
@@ -130,6 +133,8 @@ export {
   type Goal,
   type GoalHorizon,
   type GoalInput,
+  type GoalPace,
+  type GoalPaceState,
   type KeyResult,
   type GoalStatus,
   type IfThen,
@@ -138,6 +143,7 @@ export {
 export {
   PROJECT_STATUSES,
   type Milestone,
+  type UpcomingMilestone,
   type Project,
   type ProjectInput,
   type ProjectLink,
