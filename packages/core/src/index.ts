@@ -29,10 +29,8 @@ export type { ModuleStatus } from "./domain/learning";
 export { linkTarget } from "./domain/links";
 export {
   layoutRoadmap,
-  type LayoutBand,
   type LayoutItem,
   type LayoutLink,
-  type LayoutSide,
   type RoadmapLayout,
 } from "./domain/roadmapLayout";
 export { guessFromUrl, RESOURCE_KINDS, type Resource, type ResourceKind } from "./domain/resources";

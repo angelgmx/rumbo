@@ -25,7 +25,7 @@ export function ModuleBadge({ module, state, progress }: ModuleBadgeProps) {
 
   if (state === "current") {
     return (
-      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-linear-to-br from-[#ff7a4f] to-primary font-mono text-[11px] font-medium text-white">
+      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary font-mono text-[11px] font-medium text-primary-foreground">
         {number}
       </span>
     );
