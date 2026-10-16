@@ -1,19 +1,15 @@
 import { ROUTINE_TEMPLATES, routineSchema, type RoutineTemplate } from "@rumbo/core";
 import { LayoutGridIcon, PlusIcon } from "lucide-react";
-import { toast } from "sonner";
-import { useLocation } from "wouter";
-import { useRumbo } from "@/app/RumboContext";
 import { AreaIcon } from "@/components/AreaIcon";
 import { Card } from "@/components/ui/card";
 import { formatMinutes } from "@/lib/format";
 import { BlockStrip } from "./BlockStrip";
 import { TEMPLATE_LABEL, templateKind, useRoutineLook } from "./look";
-import { routineHref } from "./links";
 
 const TEMPLATES = Object.keys(ROUTINE_TEMPLATES) as RoutineTemplate[];
 
-/** «Empieza con una plantilla»: un clic crea la nota y abre su editor. */
-export function TemplateGallery() {
+/** «Empieza con una plantilla»: un clic abre el panel de nueva rutina con ella. */
+export function TemplateGallery({ onPick }: { onPick: (template: RoutineTemplate) => void }) {
   return (
     <Card className="gap-4 p-5">
       <div className="flex items-center justify-between">
@@ -25,31 +21,29 @@ export function TemplateGallery() {
       </div>
       <div className="grid grid-cols-5 gap-3">
         {TEMPLATES.map((template) => (
-          <TemplateCard key={template} template={template} />
+          <TemplateCard key={template} template={template} onPick={onPick} />
         ))}
       </div>
     </Card>
   );
 }
 
-function TemplateCard({ template }: { template: RoutineTemplate }) {
-  const rumbo = useRumbo();
-  const [, navigate] = useLocation();
+function TemplateCard({
+  template,
+  onPick,
+}: {
+  template: RoutineTemplate;
+  onPick: (template: RoutineTemplate) => void;
+}) {
   const input = ROUTINE_TEMPLATES[template];
   const routine = routineSchema.parse({ ...input, kind: templateKind(template) });
   const look = useRoutineLook(routine);
   const minutes = routine.blocks.reduce((sum, block) => sum + block.minutes, 0);
 
-  async function create() {
-    const path = await rumbo.routines.createFromTemplate(template);
-    toast.success(`«${input.title}» creada`);
-    navigate(routineHref(path));
-  }
-
   return (
     <button
       type="button"
-      onClick={create}
+      onClick={() => onPick(template)}
       className="group flex flex-col gap-4 rounded-xl border bg-background/40 p-4 text-left transition-colors duration-(--dur-fast) hover:bg-muted"
     >
       <span className="flex items-start gap-3">

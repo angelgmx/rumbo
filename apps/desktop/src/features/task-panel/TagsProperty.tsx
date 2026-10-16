@@ -1,7 +1,7 @@
 import { XIcon } from "lucide-react";
 import { useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { PropertyRow } from "./PropertyRow";
+import { PropertyRow } from "@/components/panel/PropertyRow";
 
 /** Las etiquetas de la tarea: escribe una y Enter, o elige entre las que ya usas. */
 export function TagsProperty({

@@ -2,7 +2,7 @@ import type { IsoDate } from "@rumbo/core";
 import { ArrowRightIcon } from "lucide-react";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { formatLongDay } from "@/lib/format";
-import { PropertyRow } from "./PropertyRow";
+import { PropertyRow } from "@/components/panel/PropertyRow";
 
 /** Cuándo empieza la tarea y, si tiene, cuándo vence: un solo calendario para las dos. */
 export function DatesProperty({

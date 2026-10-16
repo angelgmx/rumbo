@@ -1,5 +1,5 @@
 import { useVaultQuery } from "@/hooks/useVaultQuery";
-import type { PropertyOption } from "./OptionList";
+import type { PropertyOption } from "@/components/panel/OptionList";
 
 export interface TaskOptions {
   areas: PropertyOption[];

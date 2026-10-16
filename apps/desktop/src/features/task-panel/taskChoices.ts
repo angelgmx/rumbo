@@ -1,6 +1,6 @@
 import { PRIORITY_LABEL } from "@/features/tasks/taskLabels";
 import { formatMinutes } from "@/lib/format";
-import type { PropertyOption } from "./OptionList";
+import type { PropertyOption } from "@/components/panel/OptionList";
 
 const DURATIONS = [15, 30, 45, 60, 90, 120];
 

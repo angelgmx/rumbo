@@ -1,6 +1,6 @@
 import { AreaDot } from "@/features/tasks/AreaDot";
-import { OptionList, type PropertyOption } from "./OptionList";
-import { PropertyRow } from "./PropertyRow";
+import { OptionList, type PropertyOption } from "@/components/panel/OptionList";
+import { PropertyRow } from "@/components/panel/PropertyRow";
 
 /** El área de la tarea; si no tiene una propia se enseña la heredada, apagada. */
 export function AreaProperty({

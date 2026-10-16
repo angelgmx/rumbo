@@ -8,7 +8,7 @@ import { formatMonth, monthGrid, shiftMonth } from "@/lib/calendar";
 import { formatDayMonth } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export interface DateRange {
+interface DateRange {
   start?: IsoDate;
   end?: IsoDate;
 }

@@ -1,8 +1,6 @@
 import { isRoutineOn, linkTarget, type RoutineSummary } from "@rumbo/core";
 import { PlusIcon, RepeatIcon } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
-import { useLocation } from "wouter";
 import { useRumbo } from "@/app/RumboContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SegmentedControl } from "@/components/SegmentedControl";
@@ -16,10 +14,11 @@ import {
 } from "@/components/ui/empty";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
-import { routineHref } from "./links";
 import { RoutineCard } from "./RoutineCard";
 import { TemplateGallery } from "./TemplateGallery";
 import { TodayCard } from "./TodayCard";
+import { RoutinePanel } from "./panel/RoutinePanel";
+import type { Start } from "./panel/useRoutineDraft";
 
 const ALL_AREAS = "all";
 
@@ -28,8 +27,23 @@ export function RoutinesScreen() {
   const rumbo = useRumbo();
   const list = useVaultQuery((r) => r.routines.list()).data;
   const [area, setArea] = useState(ALL_AREAS);
+  const [creating, setCreating] = useState<Start>();
 
-  const header = <ScreenHeader title="Rutinas" newTask={false} actions={<NewRoutineButton />} />;
+  const header = (
+    <>
+      <ScreenHeader
+        title="Rutinas"
+        newTask={false}
+        actions={
+          <Button onClick={() => setCreating("blank")}>
+            <PlusIcon data-icon="inline-start" />
+            Nueva rutina
+          </Button>
+        }
+      />
+      <RoutinePanel from={creating} onClose={() => setCreating(undefined)} />
+    </>
+  );
   if (!list) return header;
 
   const today = rumbo.daily.today();
@@ -97,29 +111,10 @@ export function RoutinesScreen() {
             </>
           )}
 
-          <TemplateGallery />
+          <TemplateGallery onPick={setCreating} />
         </div>
       </main>
     </>
-  );
-}
-
-/** Crea una rutina en blanco y abre su editor para ponerle nombre y bloques. */
-function NewRoutineButton() {
-  const rumbo = useRumbo();
-  const [, navigate] = useLocation();
-
-  async function create() {
-    const path = await rumbo.routines.create({ title: "Nueva rutina", start: "18:00" });
-    toast.success("Rutina creada: ponle nombre y bloques");
-    navigate(routineHref(path));
-  }
-
-  return (
-    <Button onClick={create}>
-      <PlusIcon data-icon="inline-start" />
-      Nueva rutina
-    </Button>
   );
 }
 

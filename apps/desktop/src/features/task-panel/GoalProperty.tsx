@@ -1,5 +1,5 @@
 import { TargetIcon } from "lucide-react";
-import { ReadOnlyRow } from "./PropertyRow";
+import { ReadOnlyRow } from "@/components/panel/PropertyRow";
 
 /** El objetivo al que empuja la tarea: no se elige aquí, viene del hábito o de la ruta. */
 export function GoalProperty({ goal }: { goal: string }) {

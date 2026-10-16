@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { StepsBar } from "@/features/tasks/StepsBar";
-import { SectionLabel } from "./SectionLabel";
+import { SectionLabel } from "@/components/panel/SectionLabel";
 
 /** Los pasos de la tarea: una lista de casillas que se marcan, se escriben y se quitan. */
 export function TaskSteps({

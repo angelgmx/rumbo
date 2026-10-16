@@ -1,7 +1,7 @@
-import { PropertyRow } from "./PropertyRow";
+import { PropertyRow } from "@/components/panel/PropertyRow";
 import { Progress } from "@/components/ui/progress";
 import { formatMinutes } from "@/lib/format";
-import { OptionList } from "./OptionList";
+import { OptionList } from "@/components/panel/OptionList";
 import { durationOptions } from "./taskChoices";
 
 /** Lo que calculaste que llevaría y lo que lleva de verdad según la sesión de trabajo. */

@@ -4,8 +4,8 @@ import { DateRangePicker } from "@/components/DateRangePicker";
 import { PRIORITY_LABEL } from "@/features/tasks/taskLabels";
 import { formatRelativeDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { OptionList } from "./OptionList";
-import { PropertyPopover } from "./PropertyPopover";
+import { OptionList } from "@/components/panel/OptionList";
+import { PropertyPopover } from "@/components/panel/PropertyPopover";
 import { PRIORITIES, STATUSES } from "./taskChoices";
 import type { TaskStatus } from "./taskStatus";
 

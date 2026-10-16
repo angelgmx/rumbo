@@ -69,7 +69,7 @@ export {
 } from "./domain/session";
 export { chooseStart, type StartChoice } from "./domain/focus";
 
-export { blocksAround, minutesBetween } from "./domain/agenda";
+export { addMinutesToTime, blocksAround, minutesBetween } from "./domain/agenda";
 export { addDays, startOfWeek, WEEKDAYS, type IsoDate, type Weekday } from "./domain/dates";
 export {
   completionRate,
@@ -105,6 +105,7 @@ export {
   type BlockKind,
   type Routine,
   type RoutineBlock,
+  type RoutineInput,
   type RoutineTemplate,
   type TimedBlock,
 } from "./domain/routines";

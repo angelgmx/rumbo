@@ -5,7 +5,7 @@ import { DatesProperty } from "./DatesProperty";
 import { EstimateProperty } from "./EstimateProperty";
 import { GoalProperty } from "./GoalProperty";
 import { OptionProperty } from "./OptionProperty";
-import { SectionLabel } from "./SectionLabel";
+import { SectionLabel } from "@/components/panel/SectionLabel";
 import { REPEATS } from "./taskChoices";
 import { TagsProperty } from "./TagsProperty";
 import type { Inheritance } from "./useInheritance";
