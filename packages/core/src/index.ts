@@ -7,6 +7,8 @@ export { openAiCompatible, type OpenAiCompatibleOptions } from "./ai/openAiCompa
 export { createRumbo, type Rumbo } from "./app/rumbo";
 export { createNewVault } from "./app/newVault";
 export type { TriageSuggestion } from "./app/inboxTriageService";
+export type { DayClosing } from "./app/closeDayService";
+export { ENERGY_LEVELS, type Energy } from "./domain/closeDay";
 export type { TriageKind, TriageProposal } from "./domain/inboxTriage";
 export type { SavedView } from "./app/savedViewService";
 export type { DayPlanItem } from "./app/dayPlanService";

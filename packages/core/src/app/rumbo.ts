@@ -1,5 +1,6 @@
 import { systemClock, type Clock, type FileSystem } from "../ports";
 import { AgendaService } from "./agendaService";
+import { CloseDayService } from "./closeDayService";
 import { DailyService } from "./dailyService";
 import { DayPlanService } from "./dayPlanService";
 import { HabitService } from "./habitService";
@@ -27,6 +28,7 @@ export interface Rumbo {
   learning: LearningService;
   review: ReviewService;
   routines: RoutineService;
+  closeDay: CloseDayService;
 }
 
 /** Abre un vault y monta todos los servicios de la app sobre él. */
@@ -38,6 +40,7 @@ export async function createRumbo(fs: FileSystem, clock: Clock = systemClock): P
   const habits = new HabitService(store, daily, tasks);
   const learning = new LearningService(store, daily, tasks);
   const ideas = new IdeaService(store, daily, tasks);
+  const routines = new RoutineService(store, daily, habits, tasks, learning);
 
   return {
     store,
@@ -52,6 +55,7 @@ export async function createRumbo(fs: FileSystem, clock: Clock = systemClock): P
     dayPlan: new DayPlanService(agenda, habits),
     learning,
     review: new ReviewService(store, learning, daily),
-    routines: new RoutineService(store, daily, habits, tasks, learning),
+    routines,
+    closeDay: new CloseDayService(store, daily, habits, tasks, routines),
   };
 }
