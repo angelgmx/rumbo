@@ -1,6 +1,7 @@
 import {
   ArrowRightLeftIcon,
   BookOpenIcon,
+  CodeIcon,
   FlameIcon,
   InboxIcon,
   SunIcon,
@@ -20,6 +21,7 @@ const SCREENS: { href: string; match: string; label: string; icon: LucideIcon }[
   { href: "/rutinas", match: "/rutinas/*?", label: "Rutinas", icon: ArrowRightLeftIcon },
   { href: "/habitos", match: "/habitos", label: "Hábitos", icon: FlameIcon },
   { href: "/roadmaps", match: "/roadmaps/*?", label: "Roadmaps", icon: BookOpenIcon },
+  { href: "/ejercicios", match: "/ejercicios/*?", label: "Ejercicios", icon: CodeIcon },
 ];
 
 export function NavRail() {

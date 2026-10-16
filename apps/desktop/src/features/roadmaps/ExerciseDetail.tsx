@@ -18,7 +18,7 @@ const EXTENSIONS: Record<string, string> = {
 };
 
 /** "FizzBuzz.java", sacado de la clase del enunciado y del lenguaje del bloque de código. */
-function fileName(statement: string): string | undefined {
+export function fileName(statement: string): string | undefined {
   const language = /```(\w+)/.exec(statement)?.[1]?.toLowerCase();
   const className = /\bclass\s+(\w+)/.exec(statement)?.[1];
   if (!language || !className) return undefined;

@@ -25,7 +25,8 @@ import { cn } from "@/lib/utils";
 import { openUrl } from "@/platform/openUrl";
 import { Breadcrumb } from "./Breadcrumb";
 import { copyToIde, exerciseTime, LevelTag, Statement } from "./ExerciseDetail";
-import { topicHref } from "./links";
+import { roadmapCrumbs } from "./crumbs";
+import { roadmapHref } from "./links";
 import { NoteReader } from "./NoteReader";
 import { PageTitle } from "./PageTitle";
 import { ResourceIcon } from "./ResourceIcon";
@@ -44,7 +45,7 @@ export function ModuleScreen() {
   if (!topic || !module) {
     return (
       <>
-        <ScreenHeader title={<Breadcrumb topic={topic} module={moduleName} />} />
+        <ScreenHeader title={<Breadcrumb items={roadmapCrumbs(topic, moduleName)} />} />
         <Empty>
           <EmptyHeader>
             <EmptyTitle>No encuentro este módulo</EmptyTitle>
@@ -70,7 +71,7 @@ function Module({ topic, module }: { topic: TopicSummary; module: ModuleSummary 
   return (
     <>
       <ScreenHeader
-        title={<Breadcrumb topic={topic} module={module.title} />}
+        title={<Breadcrumb items={roadmapCrumbs(topic, module.title)} />}
         actions={
           <>
             <Button variant="outline" onClick={() => setReading(module.path)}>
@@ -89,7 +90,7 @@ function Module({ topic, module }: { topic: TopicSummary; module: ModuleSummary 
       <main className="flex-1 overflow-y-auto p-6">
         <div className="mx-auto flex max-w-7xl flex-col gap-4">
           <PageTitle
-            backHref={topicHref(topic.path)}
+            backHref={roadmapHref(topic.path)}
             icon={topic}
             title={module.title}
             subtitle={`Módulo ${pad(module.order)} de ${roadmap.modules.length} · ruta «${roadmap.title}»`}

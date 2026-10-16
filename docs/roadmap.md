@@ -93,5 +93,8 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 **Nombres de la especificación (16 oct):**
 
 - [x] Raíl con los nombres y el orden de la especificación: Hoy pasa a **Foco** y Aprender a **Roadmaps**
-- [ ] Galería de Roadmaps y página **Ejercicios** (láminas `08-roadmaps` y `11-ejercicios`)
-- [ ] La página de tema pasa a **Áreas** cuando exista esa pestaña
+- [x] Galería de Roadmaps: «Hoy toca», tarjetas con progreso, siguiente reto, fin estimado y ritmo
+- [x] Ruta abierta con pistas en paralelo, checkpoints, panel del módulo y ritmo frente a la fecha objetivo (subir ritmo, mover la fecha o quitar módulos)
+- [x] Página **Ejercicios** por niveles y retos, y la nota de ejercicio: código para el IDE, pistas, tests, solución tapada, temporizador y «Mi solución» guardada en la nota
+- [x] La página de tema vive en `/areas/…` (se enlazará desde Áreas cuando exista)
+- [ ] Diagrama de la ruta con el diseño definitivo (`feat/roadmap-diagram`)

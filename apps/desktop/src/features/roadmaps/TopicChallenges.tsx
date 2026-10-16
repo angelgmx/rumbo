@@ -36,7 +36,7 @@ interface ChallengeCardProps {
   onOpen: () => void;
 }
 
-function ChallengeCard({ challenge, color, onOpen }: ChallengeCardProps) {
+export function ChallengeCard({ challenge, color, onOpen }: ChallengeCardProps) {
   const { done, total } = challenge.requirements;
   return (
     <button type="button" onClick={onOpen} className="group flex text-left">
