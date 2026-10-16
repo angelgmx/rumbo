@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   appendTask,
   appendTaskDraft,
+  duplicateTask,
   habitHistoryFromTasks,
   isInView,
   parseTasks,
@@ -221,6 +222,35 @@ describe("removeTask", () => {
   it("removes the task and its steps", () => {
     const source = "- [ ] Uno\n    Nota\n    - [ ] Paso\n- [ ] Dos\n";
     expect(removeTask(source, 0)).toBe("- [ ] Dos\n");
+  });
+});
+
+describe("duplicateTask", () => {
+  it("copies the task with its notes and steps right below, reopened", () => {
+    const source =
+      "- [x] Uno ⏳ 2026-10-15 ✅ 2026-10-15\n    Nota\n    - [x] Paso ✅ 2026-10-15\n- [ ] Dos\n";
+    const copy = duplicateTask(source, 0)!;
+    expect(copy.line).toBe(3);
+    expect(copy.source).toBe(
+      [
+        "- [x] Uno ⏳ 2026-10-15 ✅ 2026-10-15",
+        "    Nota",
+        "    - [x] Paso ✅ 2026-10-15",
+        "- [ ] Uno ⏳ 2026-10-15",
+        "    Nota",
+        "    - [ ] Paso",
+        "- [ ] Dos",
+        "",
+      ].join("\n"),
+    );
+  });
+
+  it("copies the last task of a note without a final newline", () => {
+    expect(duplicateTask("- [ ] Uno", 0)).toEqual({ source: "- [ ] Uno\n- [ ] Uno", line: 1 });
+  });
+
+  it("ignores a line that is not a task", () => {
+    expect(duplicateTask("# Inbox\n", 0)).toBeUndefined();
   });
 });
 

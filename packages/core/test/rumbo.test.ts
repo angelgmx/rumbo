@@ -71,6 +71,31 @@ describe("tasks", () => {
   });
 });
 
+describe("editing tasks", () => {
+  it("keeps both changes when two edits arrive at once", async () => {
+    const [task] = await rumbo.tasks.list("inbox");
+    await Promise.all([
+      rumbo.tasks.update(task!, { priority: "high" }),
+      rumbo.tasks.update(task!, { duration: 30 }),
+    ]);
+    expect(files.get("Inbox/Inbox.md")).toContain("[duration:: 30m] ⏫");
+  });
+
+  it("duplicates a task and returns the copy", async () => {
+    const [task] = await rumbo.tasks.list("inbox");
+    const copy = await rumbo.tasks.duplicate(task!);
+    expect(copy).toMatchObject({ text: "Buy a new notebook", done: false });
+    expect(copy!.line).toBeGreaterThan(task!.line);
+    expect((await rumbo.tasks.list("inbox")).filter((t) => t.text === task!.text)).toHaveLength(2);
+  });
+
+  it("removes a task from its note", async () => {
+    const [task] = await rumbo.tasks.list("inbox");
+    await rumbo.tasks.remove(task!);
+    expect(await rumbo.tasks.list("inbox")).toEqual([]);
+  });
+});
+
 describe("inherited area", () => {
   it("comes from the roadmap of the module", () => {
     expect(rumbo.tasks.inheritedArea({ module: "Mastery — Variables" })).toBe("Python");

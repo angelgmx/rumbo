@@ -6,7 +6,7 @@ import type { Priority } from "./tasks";
 //   "gym mañana 18:00 1h30 #gym"  → bloque en la agenda de mañana, de 18:00 a 19:30
 //   "llamar al dentista viernes"  → tarea para el viernes
 //   "idea para Citalash"          → tarea sin fecha en el inbox
-// El título de la ventana de tarea usa otra lectura: sin hora, con prioridad («!alta»).
+// El título del panel de tarea usa otra lectura: sin hora, con prioridad («!alta»).
 
 export interface Capture {
   text: string;

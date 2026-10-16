@@ -63,6 +63,7 @@ export interface TaskDraft {
 const PRIORITY_EMOJI: Record<Priority, string> = { high: "⏫", medium: "🔼", low: "🔽" };
 
 const DATE = String.raw`(\d{4}-\d{2}-\d{2})`;
+const DONE_MARK = new RegExp(`\\s*✅\\s*${DATE}`, "u");
 // [clave:: valor]. El valor puede llevar wikilinks: [project:: [[Citalash]]].
 const DATAVIEW_FIELD = /\[([\w-]+)::\s*((?:\[\[[^\]]*\]\]|[^\]])*)\]/g;
 
@@ -151,7 +152,7 @@ export function setTaskDone(source: string, line: number, done: boolean, today: 
   const match = CHECKBOX.exec(lines[line] ?? "");
   if (!match) return source;
 
-  const text = match[4]!.replace(new RegExp(`\\s*✅\\s*${DATE}`, "u"), "");
+  const text = match[4]!.replace(DONE_MARK, "");
   lines[line] = `${match[1]}${done ? "x" : " "}${match[3]}${done ? `${text} ✅ ${today}` : text}`;
   return lines.join("\n");
 }
@@ -321,6 +322,28 @@ export function removeTask(source: string, line: number): string {
 
   lines.splice(line, blockEnd(lines, line) - line);
   return lines.join("\n");
+}
+
+/**
+ * Copia una tarea, con sus pasos y notas, justo debajo de ella y sin hacer.
+ * Devuelve la nota con la copia y la línea donde ha quedado.
+ */
+export function duplicateTask(
+  source: string,
+  line: number,
+): { source: string; line: number } | undefined {
+  const lines = source.split("\n");
+  if (!CHECKBOX.test(lines[line] ?? "")) return undefined;
+
+  const end = blockEnd(lines, line);
+  const copy = lines.slice(line, end).map(reopen);
+  lines.splice(end, 0, ...copy);
+  return { source: lines.join("\n"), line: end };
+}
+
+function reopen(line: string): string {
+  const match = CHECKBOX.exec(line);
+  return match ? `${match[1]} ${match[3]}${match[4]!.replace(DONE_MARK, "")}` : line;
 }
 
 /** Donde acaba una tarea: tras ella, las líneas seguidas con más sangría. */
