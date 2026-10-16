@@ -24,6 +24,7 @@ import { ReviewService } from "./reviewService";
 import { RoutineService } from "./routineService";
 import { SavedViewService } from "./savedViewService";
 import { TaskOrganizerService } from "./taskOrganizerService";
+import { TaskClashService } from "./taskClashService";
 import { TaskService } from "./taskService";
 import { VaultImport } from "./vaultImport";
 import { VaultStore } from "./vaultStore";
@@ -42,6 +43,7 @@ export interface Rumbo {
   progress: ProgressService;
   views: SavedViewService;
   dayPlan: DayPlanService;
+  taskClashes: TaskClashService;
   learning: LearningService;
   review: ReviewService;
   routines: RoutineService;
@@ -130,6 +132,7 @@ async function open({ fs, database, clock = systemClock }: RumboSources): Promis
     progress: new ProgressService(habits, agenda),
     views: new SavedViewService(store),
     dayPlan,
+    taskClashes: new TaskClashService(tasks, routines),
     learning,
     review: new ReviewService(store, learning, daily),
     routines,

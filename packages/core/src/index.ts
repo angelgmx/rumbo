@@ -74,6 +74,9 @@ export {
 export { chooseStart, type StartChoice } from "./domain/focus";
 
 export { addMinutesToTime, blocksAround, minutesBetween } from "./domain/agenda";
+export { parseDuration } from "./domain/duration";
+export { endTime, type BusySlot } from "./domain/taskClash";
+export type { TaskSlot } from "./app/taskClashService";
 export { addDays, startOfWeek, WEEKDAYS, type IsoDate, type Weekday } from "./domain/dates";
 export {
   completionRate,
