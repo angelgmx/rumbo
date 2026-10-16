@@ -130,3 +130,10 @@ Lo que organiza tu día pasa del vault a SQLite, una entidad por PR. Ver [Modelo
 - [ ] Proyectos e hitos
 - [ ] Sesiones, cierres del día y agenda
 - [ ] Exportar a Markdown y copia de seguridad en Ajustes
+
+## Apuntado para más adelante
+
+- [ ] **Iconos para diferenciar de un vistazo** (librería Lucide, la de toda la app):
+  - Selector de icono con buscador al crear o editar un área, una ruta o un hábito.
+  - Icono por tipo de tarea: estudio, ejercicio, lectura, vídeo, llamada, recado, revisión… (por su módulo, hábito o etiqueta, o elegido a mano).
+  - El icono se ve en las filas de Tareas, en Foco, en el calendario y en las rutas.
