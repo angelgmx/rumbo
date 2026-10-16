@@ -3,6 +3,7 @@ import { PlusIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useRumbo } from "@/app/RumboContext";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CounterChip } from "@/features/counters/CounterChip";
 import {
   InputGroup,
   InputGroupAddon,
@@ -44,9 +45,10 @@ export function HabitTasks({ habit, tasks }: { habit: Habit; tasks: Task[] }) {
             checked={task.done}
             onCheckedChange={(checked) => rumbo.tasks.setDone(task, checked === true)}
           />
-          <span className={cn("text-sm", task.done && "text-muted-foreground line-through")}>
+          <span className={cn("flex-1 text-sm", task.done && "text-muted-foreground line-through")}>
             {task.text}
           </span>
+          {task.counter && <CounterChip counter={task.counter} />}
         </label>
       ))}
       <form onSubmit={add} className="mt-1">

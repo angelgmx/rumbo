@@ -1,24 +1,22 @@
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useEffectEvent, useState } from "react";
 
-export interface FocusTimer {
+export interface Countdown {
   secondsLeft: number;
   running: boolean;
   start: (minutes: number) => void;
   toggle: () => void;
 }
 
-const DEFAULT_MINUTES = 50;
-
 /**
- * Temporizador de foco. Solo vive en la pantalla: no se guarda nada en el vault.
- * Guarda la hora a la que termina en vez de restar segundos, así no se desfasa.
+ * Cuenta atrás que solo vive en pantalla. Guarda la hora a la que termina en vez
+ * de restar segundos, así no se desfasa aunque la ventana se congele un rato.
  */
-export function useFocusTimer(): FocusTimer {
-  const [pausedSeconds, setPausedSeconds] = useState(DEFAULT_MINUTES * 60);
+export function useCountdown(initialMinutes: number, onFinish: () => void): Countdown {
+  const [pausedSeconds, setPausedSeconds] = useState(initialMinutes * 60);
   const [endsAt, setEndsAt] = useState<number>();
-  // La hora de la última vuelta del intervalo; con ella se calcula lo que queda.
   const [now, setNow] = useState(() => Date.now());
+  // Siempre la última versión del aviso, sin reiniciar el intervalo cuando cambia.
+  const finish = useEffectEvent(onFinish);
 
   useEffect(() => {
     if (endsAt === undefined) return;
@@ -29,7 +27,7 @@ export function useFocusTimer(): FocusTimer {
       }
       setEndsAt(undefined);
       setPausedSeconds(0);
-      toast.success("Bloque de foco terminado. Descansa un poco.");
+      finish();
     }, 1000);
     return () => clearInterval(timer);
   }, [endsAt]);
@@ -57,6 +55,6 @@ export function useFocusTimer(): FocusTimer {
 }
 
 /** "50:00" */
-export function formatCountdown(seconds: number): string {
+export function formatClock(seconds: number): string {
   return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 }

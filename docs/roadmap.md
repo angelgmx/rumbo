@@ -72,7 +72,7 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 
 ## Fase 3 en detalle
 
-**Diseño (láminas en `docs/design/01-hoy`, `02-tareas` y `04-rutinas`):** pendiente de aprobar.
+**Diseño:** láminas en `docs/design/01-foco`, `02-tareas` y `04-rutinas`.
 
 **Lógica en `core` (hecha):**
 
@@ -80,7 +80,13 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] Rutinas (`type: routine`): bloques con hora calculada, rutinas de hoy, plantillas, reordenar, activar y pausar
 - [x] Un bloque de tema genera las tareas del día; completar un bloque marca su hábito y empieza el tema
 
-**Pantallas:** cuando el diseño esté aprobado.
+**Pantallas:**
+
+- [x] Contadores en la interfaz: elegir el contador al crear una tarea, verlo en las filas de Tareas y en Foco, y usarlo en el detalle de la tarea (cronómetro, pomodoro, −/+ y progreso)
+- [x] Detalle de tarea en un panel lateral, con lo que la tarea guarda en el vault
+- [x] «Ahora» en Foco enseña el contador de la primera tarea del foco cuando no hay un bloque de agenda en curso
+- [ ] Registro de sesiones y estimado vs real (necesitan guardar el tiempo de cada sesión)
+- [ ] Rutinas, Foco v2, modo enfoque y cerrar el día
 
 **Nombres de la especificación (16 oct):**
 

@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { CounterChip } from "@/features/counters/CounterChip";
 import { listItem } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -78,6 +79,7 @@ function TaskLine({
       >
         {task.text}
       </span>
+      {task.counter && <CounterChip counter={task.counter} />}
     </label>
   );
 }

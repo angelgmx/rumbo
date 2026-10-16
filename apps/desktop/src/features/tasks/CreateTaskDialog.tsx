@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { OptionSelect } from "@/components/OptionSelect";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { CounterPicker } from "@/features/counters/CounterPicker";
 
 const DURATIONS = [
   { label: "Sin duración", value: null },
@@ -67,7 +68,7 @@ export function CreateTaskDialog() {
         <PlusIcon data-icon="inline-start" />
         Nueva tarea
       </DialogTrigger>
-      <DialogContent className="sm:max-w-xl" onKeyDown={onKeyDown}>
+      <DialogContent className="sm:max-w-2xl" onKeyDown={onKeyDown}>
         <form onSubmit={save} className="flex flex-col gap-6">
           <DialogHeader>
             <DialogTitle>Nueva tarea</DialogTitle>
@@ -146,6 +147,11 @@ export function CreateTaskDialog() {
                 </ToggleGroup>
               </Field>
             </div>
+
+            <Field>
+              <FieldLabel>Contador</FieldLabel>
+              <CounterPicker value={draft.counter} onChange={(counter) => update({ counter })} />
+            </Field>
 
             <Field>
               <FieldLabel>Pasos</FieldLabel>

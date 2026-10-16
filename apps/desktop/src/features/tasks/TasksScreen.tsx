@@ -22,6 +22,7 @@ import { listItem } from "@/lib/motion";
 import { CreateTaskDialog } from "./CreateTaskDialog";
 import { ProcessInboxDialog } from "./ProcessInboxDialog";
 import { SaveViewButton } from "./SaveViewButton";
+import { TaskDetailSheet } from "./TaskDetailSheet";
 import { TaskRow } from "./TaskRow";
 import { TasksSidebar } from "./TasksSidebar";
 import { findView, TASK_VIEWS } from "./taskViews";
@@ -33,6 +34,7 @@ export function TasksScreen() {
   const current = findView(useParams<{ view: string }>().view);
   const [area, setArea] = useState<string>();
   const [tag, setTag] = useState<string>();
+  const [openKey, setOpenKey] = useState<string>();
 
   const [, navigate] = useLocation();
   const all = useVaultQuery((r) => r.tasks.all()).data ?? [];
@@ -44,6 +46,8 @@ export function TasksScreen() {
     setArea(saved.area);
     setTag(saved.tag);
   }
+  // Se busca en cada lectura del vault, así el panel enseña el contador al día.
+  const openTask = all.find((task) => taskKey(task) === openKey);
   const inView = (task: Task, view: TaskView) => isInView(task, view, today, inboxPath);
 
   const counts = Object.fromEntries(
@@ -153,6 +157,7 @@ export function TasksScreen() {
                         task={task}
                         today={today}
                         onToggle={(done) => rumbo.tasks.setDone(task, done)}
+                        onOpen={() => setOpenKey(taskKey(task))}
                       />
                     </motion.div>
                   ))}
@@ -162,6 +167,7 @@ export function TasksScreen() {
           </div>
         </main>
       </div>
+      <TaskDetailSheet task={openTask} onClose={() => setOpenKey(undefined)} />
     </>
   );
 }
@@ -198,6 +204,8 @@ function FilterChip({ label, onClear }: { label: string; onClear: () => void }) 
     </Button>
   );
 }
+
+const taskKey = (task: Task) => `${task.path}:${task.line}`;
 
 /** Primero lo que tiene fecha (la más cercana arriba); lo que no tiene, al final. */
 function byDate(a: Task, b: Task): number {
