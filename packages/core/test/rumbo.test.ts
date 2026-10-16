@@ -71,6 +71,23 @@ describe("tasks", () => {
   });
 });
 
+describe("inherited area", () => {
+  it("comes from the roadmap of the module", () => {
+    expect(rumbo.tasks.inheritedArea({ module: "Mastery — Variables" })).toBe("Python");
+  });
+
+  it("comes from the area of the project when there is no module", async () => {
+    files.set("Projects/Rumbo.md", '---\ntype: project\narea: "[[Python]]"\n---\n');
+    await rumbo.store.refresh("Projects/Rumbo.md");
+    expect(rumbo.tasks.inheritedArea({ project: "Rumbo" })).toBe("Python");
+  });
+
+  it("is nothing when the links point nowhere", () => {
+    expect(rumbo.tasks.inheritedArea({})).toBeUndefined();
+    expect(rumbo.tasks.inheritedArea({ module: "Nope", project: "Nope" })).toBeUndefined();
+  });
+});
+
 describe("agenda", () => {
   it("ticks a block of today's agenda", async () => {
     const [block] = await rumbo.agenda.blocks("2026-10-15");

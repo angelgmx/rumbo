@@ -43,6 +43,13 @@ export class VaultStore {
     return this.index.get(path);
   }
 
+  /** El área más de fuera que contiene a esta nota (por carpetas). */
+  rootArea(note: Note): Note | undefined {
+    return this.notesOfType("area")
+      .filter((area) => note.path.startsWith(`${parentOf(area.path)}/`))
+      .sort((a, b) => a.path.split("/").length - b.path.split("/").length)[0];
+  }
+
   findByName(name: string): Note | undefined {
     return [...this.index.values()].find((note) => note.name === name);
   }
@@ -111,4 +118,8 @@ export class VaultStore {
     this.changes++;
     for (const listener of this.listeners) listener();
   }
+}
+
+function parentOf(path: string): string {
+  return path.split("/").slice(0, -1).join("/");
 }

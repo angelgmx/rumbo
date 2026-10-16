@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCapture } from "../src/domain/capture";
+import { parseCapture, parseTaskTitle } from "../src/domain/capture";
 
 // El 2026-10-15 es jueves.
 const today = "2026-10-15";
@@ -36,6 +36,33 @@ describe("parseCapture", () => {
   it("leaves plain text as a task without date", () => {
     expect(parseCapture("idea para Citalash", today)).toEqual({
       text: "idea para Citalash",
+      tags: [],
+    });
+  });
+});
+
+describe("parseTaskTitle", () => {
+  it("reads day, duration, priority and tags out of the title", () => {
+    expect(parseTaskTitle("ejercicios strings hoy 45m !alta #java", today)).toEqual({
+      text: "ejercicios strings",
+      date: today,
+      duration: 45,
+      priority: "high",
+      tags: ["java"],
+    });
+  });
+
+  it("reads hours and minutes as a duration and leaves a time in the title", () => {
+    expect(parseTaskTitle("repasar 1h30 mañana a las 10:00", today)).toMatchObject({
+      text: "repasar a las 10:00",
+      date: "2026-10-16",
+      duration: 90,
+    });
+  });
+
+  it("changes nothing in a plain title", () => {
+    expect(parseTaskTitle("Comprar creatina", today)).toEqual({
+      text: "Comprar creatina",
       tags: [],
     });
   });

@@ -85,13 +85,15 @@ export {
 export { weekProgress } from "./domain/habits";
 export {
   isInView,
+  taskToDraft,
   type Priority,
   type Task,
   type TaskChanges,
   type TaskDraft,
+  type TaskStep,
   type TaskView,
 } from "./domain/tasks";
-export { parseCapture, type Capture } from "./domain/capture";
+export { parseCapture, parseTaskTitle, type Capture, type TaskTitle } from "./domain/capture";
 export {
   COUNTER_KINDS,
   formatCounter,

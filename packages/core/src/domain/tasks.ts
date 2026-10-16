@@ -1,6 +1,7 @@
 import { CHECKBOX } from "./checkbox";
 import { formatCounter, parseCounter, type Counter } from "./counters";
 import type { IsoDate } from "./dates";
+import { linkTarget } from "./links";
 
 // Las tareas son casillas normales con el formato del plugin "Tasks" de
 // Obsidian, así siguen funcionando en Obsidian sin la app:
@@ -23,6 +24,15 @@ export interface Task {
   fields: Record<string, string>;
   /** Cronómetro, pomodoros, cantidad o progreso. Sin él, solo se marca hecha. */
   counter?: Counter;
+  /** Las casillas con más sangría justo debajo: no son tareas aparte, son sus pasos. */
+  steps: TaskStep[];
+  /** El resto de líneas con sangría debajo de la tarea. Vacío si no hay. */
+  notes: string;
+}
+
+export interface TaskStep {
+  text: string;
+  done: boolean;
 }
 
 export type TaskView = "inbox" | "today" | "upcoming" | "someday" | "done";
@@ -38,10 +48,15 @@ export interface TaskDraft {
   priority?: Priority;
   recurrence?: string;
   area?: string;
+  /** Nombre de la nota del proyecto. */
+  project?: string;
+  /** Nombre de la nota del módulo de una ruta. */
+  module?: string;
   /** La clave del hábito al que pertenece: la tarea cuenta para cumplirlo ese día. */
   habit?: string;
   tags?: string[];
-  steps?: string[];
+  steps?: TaskStep[];
+  notes?: string;
   counter?: Counter;
 }
 
@@ -55,15 +70,35 @@ export function parseTasks(path: string, source: string): Task[] {
   const tasks: Task[] = [];
   const lines = source.split("\n");
   let inAgenda = false;
+  let parent: { task: Task; indent: number; notes: string[] } | undefined;
+
+  const closeParent = () => {
+    if (parent) parent.task.notes = dedent(parent.notes).join("\n");
+    parent = undefined;
+  };
 
   lines.forEach((line, index) => {
-    if (/^#{1,6}\s/.test(line)) inAgenda = /^#{1,6}\s+Agenda\b/.test(line);
+    if (/^#{1,6}\s/.test(line)) {
+      closeParent();
+      inAgenda = /^#{1,6}\s+Agenda\b/.test(line);
+    }
     // Lo que hay bajo "## Agenda" son bloques con hora, no tareas (ver agenda.ts).
     if (inAgenda) return;
 
     const match = CHECKBOX.exec(line);
-    if (match) tasks.push(parseTaskText(path, index, match[2] !== " ", match[4]!));
+    if (parent && line.trim() !== "" && indentOf(line) > parent.indent) {
+      if (match) parent.task.steps.push({ text: match[4]!, done: match[2] !== " " });
+      else parent.notes.push(line);
+      return;
+    }
+
+    closeParent();
+    if (!match) return;
+    const task = parseTaskText(path, index, match[2] !== " ", match[4]!);
+    tasks.push(task);
+    parent = { task, indent: indentOf(line), notes: [] };
   });
+  closeParent();
   return tasks;
 }
 
@@ -95,6 +130,8 @@ function parseTaskText(path: string, line: number, done: boolean, raw: string): 
     tags: [...raw.matchAll(/(?:^|\s)#([\p{L}\p{N}_/-]+)/gu)].map((m) => m[1]!),
     fields,
     counter: parseCounter(fields.counter),
+    steps: [],
+    notes: "",
   };
 }
 
@@ -124,12 +161,29 @@ export function appendTask(source: string, text: string): string {
   return appendLines(source, [`- [ ] ${text}`]);
 }
 
-/** Añade una tarea creada con el formulario, con sus pasos debajo. */
+/** Añade una tarea creada con el formulario, con sus pasos y notas debajo. */
 export function appendTaskDraft(source: string, draft: TaskDraft): string {
-  const steps = (draft.steps ?? [])
-    .filter((step) => step.trim())
-    .map((step) => `    - [ ] ${step.trim()}`);
-  return appendLines(source, [`- [ ] ${formatTaskText(draft)}`, ...steps]);
+  return appendLines(source, [
+    `- [ ] ${formatTaskText(draft)}`,
+    ...childLines(draft.notes ?? "", draft.steps ?? [], ""),
+  ]);
+}
+
+/**
+ * Notas y pasos bajo una tarea, con sangría. Las líneas en blanco de las notas se quitan:
+ * una línea en blanco corta el bloque y lo de debajo dejaría de ser de la tarea.
+ */
+function childLines(notes: string, steps: TaskStep[], taskIndent: string): string[] {
+  const prefix = `${taskIndent}    `;
+  return [
+    ...notes
+      .split("\n")
+      .filter((line) => line.trim() !== "")
+      .map((line) => `${prefix}${line.trimEnd()}`),
+    ...steps
+      .filter((step) => step.text.trim())
+      .map((step) => `${prefix}- [${step.done ? "x" : " "}] ${step.text.trim()}`),
+  ];
 }
 
 /** El texto de la tarea con sus marcas en el orden que usa el plugin Tasks. */
@@ -137,6 +191,8 @@ export function formatTaskText(draft: TaskDraft): string {
   return [
     draft.text.trim(),
     draft.area && `[area:: ${draft.area}]`,
+    draft.project && `[project:: [[${draft.project}]]]`,
+    draft.module && `[module:: [[${draft.module}]]]`,
     draft.habit && `[habit:: ${draft.habit}]`,
     draft.duration && `[duration:: ${draft.duration}m]`,
     draft.counter && `[counter:: ${formatCounter(draft.counter)}]`,
@@ -180,12 +236,17 @@ function isUnprocessed(task: Task, inboxPath: string): boolean {
   );
 }
 
-/** Lo que se puede cambiar de una tarea. `undefined` en un campo lo quita. */
-export type TaskChanges = Partial<Omit<TaskDraft, "steps">>;
+/**
+ * Lo que se puede cambiar de una tarea. `undefined` en un campo lo quita.
+ * Los pasos y las notas, si se dan, sustituyen a los de la tarea; si no, se dejan como están.
+ */
+export type TaskChanges = Partial<TaskDraft>;
 
 // Campos de Dataview que ya salen en el borrador; el resto se conserva tal cual.
 const DRAFT_FIELDS = new Set([
   "area",
+  "project",
+  "module",
   "habit",
   "duration",
   "counter",
@@ -203,15 +264,24 @@ export function updateTask(source: string, line: number, changes: TaskChanges): 
   const match = CHECKBOX.exec(lines[line] ?? "");
   if (!match) return source;
 
-  const task = parseTaskText("", line, match[2] !== " ", match[4]!);
-  const draft: TaskDraft = { ...taskToDraft(task), ...changes };
-  const kept = Object.entries(task.fields)
+  const end = blockEnd(lines, line);
+  const current = parseTasks("", lines.slice(line, end).join("\n"))[0]!;
+  const draft: TaskDraft = { ...taskToDraft(current), ...changes };
+  const kept = Object.entries(current.fields)
     .filter(([key]) => !DRAFT_FIELDS.has(key))
     .map(([key, value]) => `[${key}:: ${value}]`);
-  const done = task.doneOn ? ` ✅ ${task.doneOn}` : "";
+  const done = current.doneOn ? ` ✅ ${current.doneOn}` : "";
+  const rewritesChildren = changes.steps !== undefined || changes.notes !== undefined;
 
-  lines[line] =
-    `${match[1]}${match[2]}${match[3]}${[formatTaskText(draft), ...kept].join(" ")}${done}`;
+  const head = `${match[1]}${match[2]}${match[3]}${[formatTaskText(draft), ...kept].join(" ")}${done}`;
+  const children = rewritesChildren
+    ? childLines(
+        changes.notes ?? current.notes,
+        changes.steps ?? current.steps,
+        lines[line]!.slice(0, indentOf(lines[line]!)),
+      )
+    : lines.slice(line + 1, end);
+  lines.splice(line, end - line, head, ...children);
   return lines.join("\n");
 }
 
@@ -244,19 +314,31 @@ function insertBeforeSignifiers(line: string, text: string): string {
   return `${line.slice(0, index).trimEnd()} ${text} ${line.slice(index)}`;
 }
 
-/** Borra una tarea y sus pasos (las líneas con más sangría justo debajo). */
+/** Borra una tarea con sus pasos y notas (las líneas con más sangría justo debajo). */
 export function removeTask(source: string, line: number): string {
   const lines = source.split("\n");
   if (!CHECKBOX.test(lines[line] ?? "")) return source;
 
-  const indent = indentOf(lines[line]!);
-  let end = line + 1;
-  while (end < lines.length && lines[end]!.trim() !== "" && indentOf(lines[end]!) > indent) end++;
-  lines.splice(line, end - line);
+  lines.splice(line, blockEnd(lines, line) - line);
   return lines.join("\n");
 }
 
-function taskToDraft(task: Task): TaskDraft {
+/** Donde acaba una tarea: tras ella, las líneas seguidas con más sangría. */
+function blockEnd(lines: string[], line: number): number {
+  const indent = indentOf(lines[line]!);
+  let end = line + 1;
+  while (end < lines.length && lines[end]!.trim() !== "" && indentOf(lines[end]!) > indent) end++;
+  return end;
+}
+
+/** Quita la sangría que comparten todas las líneas, para guardar las notas sin ella. */
+function dedent(lines: string[]): string[] {
+  const shared = Math.min(...lines.map(indentOf));
+  return lines.map((line) => line.slice(shared).trimEnd());
+}
+
+/** Lo que enseña el formulario de una tarea que ya existe. */
+export function taskToDraft(task: Task): TaskDraft {
   const minutes = Number.parseInt(task.fields.duration ?? "", 10);
   return {
     text: task.text,
@@ -265,9 +347,13 @@ function taskToDraft(task: Task): TaskDraft {
     duration: Number.isNaN(minutes) ? undefined : minutes,
     priority: task.priority,
     recurrence: task.recurrence,
-    area: task.fields.area,
+    area: linkTarget(task.fields.area) ?? task.fields.area,
+    project: linkTarget(task.fields.project) ?? task.fields.project,
+    module: linkTarget(task.fields.module) ?? task.fields.module,
     habit: task.fields.habit,
     tags: task.tags,
+    steps: task.steps,
+    notes: task.notes,
     counter: task.counter,
   };
 }

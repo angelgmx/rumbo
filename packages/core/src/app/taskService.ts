@@ -1,6 +1,7 @@
 import { parseCapture } from "../domain/capture";
 import { stepCounter, type Counter } from "../domain/counters";
 import type { IsoDate } from "../domain/dates";
+import { linkTarget } from "../domain/links";
 import { sectionLines } from "../domain/sections";
 import {
   appendTask,
@@ -16,6 +17,7 @@ import {
   type TaskDraft,
   type TaskView,
 } from "../domain/tasks";
+import type { Note } from "../vault/vault";
 import type { AgendaService } from "./agendaService";
 import type { DailyService } from "./dailyService";
 import type { VaultStore } from "./vaultStore";
@@ -65,6 +67,18 @@ export class TaskService {
     const source = this.store.get(path)?.source ?? "";
     const focusLines = new Set(sectionLines(source, FOCUS_HEADING).map(({ line }) => line));
     return parseTasks(path, source).filter((task) => focusLines.has(task.line) && task.text !== "");
+  }
+
+  /**
+   * El área que una tarea hereda de su módulo (la de su ruta) o, si no, de su proyecto.
+   * Es el nombre del área de arriba del todo, que es el que usan las tareas.
+   */
+  inheritedArea(links: { module?: string; project?: string }): string | undefined {
+    const topic = this.linked(this.linked(this.named(links.module), "roadmap"), "area");
+    const area =
+      (topic && (this.store.rootArea(topic) ?? topic)) ??
+      this.linked(this.named(links.project), "area");
+    return area && String(area.data.name ?? area.name);
   }
 
   async setDone(task: Task, done: boolean): Promise<void> {
@@ -122,6 +136,15 @@ export class TaskService {
 
     await this.addToInbox(capture.date ? `${capture.text} ⏳ ${capture.date}` : capture.text);
     return { kind: "task", date: capture.date };
+  }
+
+  private named(name: string | undefined): Note | undefined {
+    return name ? this.store.findByName(name) : undefined;
+  }
+
+  /** La nota a la que apunta un campo de enlace de otra nota. */
+  private linked(note: Note | undefined, key: string): Note | undefined {
+    return this.named(linkTarget(note?.data[key]));
   }
 
   private get inboxPath(): string {

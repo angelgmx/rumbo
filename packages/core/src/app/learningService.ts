@@ -379,7 +379,7 @@ export class LearningService {
         (candidate) => linkTarget(this.store.get(candidate.path)?.data.area) === note.name,
       ) ??
       roadmaps.find((candidate) => parentOf(candidate.path) === folder);
-    const root = this.rootArea(note);
+    const root = this.store.rootArea(note);
 
     return {
       ...areaRef(note),
@@ -389,14 +389,6 @@ export class LearningService {
       challenges: this.challengesIn(folder, roadmap),
       resources: readResources(note.data.resources),
     };
-  }
-
-  /** El área más de fuera que contiene a esta (por carpetas). */
-  private rootArea(note: Note): Note | undefined {
-    const areas = this.store.notesOfType("area");
-    return areas
-      .filter((area) => note.path.startsWith(`${parentOf(area.path)}/`))
-      .sort((a, b) => a.path.split("/").length - b.path.split("/").length)[0];
   }
 
   /** Apuntes/<carpeta>/<nota>: una carpeta por módulo. Las notas de módulo no son apuntes. */

@@ -98,13 +98,17 @@ describe("appendTaskDraft", () => {
       recurrence: "every week",
       area: "Negocio",
       tags: ["citalash"],
-      steps: ["Guion de 5 minutos", " ", "Ensayar"],
+      steps: [
+        { text: "Guion de 5 minutos", done: false },
+        { text: " ", done: false },
+        { text: "Ensayar", done: true },
+      ],
     });
     expect(result).toBe(
       "# Inbox\n" +
         "- [ ] Preparar la demo [area:: Negocio] [duration:: 45m] ⏫ 🔁 every week ⏳ 2026-10-16 #citalash\n" +
         "    - [ ] Guion de 5 minutos\n" +
-        "    - [ ] Ensayar\n",
+        "    - [x] Ensayar\n",
     );
   });
 
@@ -124,6 +128,67 @@ describe("appendTaskDraft", () => {
   });
 });
 
+describe("steps and notes", () => {
+  const source = [
+    "- [ ] Preparar la demo",
+    "    Contexto para el lunes",
+    "    - [x] Guion",
+    "    - [ ] Ensayar",
+    "- [ ] Otra tarea",
+    "",
+    "    - [ ] Suelta tras una línea en blanco",
+  ].join("\n");
+  const tasks = parseTasks("x.md", source);
+
+  it("reads the checkboxes below a task as its steps, not as tasks", () => {
+    expect(tasks.map((task) => task.text)).toEqual([
+      "Preparar la demo",
+      "Otra tarea",
+      "Suelta tras una línea en blanco",
+    ]);
+    expect(tasks[0]!.steps).toEqual([
+      { text: "Guion", done: true },
+      { text: "Ensayar", done: false },
+    ]);
+  });
+
+  it("reads the other indented lines as the notes", () => {
+    expect(tasks[0]!.notes).toBe("Contexto para el lunes");
+    expect(tasks[1]!.notes).toBe("");
+  });
+
+  it("writes notes and steps back and reads them the same", () => {
+    const result = updateTask(source, 0, {
+      notes: "Primera línea\n\nSegunda",
+      steps: [{ text: "Solo este", done: true }],
+    });
+    expect(result.split("\n").slice(0, 5)).toEqual([
+      "- [ ] Preparar la demo",
+      "    Primera línea",
+      "    Segunda",
+      "    - [x] Solo este",
+      "- [ ] Otra tarea",
+    ]);
+    expect(parseTasks("x.md", result)[0]).toMatchObject({
+      notes: "Primera línea\nSegunda",
+      steps: [{ text: "Solo este", done: true }],
+    });
+  });
+
+  it("leaves them alone when only other data changes", () => {
+    const result = updateTask(source, 0, { priority: "high" });
+    expect(result.split("\n").slice(1)).toEqual(source.split("\n").slice(1));
+  });
+
+  it("removes every step with an empty list", () => {
+    const result = updateTask(source, 0, { steps: [] });
+    expect(parseTasks("x.md", result)[0]).toMatchObject({
+      notes: "Contexto para el lunes",
+      steps: [],
+    });
+  });
+});
+
 describe("updateTask", () => {
   const source =
     "- [ ] Llamar al gestor [project:: [[Citalash]]] #negocio\n    - [ ] Preparar papeles\n- [x] Hecha ✅ 2026-10-14\n";
@@ -131,13 +196,18 @@ describe("updateTask", () => {
   it("adds new data and keeps the rest of the task", () => {
     const result = updateTask(source, 0, { scheduled: "2026-10-16", area: "Negocio" });
     expect(result.split("\n")[0]).toBe(
-      "- [ ] Llamar al gestor [area:: Negocio] ⏳ 2026-10-16 #negocio [project:: [[Citalash]]]",
+      "- [ ] Llamar al gestor [area:: Negocio] [project:: [[Citalash]]] ⏳ 2026-10-16 #negocio",
     );
   });
 
   it("removes a field when it is set to undefined", () => {
     const withDate = updateTask(source, 0, { scheduled: "2026-10-16" });
     expect(updateTask(withDate, 0, { scheduled: undefined })).not.toContain("⏳");
+  });
+
+  it("links the project and the module with wikilinks", () => {
+    const result = updateTask("- [ ] Estudiar\n", 0, { project: "Rumbo", module: "Strings" });
+    expect(result).toBe("- [ ] Estudiar [project:: [[Rumbo]]] [module:: [[Strings]]]\n");
   });
 
   it("keeps a done task done with its date", () => {
@@ -149,7 +219,7 @@ describe("updateTask", () => {
 
 describe("removeTask", () => {
   it("removes the task and its steps", () => {
-    const source = "- [ ] Uno\n    - [ ] Paso\n- [ ] Dos\n";
+    const source = "- [ ] Uno\n    Nota\n    - [ ] Paso\n- [ ] Dos\n";
     expect(removeTask(source, 0)).toBe("- [ ] Dos\n");
   });
 });

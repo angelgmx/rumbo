@@ -58,7 +58,7 @@ Cada capa solo usa las de debajo. Nunca al revés.
 | `daily.ts`      | Ruta de la daily de un día, contenido de una daily nueva e historial de hábitos a partir de las dailies. |
 | `tasks.ts`      | Leer tareas en formato del plugin Tasks, marcarlas, añadirlas y decidir en qué vista sale cada una.      |
 | `agenda.ts`     | Leer y añadir bloques con hora bajo `## Agenda` (formato del plugin Day Planner).                        |
-| `capture.ts`    | Captura rápida en lenguaje natural: «gym mañana 18:00 1h30 #gym».                                        |
+| `capture.ts`    | Captura rápida en lenguaje natural («gym mañana 18:00 1h30 #gym») y título de tarea («hoy 45m !alta»).   |
 | `checkbox.ts`   | Marcar o desmarcar una casilla de Markdown en su línea.                                                  |
 | `links.ts`      | Sacar el nombre de nota de los wikilinks.                                                                |
 | `learning.ts`   | Leer un tema (criterio, conceptos, registro de práctica) y su nota de ejercicios por niveles.            |
@@ -85,7 +85,7 @@ Cada capa solo usa las de debajo. Nunca al revés.
 | `vaultStore.ts`       | Lee y escribe, mantiene el índice y avisa de los cambios (`subscribe`).                                                                                                                             |
 | `dailyService.ts`     | Fecha de hoy, ruta de la daily y crearla con la plantilla si falta.                                                                                                                                 |
 | `habitService.ts`     | Lista de hábitos con su estado de hoy, rachas y cumplimiento; guardar el valor del día; crear, editar, archivar y eliminar hábitos.                                                                 |
-| `taskService.ts`      | Tareas por vista, foco del día (máximo 3), marcar, crear, cambiar, borrar, añadir al inbox y captura rápida.                                                                                        |
+| `taskService.ts`      | Tareas por vista, foco del día (máximo 3), marcar, crear, editar (con pasos y notas), borrar, área heredada y captura rápida.                                                                       |
 | `agendaService.ts`    | Bloques de un día, añadir y marcar.                                                                                                                                                                 |
 | `progressService.ts`  | Plan cumplido de cada día y de la semana (hábitos que tocaban + bloques de la agenda).                                                                                                              |
 | `newVault.ts`         | `createNewVault(fs)`: crea un vault nuevo con lo mínimo para empezar.                                                                                                                               |
