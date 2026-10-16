@@ -34,6 +34,11 @@ export function nextCheckpoint(list: Checkpoint[]): Checkpoint | undefined {
   });
 }
 
+/** Un reto se desbloquea cuando dominas todos los temas que pide. */
+export function isUnlocked(challenge: ChallengeSummary): boolean {
+  return challenge.modules.length > 0 && challenge.modules.every((m) => m.status === "mastered");
+}
+
 /** «Reto 03 · Analizador de texto» */
 export function checkpointLabel(challenge: { number?: string; title: string }): string {
   return challenge.number ? `Reto ${challenge.number} · ${challenge.title}` : challenge.title;

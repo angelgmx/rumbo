@@ -11,7 +11,6 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { formatDayMonth } from "@/lib/format";
-import { cn } from "@/lib/utils";
 import { Breadcrumb } from "./Breadcrumb";
 import { roadmapCrumbs, topicCrumbs } from "./crumbs";
 import { topicHref } from "./links";
@@ -20,18 +19,11 @@ import { NoteReader } from "./NoteReader";
 import { ObsidianButton } from "./ObsidianButton";
 import { PaceCard } from "./PaceCard";
 import { PageTitle } from "./PageTitle";
+import { RoadmapDiagram } from "./RoadmapDiagram";
+import { RoadmapLegend } from "./RoadmapLegend";
 import { WeeksList } from "./TopicRoadmap";
-import { TrackDiagram } from "./TrackDiagram";
 
 type View = "diagram" | "weeks";
-
-const LEGEND = [
-  { label: "Dominado", className: "bg-success" },
-  { label: "Aprendiendo", className: "bg-primary" },
-  { label: "Ahora", className: "border-2 border-primary" },
-  { label: "Sin empezar", className: "bg-muted-foreground/40" },
-  { label: "Checkpoint", className: "bg-warning" },
-];
 
 /** Una ruta abierta: pistas en paralelo, el módulo que eliges y si llegas a tu fecha. */
 export function RoadmapScreen() {
@@ -113,7 +105,7 @@ function Roadmap({ topic }: { topic: TopicSummary }) {
             <div className="flex flex-col gap-4">
               <Card className="gap-0 py-0">
                 <div className="flex items-center justify-between gap-4 border-b px-4 py-3">
-                  <Legend />
+                  <RoadmapLegend />
                   <ToggleGroup
                     variant="outline"
                     size="sm"
@@ -125,15 +117,13 @@ function Roadmap({ topic }: { topic: TopicSummary }) {
                   </ToggleGroup>
                 </div>
                 {view === "diagram" ? (
-                  <div className="max-h-[640px] overflow-y-auto">
-                    <TrackDiagram
-                      topic={topic}
-                      today={rumbo.daily.today()}
-                      selected={selected?.path}
-                      onSelect={(module) => setSelectedPath(module.path)}
-                      onOpenChallenge={setReading}
-                    />
-                  </div>
+                  <RoadmapDiagram
+                    topic={topic}
+                    selected={selected?.path}
+                    className="h-[720px]"
+                    onSelectModule={(module) => setSelectedPath(module.path)}
+                    onOpenChallenge={setReading}
+                  />
                 ) : (
                   <div className="p-4">
                     <WeeksList topic={topic} />
@@ -170,18 +160,5 @@ function Subtitle({ topic }: { topic: TopicSummary }) {
       </Link>
       {` · ${parts.join(" · ")}`}
     </>
-  );
-}
-
-function Legend() {
-  return (
-    <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
-      {LEGEND.map((item) => (
-        <span key={item.label} className="flex items-center gap-2">
-          <span className={cn("size-2 rounded-xs", item.className)} />
-          {item.label}
-        </span>
-      ))}
-    </div>
   );
 }

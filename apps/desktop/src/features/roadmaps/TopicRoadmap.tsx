@@ -1,41 +1,28 @@
 import { startOfWeek, type ModuleSummary, type TopicSummary } from "@rumbo/core";
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { formatDayMonth } from "@/lib/format";
-import { cn } from "@/lib/utils";
 import { moduleHref } from "./links";
 import { STATUS_LABEL, STATUS_STYLE } from "./moduleStatus";
 import { NoteReader } from "./NoteReader";
 import { RoadmapDiagram } from "./RoadmapDiagram";
+import { RoadmapLegend } from "./RoadmapLegend";
 import { Tag } from "./Tag";
 
 type View = "diagram" | "weeks";
-
-const LEGEND = [
-  { label: "Dominado", className: "bg-success" },
-  { label: "Aprendiendo", className: "bg-primary" },
-  { label: "Sin empezar", className: "bg-muted-foreground/40" },
-  { label: "Reto", className: "bg-foreground" },
-];
 
 /** Pestaña Ruta: el diagrama tipo roadmap.sh o la lista por semanas. */
 export function TopicRoadmap({ topic }: { topic: TopicSummary }) {
   const [view, setView] = useState<View>("diagram");
   const [reading, setReading] = useState<string>();
+  const [, navigate] = useLocation();
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-start justify-between">
-        <div className="grid grid-cols-[repeat(2,auto)] gap-x-12 gap-y-1 text-xs text-muted-foreground">
-          {LEGEND.map((item) => (
-            <span key={item.label} className="flex items-center gap-2">
-              <span className={cn("size-1.5 rounded-full", item.className)} />
-              {item.label}
-            </span>
-          ))}
-        </div>
+        <RoadmapLegend />
         <ToggleGroup
           variant="outline"
           size="sm"
@@ -47,7 +34,12 @@ export function TopicRoadmap({ topic }: { topic: TopicSummary }) {
         </ToggleGroup>
       </div>
       {view === "diagram" ? (
-        <RoadmapDiagram topic={topic} onOpenChallenge={setReading} />
+        <RoadmapDiagram
+          topic={topic}
+          className="h-[640px] overflow-hidden rounded-xl border"
+          onSelectModule={(module) => navigate(moduleHref(topic.path, module.name))}
+          onOpenChallenge={setReading}
+        />
       ) : (
         <WeeksList topic={topic} />
       )}
