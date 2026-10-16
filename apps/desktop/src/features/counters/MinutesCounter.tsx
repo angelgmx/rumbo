@@ -10,9 +10,9 @@ import type { CountedTask } from "./countedTask";
 
 /**
  * Cronómetro hacia arriba. Al vault solo va al pausar o al salir de la pantalla:
- * escribir cada segundo llenaría Obsidian de cambios.
+ * escribir cada segundo llenaría Obsidian de cambios. Con `autoStart` arranca al montarse.
  */
-export function MinutesCounter({ task }: { task: CountedTask }) {
+export function MinutesCounter({ task, autoStart }: { task: CountedTask; autoStart?: boolean }) {
   const rumbo = useRumbo();
   const stopwatch = useStopwatch();
   const { counter } = task;
@@ -27,6 +27,11 @@ export function MinutesCounter({ task }: { task: CountedTask }) {
     if (stopwatch.running) save(stopwatch.stop());
   });
   useEffect(() => () => saveOnLeave(), []);
+
+  const begin = useEffectEvent(() => stopwatch.start());
+  useEffect(() => {
+    if (autoStart) begin();
+  }, [autoStart]);
 
   const seconds = counter.current * 60 + stopwatch.elapsedSeconds;
   const toggle = () => (stopwatch.running ? save(stopwatch.stop()) : stopwatch.start());

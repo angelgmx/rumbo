@@ -12,6 +12,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Kbd } from "@/components/ui/kbd";
+import { TaskPanelDock } from "@/features/task-panel/TaskPanelDock";
 import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
@@ -151,6 +152,7 @@ export function TasksScreen() {
             )}
           </div>
         </main>
+        <TaskPanelDock />
       </div>
     </>
   );

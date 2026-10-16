@@ -3,6 +3,7 @@ import { CreateTaskFooter } from "./CreateTaskFooter";
 import { TaskPanelBody } from "./TaskPanelBody";
 import { TaskPanelHeader } from "./TaskPanelHeader";
 import { useNewTask } from "./useNewTask";
+import { useTaskContext } from "./useTaskContext";
 
 /** El panel en modo crear. Con «Crear otra» se queda abierto con una tarea en blanco. */
 export function CreateTaskPanel({ onClose }: { onClose: () => void }) {
@@ -14,6 +15,7 @@ export function CreateTaskPanel({ onClose }: { onClose: () => void }) {
       key={round}
       another={another}
       onAnotherChange={setAnother}
+      onClose={onClose}
       onCreated={() => (another ? setRound(round + 1) : onClose())}
     />
   );
@@ -22,13 +24,16 @@ export function CreateTaskPanel({ onClose }: { onClose: () => void }) {
 function NewTaskForm({
   another,
   onAnotherChange,
+  onClose,
   onCreated,
 }: {
   another: boolean;
   onAnotherChange: (another: boolean) => void;
+  onClose: () => void;
   onCreated: () => void;
 }) {
   const task = useNewTask(onCreated);
+  const context = useTaskContext(task.draft);
 
   // Ctrl Enter crea desde cualquier campo, también desde los pasos y las propiedades.
   function onKeyDown(event: KeyboardEvent) {
@@ -40,9 +45,10 @@ function NewTaskForm({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col" onKeyDown={onKeyDown}>
-      <TaskPanelHeader title="Nueva tarea" />
+      <TaskPanelHeader context={context} last="Nueva tarea" onClose={onClose} />
       <TaskPanelBody
         draft={task.draft}
+        context={context}
         status={undefined}
         creating
         onPatch={task.patch}

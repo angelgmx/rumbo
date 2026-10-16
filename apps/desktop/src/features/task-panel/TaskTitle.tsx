@@ -2,7 +2,7 @@ import type { KeyboardEvent } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
-/** El título grande, editable en línea, con la casilla de hecha si la tarea ya existe. */
+/** El título grande, editable en línea, con la casilla de hecha (apagada en una tarea nueva). */
 export function TaskTitle({
   value,
   done,
@@ -12,7 +12,7 @@ export function TaskTitle({
   onToggleDone,
 }: {
   value: string;
-  /** Sin él es una tarea nueva y no hay casilla. */
+  /** Sin él es una tarea nueva y la casilla no se puede marcar. */
   done: boolean | undefined;
   autoFocus: boolean;
   onChange: (title: string) => void;
@@ -28,14 +28,13 @@ export function TaskTitle({
 
   return (
     <div className="flex items-start gap-3">
-      {done !== undefined && (
-        <Checkbox
-          className="mt-2.5"
-          checked={done}
-          onCheckedChange={(checked) => onToggleDone(checked === true)}
-          aria-label="Hecha"
-        />
-      )}
+      <Checkbox
+        className="mt-2.5 size-5 rounded-md border-2 border-primary"
+        checked={done === true}
+        disabled={done === undefined}
+        onCheckedChange={(checked) => onToggleDone(checked === true)}
+        aria-label="Hecha"
+      />
       <textarea
         autoFocus={autoFocus}
         rows={1}
