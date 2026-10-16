@@ -1,4 +1,4 @@
-import { addDays, WEEKDAYS, weekdayOf, type IsoDate, type Weekday } from "./dates";
+import { addDays, startOfWeek, WEEKDAYS, weekdayOf, type IsoDate, type Weekday } from "./dates";
 import type { ExerciseLevel } from "./exercises";
 
 // El planificador reparte lo que te queda de una ruta en tu horario de estudio
@@ -25,6 +25,8 @@ export interface PlannedModule {
   minutes: number;
   /** Día en que se termina, si cabe en el horario dentro del límite de búsqueda. */
   finishes?: IsoDate;
+  /** Los días de estudio que ocupa, en orden. */
+  sessions: IsoDate[];
 }
 
 // Minutos orientativos. Se pueden afinar con datos reales más adelante.
@@ -74,10 +76,12 @@ export function planModules(
 
   return work.map((item) => {
     let left = pendingMinutes(item);
-    if (left === 0) return { id: item.id, minutes: 0, finishes: day };
+    if (left === 0) return { id: item.id, minutes: 0, finishes: day, sessions: [] };
+    const sessions: IsoDate[] = [];
 
     while (left > 0 && daysWalked < MAX_DAYS) {
       const free = perDay[weekdayOf(day)] - usedToday;
+      if (free > 0) sessions.push(day);
       if (free >= left) {
         usedToday += left;
         left = 0;
@@ -88,8 +92,36 @@ export function planModules(
       usedToday = 0;
       daysWalked++;
     }
-    return { id: item.id, minutes: pendingMinutes(item), finishes: left === 0 ? day : undefined };
+    return {
+      id: item.id,
+      minutes: pendingMinutes(item),
+      finishes: left === 0 ? day : undefined,
+      sessions,
+    };
   });
+}
+
+/** Hora a la que empieza el estudio de un día: la primera franja que lo incluye. */
+export function sessionStart(slots: StudySlot[], day: IsoDate): string | undefined {
+  const weekday = weekdayOf(day);
+  return slots
+    .filter((slot) => slot.days.includes(weekday))
+    .map((slot) => slot.from)
+    .sort()[0];
+}
+
+export interface WeekSessions {
+  id: string;
+  count: number;
+}
+
+/** Cuántas sesiones tiene cada módulo en la semana (de lunes a domingo) de `today`. */
+export function weekSessions(sessions: Map<string, IsoDate[]>, today: IsoDate): WeekSessions[] {
+  const start = startOfWeek(today);
+  const end = addDays(start, 6);
+  return [...sessions]
+    .map(([id, days]) => ({ id, count: days.filter((day) => day >= start && day <= end).length }))
+    .filter((week) => week.count > 0);
 }
 
 function toMinutes(time: string): number {

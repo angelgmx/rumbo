@@ -90,6 +90,8 @@ export interface RoadmapPlan {
   finishes?: IsoDate;
   /** Fecha estimada de fin de cada tema pendiente, por ruta de la nota. */
   modules: Map<string, IsoDate | undefined>;
+  /** Los días de estudio previstos de cada tema pendiente, por ruta de la nota. */
+  sessions: Map<string, IsoDate[]>;
   /** Minutos que le quedan a cada tema pendiente, por ruta de la nota. */
   minutesLeft: Map<string, number>;
   /** Minutos de la ruta entera (sin los temas saltados) y los que quedan. */
@@ -358,6 +360,7 @@ export class LearningService {
       weeklyMinutes: weeklyMinutes(schedule),
       finishes: planned.at(-1)?.finishes,
       modules: new Map(planned.map((item) => [item.id, item.finishes])),
+      sessions: new Map(planned.map((item) => [item.id, item.sessions])),
       minutesLeft: new Map(planned.map((item) => [item.id, item.minutes])),
       totalMinutes: modules
         .filter((module) => module.status !== "skipped")
