@@ -25,6 +25,24 @@ export { type Energy } from "./domain/closeDay";
 export type { TriageKind } from "./domain/inboxTriage";
 export type { SavedView } from "./app/savedViewService";
 export type { DayPlanItem } from "./app/dayPlanService";
+export type { CalendarDay, CalendarEvent } from "./app/calendarService";
+export {
+  areaKey,
+  DEFAULT_TASK_MINUTES,
+  freeMinutes,
+  layoutLanes,
+  placeTask,
+  resizeTask,
+  snapMinutes,
+  sourceCount,
+  sourceKey,
+  sourceTasks,
+  type CalendarSource,
+  type Deadline,
+  type Placed,
+  type SourceTasks,
+} from "./domain/calendar";
+export { minutesOf, timeOf, type Interval } from "./domain/freeTime";
 export type {
   ChallengeSummary,
   ModuleSummary,
@@ -77,10 +95,19 @@ export { addMinutesToTime, blocksAround, minutesBetween } from "./domain/agenda"
 export { parseDuration } from "./domain/duration";
 export { endTime, type BusySlot } from "./domain/taskClash";
 export type { TaskSlot } from "./app/taskClashService";
-export { addDays, startOfWeek, WEEKDAYS, type IsoDate, type Weekday } from "./domain/dates";
+export {
+  addDays,
+  isoWeek,
+  startOfWeek,
+  WEEKDAYS,
+  weekdayOf,
+  type IsoDate,
+  type Weekday,
+} from "./domain/dates";
 export {
   completionRate,
   habitProgress,
+  habitStep,
   isDone,
   isScheduledOn,
   minimumOf,

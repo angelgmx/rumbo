@@ -1,6 +1,6 @@
 import type { RoutineRepository } from "../db/routineRepository";
 import type { IsoDate } from "../domain/dates";
-import type { Habit } from "../domain/habits";
+import { isDone, type Habit } from "../domain/habits";
 import { linkTarget } from "../domain/links";
 import {
   blockTitle,
@@ -142,12 +142,12 @@ export class RoutineService {
 
   /**
    * Los pasos de la rutina que se pueden comprobar: los bloques de hábito, de tema y de tarea,
-   * hechos o pendientes según su hábito o su tarea. Las actividades y los descansos no dejan
-   * rastro y no salen.
+   * hechos o pendientes según su hábito o su tarea ese día (hoy, si no se dice). Las actividades
+   * y los descansos no dejan rastro y no salen.
    */
-  steps(summary: RoutineSummary): RoutineStep[] {
+  steps(summary: RoutineSummary, date = this.daily.today()): RoutineStep[] {
     return summary.blocks.flatMap((block) => {
-      const state = this.stateOf(block, summary);
+      const state = this.stateOf(block, summary, date);
       if (!state) return [];
       return [
         {
@@ -165,14 +165,26 @@ export class RoutineService {
   private stateOf(
     block: RoutineBlock,
     summary: RoutineSummary,
+    date: IsoDate,
   ): Pick<RoutineStep, "done" | "completable"> | undefined {
+    const isToday = date === this.daily.today();
     if (block.kind === "task") {
       const task = this.taskOf(block);
-      return task && { done: task.done, completable: !task.done };
+      return (
+        task && {
+          done: task.done && (isToday || task.doneOn === date),
+          completable: isToday && !task.done,
+        }
+      );
     }
     const key = this.habitKeyOf(block);
     const habit = summary.habits.find((candidate) => candidate.habit.key === key);
-    return habit && { done: habit.doneToday, completable: habit.habit.kind !== "tasks" };
+    return (
+      habit && {
+        done: isDone(habit.habit, habit.history.get(date)),
+        completable: isToday && habit.habit.kind !== "tasks",
+      }
+    );
   }
 
   /** Las rutinas activas que tocan hoy, por hora de inicio. */

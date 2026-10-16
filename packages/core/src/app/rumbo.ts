@@ -9,6 +9,7 @@ import { TaskOrganizationRepository } from "../db/taskOrganizationRepository";
 import { TaskRepository } from "../db/taskRepository";
 import { systemClock, type Clock, type Database, type FileSystem } from "../ports";
 import { AgendaService } from "./agendaService";
+import { CalendarService } from "./calendarService";
 import { CloseDayService } from "./closeDayService";
 import { DailyService } from "./dailyService";
 import { DayPlanService } from "./dayPlanService";
@@ -43,6 +44,7 @@ export interface Rumbo {
   progress: ProgressService;
   views: SavedViewService;
   dayPlan: DayPlanService;
+  calendar: CalendarService;
   taskClashes: TaskClashService;
   learning: LearningService;
   review: ReviewService;
@@ -132,6 +134,7 @@ async function open({ fs, database, clock = systemClock }: RumboSources): Promis
     progress: new ProgressService(habits, agenda),
     views: new SavedViewService(store),
     dayPlan,
+    calendar: new CalendarService(daily, agenda, tasks, habits, routines, goals, projects),
     taskClashes: new TaskClashService(tasks, routines),
     learning,
     review: new ReviewService(store, learning, daily),

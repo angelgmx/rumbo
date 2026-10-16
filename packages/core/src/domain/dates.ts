@@ -61,3 +61,10 @@ export function daysBetween(from: IsoDate, to: IsoDate): number {
   // Date.UTC evita que el cambio de hora cuente un día de más o de menos.
   return Math.round((Date.UTC(y2!, m2! - 1, d2!) - Date.UTC(y1!, m1! - 1, d1!)) / 86_400_000);
 }
+
+/** El número de semana ISO (la primera es la que tiene el primer jueves del año). */
+export function isoWeek(date: IsoDate): number {
+  const thursday = addDays(startOfWeek(date), 3);
+  const year = thursday.slice(0, 4);
+  return Math.floor(daysBetween(`${year}-01-01`, thursday) / 7) + 1;
+}

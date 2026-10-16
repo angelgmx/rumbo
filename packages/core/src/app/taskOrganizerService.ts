@@ -1,5 +1,6 @@
 import type { TaskOrganizationRepository } from "../db/taskOrganizationRepository";
 import { addDays, toTime, type IsoDate } from "../domain/dates";
+import type { Interval } from "../domain/freeTime";
 import { isRoutineOn } from "../domain/routines";
 import {
   blockEnd,
@@ -11,7 +12,6 @@ import {
   organizeMessages,
   parseOrganization,
   taskInterval,
-  type Interval,
   type OrganizeContext,
   type OrganizeLinks,
   type OrganizeProposal,

@@ -77,6 +77,11 @@ export function minimumOf(habit: Habit): number | undefined {
   return habit.minimum ?? Math.ceil((habit.target ?? 1) / 2);
 }
 
+/** Lo que suma o resta un toque en un hábito de cantidad (1) o de tiempo (5 minutos). */
+export function habitStep(habit: Habit): number {
+  return habit.kind === "duration" ? 5 : 1;
+}
+
 /** Si ese día mantiene la racha: el hábito cumplido o, al menos, su versión mínima. */
 export function keepsStreak(habit: Habit, value: HabitValue | undefined): boolean {
   if (isDone(habit, value)) return true;
