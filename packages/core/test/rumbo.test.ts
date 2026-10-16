@@ -455,6 +455,13 @@ describe("learning", () => {
     const coding = rumbo.habits.list().habits.find((summary) => summary.habit.key === habit)!;
     expect(coding.todayTasks.map((task) => task.text)).toEqual([text]);
   });
+
+  it("does not add the same step twice to today", async () => {
+    const roadmap = rumbo.learning.roadmaps()[0]!;
+    const text = await rumbo.learning.planToday(roadmap);
+    await rumbo.learning.planToday(roadmap);
+    expect(rumbo.tasks.all().filter((task) => task.text === text)).toHaveLength(1);
+  });
 });
 
 describe("roadmap pace and scope", () => {

@@ -326,13 +326,20 @@ export class LearningService {
     const text = exercise
       ? `${roadmap.title} · ${module.title}: ejercicio ${exercise.id} — ${exercise.title}`
       : `${roadmap.title} · ${module.title}: repasar conceptos y criterio de dominado`;
+    const today = this.daily.today();
+    // Pulsar «Añadir a hoy» dos veces no debe duplicar la tarea.
+    const alreadyToday = this.tasks
+      .all()
+      .some((task) => !task.done && task.text === text && task.scheduled === today);
+    if (alreadyToday) return text;
+
     const habitNote = this.store
       .notesOfType("habit")
       .find((note) => roadmap.habit !== undefined && note.data.key === roadmap.habit);
 
     await this.tasks.create({
       text,
-      scheduled: this.daily.today(),
+      scheduled: today,
       habit: roadmap.habit,
       area: linkTarget(habitNote?.data.area),
     });

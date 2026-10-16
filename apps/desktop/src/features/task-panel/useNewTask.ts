@@ -14,10 +14,10 @@ export interface NewTask {
 }
 
 /** El borrador de una tarea nueva: se rellena a mano o escribiendo el título en lenguaje natural. */
-export function useNewTask(onCreated: () => void): NewTask {
+export function useNewTask(onCreated: () => void, initial: TaskDraft = EMPTY_DRAFT): NewTask {
   const rumbo = useRumbo();
   const today = rumbo.daily.today();
-  const [draft, setDraft] = useState<TaskDraft>(EMPTY_DRAFT);
+  const [draft, setDraft] = useState<TaskDraft>(initial);
 
   const patch = (changes: Partial<TaskDraft>) => setDraft((old) => ({ ...old, ...changes }));
 
@@ -45,7 +45,7 @@ export function useNewTask(onCreated: () => void): NewTask {
       toast.error("No se ha podido crear la tarea");
       return;
     }
-    toast.success("Tarea creada en el inbox");
+    toast.success(finished.scheduled ? "Tarea creada" : "Tarea creada en el inbox");
     onCreated();
   }
 
