@@ -16,9 +16,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <motion.div
           key={screen}
           className="flex min-h-0 flex-1 flex-col"
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: duration.page, ease: ease.enter }}
+          // Entrada suave pero sin pasar por transparente: así no se ve el hueco entre páginas.
+          initial={{ opacity: 0.6 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: duration.base, ease: ease.enter }}
         >
           {children}
         </motion.div>

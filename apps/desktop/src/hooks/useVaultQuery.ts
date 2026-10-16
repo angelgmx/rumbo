@@ -9,7 +9,9 @@ export interface VaultQuery<T> {
 
 /**
  * Pide datos a core y los vuelve a pedir cada vez que cambia el vault.
- * Mientras llegan los nuevos se siguen enseñando los anteriores, así la pantalla no parpadea.
+ * Casi todo sale del índice en memoria, así que la primera vez se calcula en el propio
+ * render: la pantalla entra ya con sus datos. Mientras llegan datos nuevos se siguen
+ * enseñando los anteriores, así no parpadea.
  */
 export function useVaultQuery<T>(
   load: (rumbo: Rumbo) => T | Promise<T>,
@@ -17,7 +19,7 @@ export function useVaultQuery<T>(
 ): VaultQuery<T> {
   const rumbo = useRumbo();
   const version = useVaultVersion();
-  const [state, setState] = useState<VaultQuery<T>>({ data: undefined, error: undefined });
+  const [state, setState] = useState<VaultQuery<T>>(() => loadNow(load, rumbo));
 
   useEffect(() => {
     let current = true;
@@ -35,6 +37,20 @@ export function useVaultQuery<T>(
   }, [rumbo, version, ...deps]);
 
   return state;
+}
+
+/** Si la carga es síncrona, el resultado ya; si es asíncrona, se espera en el efecto. */
+function loadNow<T>(load: (rumbo: Rumbo) => T | Promise<T>, rumbo: Rumbo): VaultQuery<T> {
+  try {
+    const result = load(rumbo);
+    if (result instanceof Promise) {
+      result.catch(() => {}); // el efecto la vuelve a pedir y gestiona el error
+      return { data: undefined, error: undefined };
+    }
+    return { data: result, error: undefined };
+  } catch (error) {
+    return { data: undefined, error: toError(error) };
+  }
 }
 
 function toError(error: unknown): Error {
