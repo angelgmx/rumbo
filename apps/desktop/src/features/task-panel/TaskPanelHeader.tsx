@@ -1,4 +1,4 @@
-import { PanelRightCloseIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { TaskCrumbs } from "./TaskCrumbs";
@@ -22,8 +22,8 @@ export function TaskPanelHeader({
         <TaskCrumbs context={context} last={last} />
       </div>
       {children}
-      <Button variant="outline" size="icon" aria-label="Cerrar panel" onClick={onClose}>
-        <PanelRightCloseIcon />
+      <Button variant="ghost" size="icon" aria-label="Cerrar" onClick={onClose}>
+        <XIcon />
       </Button>
     </header>
   );
