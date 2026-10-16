@@ -71,6 +71,50 @@ describe("tasks", () => {
   });
 });
 
+describe("capture", () => {
+  it("reads priority, duration and tags from a task", async () => {
+    await rumbo.tasks.capture("repasar strings hoy 30m !alta #java");
+    expect(files.get("Inbox/Inbox.md")).toContain("- [ ] repasar strings");
+    const [task] = rumbo.tasks.all().filter((t) => t.text === "repasar strings");
+    expect(task).toMatchObject({ priority: "high", tags: ["java"], scheduled: "2026-10-15" });
+  });
+});
+
+describe("ideas", () => {
+  it("keeps the ideas next to the inbox by default", async () => {
+    expect(rumbo.store.config.folders.ideas).toBe("Inbox/Ideas.md");
+    const fresh = await createRumbo(memoryFileSystem(new Map()), clock);
+    expect(fresh.store.config.folders.ideas).toBe("Ideas.md");
+  });
+
+  it("captures an idea as a bullet with its date", async () => {
+    await rumbo.ideas.capture("App de recetas");
+    expect(files.get("Inbox/Ideas.md")).toBe("- App de recetas [created:: 2026-10-15]\n");
+    expect(rumbo.ideas.list()).toMatchObject([{ text: "App de recetas", created: "2026-10-15" }]);
+  });
+
+  it("removes an idea", async () => {
+    await rumbo.ideas.capture("one");
+    await rumbo.ideas.capture("two");
+    await rumbo.ideas.remove(rumbo.ideas.list()[0]!);
+    expect(rumbo.ideas.list().map((idea) => idea.text)).toEqual(["two"]);
+  });
+
+  it("turns an idea into an inbox task and removes the idea", async () => {
+    await rumbo.ideas.capture("Write a post");
+    const task = await rumbo.ideas.toTask(rumbo.ideas.list()[0]!);
+    expect(task).toMatchObject({ text: "Write a post", path: "Inbox/Inbox.md", done: false });
+    expect(rumbo.ideas.list()).toEqual([]);
+  });
+
+  it("turns an inbox task into an idea", async () => {
+    const [task] = await rumbo.tasks.list("inbox");
+    await rumbo.ideas.fromTask(task!);
+    expect(rumbo.ideas.list().map((idea) => idea.text)).toEqual(["Buy a new notebook"]);
+    expect(await rumbo.tasks.list("inbox")).toEqual([]);
+  });
+});
+
 describe("editing tasks", () => {
   it("keeps both changes when two edits arrive at once", async () => {
     const [task] = await rumbo.tasks.list("inbox");

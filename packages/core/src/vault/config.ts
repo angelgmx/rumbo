@@ -10,6 +10,7 @@ const rawSchema = z.object({
       daily: z.string().default("Daily"),
       daily_format: z.string().default("YYYY-MM-DD"),
       inbox: z.string().default("Inbox.md"),
+      ideas: z.string().optional(),
       archive: z.string().optional(),
       habits: z.string().default("Habits"),
       goals: z.string().default("Goals"),
@@ -29,11 +30,12 @@ const rawSchema = z.object({
   aliases: z.record(z.string(), z.string()).default({}),
 });
 
-// El archivo de tareas, si no se dice, vive junto a la nota del inbox.
+// Las ideas y el archivo de tareas, si no se dicen, viven junto a la nota del inbox.
 const configSchema = rawSchema.transform((config) => ({
   ...config,
   folders: {
     ...config.folders,
+    ideas: config.folders.ideas ?? besideInbox(config.folders.inbox, "Ideas.md"),
     archive: config.folders.archive ?? besideInbox(config.folders.inbox, "Archivo de tareas.md"),
   },
 }));

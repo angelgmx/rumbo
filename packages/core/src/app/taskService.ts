@@ -1,4 +1,4 @@
-import { parseCapture } from "../domain/capture";
+import { parseCapture, parseTaskTitle } from "../domain/capture";
 import type { IsoDate } from "../domain/dates";
 import { linkTarget } from "../domain/links";
 import { sectionLines } from "../domain/sections";
@@ -175,8 +175,15 @@ export class TaskService {
       return { kind: "agenda", date: capture.date };
     }
 
-    await this.addToInbox(capture.date ? `${capture.text} ⏳ ${capture.date}` : capture.text);
-    return { kind: "task", date: capture.date };
+    const title = parseTaskTitle(input, this.daily.today());
+    await this.create({
+      text: title.text,
+      scheduled: title.date,
+      duration: title.duration,
+      priority: title.priority,
+      tags: title.tags,
+    });
+    return { kind: "task", date: title.date };
   }
 
   /**

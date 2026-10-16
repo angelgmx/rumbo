@@ -110,6 +110,7 @@ export {
   type TaskStep,
   type TaskView,
 } from "./domain/tasks";
+export type { Idea } from "./domain/ideas";
 export { parseCapture, parseTaskTitle, type Capture, type TaskTitle } from "./domain/capture";
 export {
   BLOCK_KINDS,

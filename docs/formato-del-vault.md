@@ -23,6 +23,7 @@ folders:
   daily: 04 - Diario # carpeta de las dailies
   daily_format: YYYY/MM/YYYY-MM-DD # subcarpetas y nombre de cada daily
   inbox: 00 - Inbox/Inbox.md # fichero donde caen las capturas
+  ideas: 00 - Inbox/Ideas.md # opcional; por defecto, junto al inbox
   archive: 00 - Inbox/Archivo de tareas.md # opcional; por defecto, junto al inbox
   habits: Hábitos
   goals: Objetivos
@@ -189,7 +190,19 @@ project: Citalash # opcional
 
 Una tarea sale del inbox en cuanto tiene fecha, área o proyecto. Al procesar, la app añade esos datos a la propia línea (la tarea no se mueve de fichero), la marca como hecha o la borra junto con sus pasos.
 
+### Ideas
+
+Las ideas viven en una sola nota, `folders.ideas` (por defecto `Ideas.md`, junto a la nota del inbox: con `inbox: 00 - Inbox/Inbox.md` es `00 - Inbox/Ideas.md`). Cada idea es una viñeta, no una casilla, con la fecha en que se apuntó:
+
+```markdown
+- App de recetas con lista de la compra [created:: 2026-10-16]
+```
+
+Convertir una idea en tarea la añade al inbox y quita la viñeta; «Es una idea» en Procesar inbox hace lo contrario. El resto de líneas de la nota (títulos, texto) no se tocan.
+
 ### Captura rápida
+
+La captura rápida tiene un conmutador **Tarea | Idea**. Una idea se guarda tal cual en la nota de ideas; lo que sigue es para las tareas.
 
 Lo que escribes en la captura rápida se interpreta así:
 
@@ -200,6 +213,7 @@ Lo que escribes en la captura rápida se interpreta así:
 | `llamar al dentista el lunes` | Tarea en el inbox con `⏳` el próximo lunes     |
 | `examen 20/10`                | Tarea con `⏳` el 20 de octubre                 |
 | `idea para Citalash`          | Tarea en el inbox, sin fecha                    |
+| `repasar hoy 30m !alta #java` | Tarea de hoy con duración, prioridad y etiqueta |
 
 Palabras de fecha: `hoy`, `mañana`, `pasado mañana`, el nombre de un día (`lunes`… `domingo`) y `día/mes`.
 
