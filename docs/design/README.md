@@ -15,7 +15,7 @@ Una carpeta por pestaña, en el orden del raíl de la especificación (Foco, Tar
 | 04 | [Rutinas](04-rutinas/) | ¿Qué hago cada día a qué hora? | [Rutinas](04-rutinas/01-rutinas.png) · [Editor](04-rutinas/02-editor-rutina.png) · [Interruptor](04-rutinas/03-interruptor.png) | 3 |
 | 05 | [Hábitos](05-habitos/) | ¿Cómo van mis rachas? | [Hábitos](05-habitos/01-habitos.png) | 1 |
 | 06 | [Objetivos](06-objetivos/) | ¿Qué quiero lograr? | [Objetivo](06-objetivos/01-objetivo.png) · [Visión](06-objetivos/02-vision.png) · [Crear objetivo](06-objetivos/03-crear-objetivo.png) | 6 |
-| 07 | [Proyectos](07-proyectos/) | ¿Qué estoy construyendo? | [Proyectos](07-proyectos/01-proyectos.png) · [Crear proyecto](07-proyectos/02-crear-proyecto.png) | 6 |
+| 07 | [Proyectos](07-proyectos/) | ¿Qué estoy construyendo? | [Proyectos](07-proyectos/01-proyectos.png) · [Crear proyecto: gym](07-proyectos/02-crear-proyecto.png) · [Crear proyecto: marketing](07-proyectos/03-crear-proyecto-marketing.png) | 6 |
 | 08 | [Roadmaps](08-roadmaps/) | ¿Qué estoy aprendiendo? | [Roadmaps](08-roadmaps/01-roadmaps.png) · [Roadmap](08-roadmaps/02-roadmap.png) · [Módulo](08-roadmaps/03-modulo.png) · [Repaso](08-roadmaps/04-repaso.png) · [Crear con IA](08-roadmaps/05-crear-ruta-ia.png) · [Ruta con vídeos](08-roadmaps/06-ruta-con-videos.png) | 2 · 7 |
 | 09 | [Notas](09-notas/) | ¿Qué sé y qué he escrito? | [Notas](09-notas/01-notas.png) · [Nota](09-notas/02-nota.png) · [Nota en claro](09-notas/03-nota-clara.png) | 5 |
 | 10 | [Métricas](10-metricas/) | ¿Cómo voy? | [Métricas](10-metricas/01-metricas.png) | 9 |
