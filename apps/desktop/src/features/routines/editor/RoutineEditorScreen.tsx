@@ -20,6 +20,7 @@ import { timeOf, useNow } from "@/hooks/useNow";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { useRoutineLook } from "../look";
+import { RoutineMenu } from "../RoutineMenu";
 import { useRoutinePurpose } from "../useRoutinePurpose";
 import { useStartRoutine } from "../useStartRoutine";
 import { BlockLibrary, type LibraryItem, type LibraryTab } from "./BlockLibrary";
@@ -87,6 +88,7 @@ function Editor({ summary }: { summary: RoutineSummary }) {
     <>
       <ScreenHeader
         title={<Crumbs title={summary.title} />}
+        newTask={false}
         actions={
           <Button variant="outline" onClick={() => start(summary, { goToFocus: false })}>
             <PlayIcon data-icon="inline-start" />
@@ -95,7 +97,7 @@ function Editor({ summary }: { summary: RoutineSummary }) {
         }
       />
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="mx-auto flex max-w-6xl flex-col gap-5">
+        <div className="flex flex-col gap-5">
           <div className="flex items-start gap-4">
             <Button
               variant="outline"
@@ -125,6 +127,7 @@ function Editor({ summary }: { summary: RoutineSummary }) {
                 onCheckedChange={(active) => rumbo.routines.setActive(summary.path, active)}
               />
             </label>
+            <RoutineMenu summary={summary} showEdit={false} className="mt-1.5" />
           </div>
 
           <RoutineSettings summary={summary} />

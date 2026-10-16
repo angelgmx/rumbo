@@ -25,12 +25,14 @@ export function TodayCard({ date, today, other }: TodayCardProps) {
 
   return (
     <Card className="flex-row gap-0 p-0">
-      <div className="min-w-0 flex-1 p-5">
+      <div className="flex min-w-0 flex-1 flex-col p-5">
         <h2 className="mb-3 flex items-baseline gap-2">
           <span className="font-medium">Tu {weekdayFormat.format(new Date(`${date}T12:00`))}</span>
           <span className="text-sm text-muted-foreground">{formatDayMonth(date)}</span>
         </h2>
-        <DayTimeline today={today} other={other} />
+        <div className="my-auto">
+          <DayTimeline today={today} other={other} />
+        </div>
       </div>
 
       <aside className="flex w-72 shrink-0 flex-col gap-4 border-l p-5">
@@ -88,10 +90,12 @@ function NextRoutine({ summary, started }: { summary: RoutineSummary; started: b
       </p>
       <div className="flex items-center gap-2.5">
         <AreaIcon area={look} />
-        <span className="flex-1 truncate font-medium">{summary.title}</span>
-        <span className="font-mono text-xs text-muted-foreground">
-          {summary.routine.start} · {formatMinutes(summary.minutes)}
-        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-medium">{summary.title}</p>
+          <p className="font-mono text-xs text-muted-foreground">
+            {summary.routine.start} – {summary.end} · {formatMinutes(summary.minutes)}
+          </p>
+        </div>
       </div>
       <Button className="w-full" onClick={() => start(summary)}>
         <PlayIcon data-icon="inline-start" />

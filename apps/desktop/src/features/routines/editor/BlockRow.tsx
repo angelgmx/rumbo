@@ -58,7 +58,7 @@ export function BlockRow({ summary, block, routineColor, current }: BlockRowProp
         transform: CSS.Translate.toString(transform),
         transition: transition,
       }}
-      className={cn("flex gap-4", isDragging && "relative z-10 opacity-80")}
+      className={cn("flex gap-3", isDragging && "relative z-10 opacity-80")}
     >
       <div className="flex w-12 shrink-0 flex-col items-center pt-4">
         <span
@@ -70,6 +70,7 @@ export function BlockRow({ summary, block, routineColor, current }: BlockRowProp
           {block.start}
         </span>
       </div>
+      <TimelineDot current={current} />
 
       <div
         className={cn(
@@ -187,4 +188,25 @@ function habitToday({ habit, today }: HabitSummary): string {
   if (habit.target === undefined) return today ? "Hecho" : "Pendiente";
   const done = typeof today === "number" ? today : 0;
   return `${done} / ${habit.target}${habit.unit ? ` ${habit.unit}` : ""}`;
+}
+
+/** La línea del tiempo de la rutina: un punto por bloque, en naranja el de ahora. */
+export function TimelineDot({
+  current = false,
+  last = false,
+}: {
+  current?: boolean;
+  last?: boolean;
+}) {
+  return (
+    <div aria-hidden className="relative flex w-3 shrink-0 justify-center">
+      {!last && <span className="absolute top-0 -bottom-2 w-px bg-border" />}
+      <span
+        className={cn(
+          "relative mt-[18px] size-2.5 rounded-full border-2 bg-card",
+          current ? "border-primary bg-primary" : "border-muted-foreground/60",
+        )}
+      />
+    </div>
+  );
 }

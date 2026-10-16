@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRumbo } from "@/app/RumboContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { SegmentedControl } from "@/components/SegmentedControl";
 import { STATUS_LABEL, STATUS_STYLE } from "@/features/roadmaps/moduleStatus";
 import { Tag } from "@/features/roadmaps/Tag";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
@@ -54,19 +54,7 @@ export function BlockLibrary({ summary, tab, onTabChange }: BlockLibraryProps) {
         </h2>
         <span className="text-sm text-faint">arrastra a la línea</span>
       </div>
-      <ToggleGroup
-        variant="outline"
-        size="sm"
-        className="w-full"
-        value={[tab]}
-        onValueChange={(values) => values[0] && onTabChange(values[0] as LibraryTab)}
-      >
-        {TABS.map(({ value, label }) => (
-          <ToggleGroupItem key={value} value={value} className="flex-1">
-            {label}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
+      <SegmentedControl label="Biblioteca" options={TABS} value={tab} onChange={onTabChange} />
       <div className="relative">
         <SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input

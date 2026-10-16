@@ -11,6 +11,7 @@ import { ComplianceBars } from "./ComplianceBars";
 import { useRoutineLook } from "./look";
 import { routineHref } from "./links";
 import { RoutineDayStatus } from "./RoutineDayStatus";
+import { RoutineMenu } from "./RoutineMenu";
 import { useRoutinePurpose } from "./useRoutinePurpose";
 import { WeekdayChips } from "./WeekdayChips";
 
@@ -44,6 +45,7 @@ export function RoutineCard({ summary }: { summary: RoutineSummary }) {
               onCheckedChange={(active) => rumbo.routines.setActive(summary.path, active)}
             />
           </label>
+          <RoutineMenu summary={summary} className="relative z-10 -mr-2" />
         </div>
 
         <div className="flex items-center gap-4 text-sm">

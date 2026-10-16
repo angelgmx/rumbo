@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { formatMinutes } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { BLOCK_KIND_ICON, BLOCK_KIND_LABEL } from "../look";
-import { blockId, BlockRow } from "./BlockRow";
+import { blockId, BlockRow, TimelineDot } from "./BlockRow";
 import type { LibraryTab } from "./BlockLibrary";
 
 export const BLOCK_LIST_ID = "blocks";
@@ -65,11 +65,14 @@ export function BlockList({
         </ol>
       </SortableContext>
 
-      <div className="flex items-center gap-4 text-sm">
-        <span className="w-12 text-center font-mono text-xs text-muted-foreground">
+      <div className="-mt-2 flex gap-3 text-sm">
+        <span className="w-12 pt-3.5 text-center font-mono text-xs text-muted-foreground">
           {summary.end}
         </span>
-        <span className="text-muted-foreground">Fin de la rutina</span>
+        <div className="-mt-1">
+          <TimelineDot last />
+        </div>
+        <span className="pt-3 text-muted-foreground">Fin de la rutina</span>
       </div>
 
       <AddBlockBar summary={summary} onPickFromLibrary={onPickFromLibrary} />

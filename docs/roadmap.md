@@ -85,6 +85,7 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 **Pantallas:**
 
 - [x] **Rutinas**: el día en una franja (rutinas, huecos libres, línea de ahora, la siguiente con «Empezar»), una tarjeta por rutina con sus días, bloques y cumplimiento, filtro por área y plantillas
+- [x] Eliminar una rutina (con confirmación) desde su tarjeta o su editor
 - [x] **Editor de rutina**: días y hora, bloques que se arrastran para ordenarlos, minutos y nombre en su sitio, las tareas que genera hoy cada bloque de tema, resumen y biblioteca de temas, hábitos y tareas para arrastrar
 - [x] Interruptor rediseñado (encendido con halo, foco con anillo, deshabilitado)
 - [x] Contadores en la interfaz: elegir el contador al crear una tarea, verlo en las filas de Tareas y en Foco, y usarlo en el detalle de la tarea (cronómetro, pomodoro, −/+ y progreso)

@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { AreaIcon } from "@/components/AreaIcon";
 import { timeOf, useNow } from "@/hooks/useNow";
 import { formatMinutes, formatShortWeekday } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { BlockStrip } from "./BlockStrip";
 import { useRoutineLook } from "./look";
 import { routineHref } from "./links";
@@ -60,6 +61,14 @@ export function DayTimeline({ today, other }: DayTimelineProps) {
       </div>
 
       <div className="relative h-16 rounded-xl border bg-muted/40">
+        {hours.slice(1).map((hour) => (
+          <span
+            key={hour}
+            aria-hidden
+            className="absolute inset-y-0 w-px bg-border/60"
+            style={{ left: `${position(`${pad(hour)}:00`)}%` }}
+          />
+        ))}
         {today.map((summary) => (
           <RoutineBar
             key={summary.path}
@@ -78,20 +87,27 @@ export function DayTimeline({ today, other }: DayTimelineProps) {
         ))}
       </div>
 
-      <div className="relative mt-2 h-7">
-        {other.map((summary) => (
-          <GhostRoutine
-            key={summary.path}
-            summary={summary}
-            left={position(summary.routine.start)}
-          />
-        ))}
-      </div>
+      {other.length > 0 && (
+        <div className="relative mt-2 h-7">
+          {other.map((summary) => (
+            <GhostRoutine
+              key={summary.path}
+              summary={summary}
+              left={position(summary.routine.start)}
+            />
+          ))}
+        </div>
+      )}
 
       <div
-        className="pointer-events-none absolute top-6 bottom-9 w-px bg-primary"
+        className={cn(
+          "pointer-events-none absolute top-6 w-px bg-primary",
+          other.length > 0 ? "bottom-9" : "bottom-0",
+        )}
         style={{ left: `${position(now)}%` }}
-      />
+      >
+        <span className="absolute -bottom-1 -left-1 size-2 rounded-full bg-primary" />
+      </div>
     </div>
   );
 }

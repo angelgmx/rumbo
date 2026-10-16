@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { useRumbo } from "@/app/RumboContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SegmentedControl } from "@/components/SegmentedControl";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -13,7 +14,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { routineHref } from "./links";
@@ -29,7 +29,7 @@ export function RoutinesScreen() {
   const list = useVaultQuery((r) => r.routines.list()).data;
   const [area, setArea] = useState(ALL_AREAS);
 
-  const header = <ScreenHeader title="Rutinas" actions={<NewRoutineButton />} />;
+  const header = <ScreenHeader title="Rutinas" newTask={false} actions={<NewRoutineButton />} />;
   if (!list) return header;
 
   const today = rumbo.daily.today();
@@ -45,7 +45,7 @@ export function RoutinesScreen() {
     <>
       {header}
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6">
+        <div className="flex flex-col gap-6">
           <div className="flex items-end justify-between gap-4">
             <div>
               <h1 className="text-3xl font-semibold tracking-tight">Rutinas</h1>
@@ -54,19 +54,15 @@ export function RoutinesScreen() {
               </p>
             </div>
             {areas.length > 0 && (
-              <ToggleGroup
-                variant="outline"
-                size="sm"
-                value={[area]}
-                onValueChange={(values) => values[0] && setArea(values[0])}
-              >
-                <ToggleGroupItem value={ALL_AREAS}>Todas</ToggleGroupItem>
-                {areas.map((name) => (
-                  <ToggleGroupItem key={name} value={name}>
-                    {name}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
+              <SegmentedControl
+                label="Área"
+                options={[
+                  { value: ALL_AREAS, label: "Todas" },
+                  ...areas.map((name) => ({ value: name, label: name })),
+                ]}
+                value={area}
+                onChange={setArea}
+              />
             )}
           </div>
 
@@ -120,7 +116,7 @@ function NewRoutineButton() {
   }
 
   return (
-    <Button variant="outline" onClick={create}>
+    <Button onClick={create}>
       <PlusIcon data-icon="inline-start" />
       Nueva rutina
     </Button>
