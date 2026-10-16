@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { PropertyPopover } from "./PropertyPopover";
@@ -7,12 +8,14 @@ import { PropertyPopover } from "./PropertyPopover";
  * que al pulsarlo abre su selector. Sin valor sale `empty`, apagado.
  */
 export function PropertyRow({
+  icon: Icon,
   label,
   value,
   empty = "—",
   width,
   children,
 }: {
+  icon?: LucideIcon;
   label: string;
   value: ReactNode | undefined;
   empty?: string;
@@ -21,7 +24,10 @@ export function PropertyRow({
 }) {
   return (
     <div className="flex min-h-9 items-center gap-2">
-      <span className="w-36 shrink-0 truncate text-sm text-muted-foreground">{label}</span>
+      <span className="flex w-36 shrink-0 items-center gap-2 text-sm text-muted-foreground">
+        {Icon && <Icon className="size-4 shrink-0" />}
+        <span className="truncate">{label}</span>
+      </span>
       <PropertyPopover
         label={label}
         width={width}

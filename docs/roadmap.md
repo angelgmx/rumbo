@@ -118,8 +118,8 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 
 **Objetivos (hecha):**
 
-- [x] Página **Objetivos** en el raíl, con tres vistas y filtro por área: tablero por estado (arrastrar cambia el estado), lista tipo Notion con scroll y por periodo (año y trimestre)
-- [x] Página de un objetivo: propiedades editables en su sitio, porqué, resultados clave con su avance y lo vinculado filtrado a él (tareas, proyectos, hábitos, rutas, notas y recursos) o «Sin plan»
+- [x] Página **Objetivos** en el raíl, con dos vistas: lista con progreso, fecha límite y ritmo (con los terminados plegados) y tablero por estado (arrastrar cambia el estado)
+- [x] El objetivo como panel lateral: título y propiedades editables (área, inicio, fecha límite y prioridad), progreso con su ritmo y «Cómo llegas», el árbol de lo que lo empuja (proyectos con sus tareas e hitos, rutas con el módulo y las tareas de hoy, hábitos y tareas sueltas) con campos en línea para añadir o conectar cada cosa
 - [x] Crear y editar un objetivo en el panel lateral, en cinco pasos: qué, por qué, cómo lo medirás, qué te frenará y cómo llegarás (conectar proyectos, hábitos, rutas y notas)
 
 **Pendiente:**

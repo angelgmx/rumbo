@@ -1,5 +1,6 @@
 import { TargetIcon } from "lucide-react";
 import { useState } from "react";
+import { useLocation, useParams } from "wouter";
 import { SegmentedControl } from "@/components/SegmentedControl";
 import {
   Empty,
@@ -8,77 +9,65 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { FilterChip } from "@/features/tasks/FilterChip";
-import { AreaDot } from "@/features/tasks/AreaDot";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
+import { GoalDetailDock } from "./detail/GoalDetailDock";
 import { GoalBoard } from "./GoalBoard";
-import { GoalsByPeriod } from "./GoalsByPeriod";
-import { GoalTable } from "./GoalTable";
+import { GoalList } from "./GoalList";
 import { NewGoalButton } from "./NewGoalButton";
 
-type View = "board" | "list" | "period";
+type View = "board" | "list";
 
 const VIEWS: { value: View; label: string }[] = [
   { value: "board", label: "Tablero" },
   { value: "list", label: "Lista" },
-  { value: "period", label: "Por periodo" },
 ];
 
+/** Los objetivos en lista o tablero; al abrir uno, su panel entra a la derecha. */
 export function GoalsScreen() {
-  const goals = useVaultQuery((r) => r.goals.list()).data;
-  const [view, setView] = useState<View>("board");
-  const [area, setArea] = useState<string>();
-
-  if (!goals) return <ScreenHeader title="Objetivos" actions={<NewGoalButton />} />;
-
-  const areas = [...new Set(goals.flatMap(({ goal }) => goal.area ?? []))].sort();
-  const shown = area ? goals.filter(({ goal }) => goal.area === area) : goals;
+  const goals = useVaultQuery((r) => r.goals.list()).data ?? [];
+  const [view, setView] = useState<View>("list");
+  const [, navigate] = useLocation();
+  const { id } = useParams<{ id?: string }>();
+  const selected = goals.find((summary) => summary.id === Number(id));
 
   return (
     <>
-      <ScreenHeader title="Objetivos" actions={<NewGoalButton />} />
-      <main className="flex min-h-0 flex-1 flex-col gap-5 p-6">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Objetivos</h1>
-          <p className="mt-1 text-muted-foreground">
-            {goals.length === 0
-              ? "Resultados que quieres en una fecha"
-              : `${goals.filter(({ goal }) => goal.status === "active").length} en marcha de ${goals.length}`}
-          </p>
-        </div>
-
-        {goals.length === 0 ? (
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <TargetIcon />
-              </EmptyMedia>
-              <EmptyTitle>Todavía no tienes objetivos</EmptyTitle>
-              <EmptyDescription>Crea el primero con «Nuevo objetivo».</EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            <div className="flex flex-wrap items-center gap-3">
-              <SegmentedControl label="Vista" options={VIEWS} value={view} onChange={setView} />
-              <FilterChip
-                label="Área"
-                value={area}
-                onChange={setArea}
-                options={areas.map((name) => ({
-                  value: name,
-                  count: goals.filter(({ goal }) => goal.area === name).length,
-                  icon: <AreaDot area={name} />,
-                }))}
-              />
+      <ScreenHeader title="Objetivos" newTask={false} actions={<NewGoalButton />} />
+      <div className="flex min-h-0 flex-1">
+        <main className="flex min-w-0 flex-1 flex-col gap-5 overflow-y-auto p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight">Objetivos</h1>
+              <p className="mt-1 text-muted-foreground">
+                {goals.length === 0
+                  ? "Resultados que quieres en una fecha"
+                  : `${goals.filter(({ goal }) => goal.status === "active").length} en marcha`}
+              </p>
             </div>
-            {view === "board" && <GoalBoard goals={shown} />}
-            {view === "list" && <GoalTable goals={shown} />}
-            {view === "period" && <GoalsByPeriod goals={shown} />}
-          </>
-        )}
-      </main>
+            {goals.length > 0 && (
+              <SegmentedControl label="Vista" options={VIEWS} value={view} onChange={setView} />
+            )}
+          </div>
+
+          {goals.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <TargetIcon />
+                </EmptyMedia>
+                <EmptyTitle>Todavía no tienes objetivos</EmptyTitle>
+                <EmptyDescription>Crea el primero con «Nuevo objetivo».</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : view === "board" ? (
+            <GoalBoard goals={goals} />
+          ) : (
+            <GoalList goals={goals} selectedId={selected?.id} />
+          )}
+        </main>
+        <GoalDetailDock summary={selected} onClose={() => navigate("/objetivos")} />
+      </div>
     </>
   );
 }

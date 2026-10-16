@@ -13,7 +13,7 @@ import { StepWhat } from "./StepWhat";
 import { StepWhy } from "./StepWhy";
 import { cleaned, useGoalDraft } from "./useGoalDraft";
 
-/** Crear un objetivo en cinco pasos, en el panel lateral como las tareas. Para editarlo se abre su página. */
+/** Crear un objetivo en cinco pasos, en el panel lateral como las tareas. Para editarlo se abre su panel. */
 export function GoalPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <SidePanel open={open} title="Nuevo objetivo" onClose={onClose}>

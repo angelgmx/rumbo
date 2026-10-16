@@ -1,4 +1,5 @@
 import type { IsoDate } from "@rumbo/core";
+import type { LucideIcon } from "lucide-react";
 import { useRumbo } from "@/app/RumboContext";
 import { DateRangeTimePicker } from "@/components/date-time-picker/DateRangeTimePicker";
 import { dayShortcuts } from "@/components/date-time-picker/shortcuts";
@@ -7,11 +8,13 @@ import { formatLongDay } from "@/lib/format";
 
 /** Una fecha suelta (inicio, fecha límite…), que se cambia en un calendario. */
 export function DateRow({
+  icon,
   label,
   empty,
   date,
   onChange,
 }: {
+  icon?: LucideIcon;
   label: string;
   empty: string;
   date: IsoDate | undefined;
@@ -20,7 +23,13 @@ export function DateRow({
   const today = useRumbo().daily.today();
 
   return (
-    <PropertyRow label={label} empty={empty} value={date && formatLongDay(date)} width="w-auto p-1">
+    <PropertyRow
+      icon={icon}
+      label={label}
+      empty={empty}
+      value={date && formatLongDay(date)}
+      width="w-auto p-1"
+    >
       {(close) => (
         <DateRangeTimePicker
           mode="day"
