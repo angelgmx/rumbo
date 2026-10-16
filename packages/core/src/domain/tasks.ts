@@ -161,17 +161,23 @@ export function isInView(task: Task, view: TaskView, today: IsoDate, inboxPath: 
     case "done":
       return task.done;
     case "inbox":
-      // Sin procesar: sigue en el inbox y no tiene fecha, área ni proyecto.
-      return (
-        !task.done && task.path === inboxPath && !date && !task.fields.area && !task.fields.project
-      );
+      return isUnprocessed(task, inboxPath);
     case "today":
       return !task.done && date !== undefined && date <= today;
     case "upcoming":
       return !task.done && date !== undefined && date > today;
     case "someday":
-      return !task.done && date === undefined && task.path !== inboxPath;
+      // Sin fecha y ya procesada: con área o proyecto, aunque siga en la nota del inbox.
+      return !task.done && date === undefined && !isUnprocessed(task, inboxPath);
   }
+}
+
+/** Sin procesar: sigue en el inbox y no tiene fecha, área ni proyecto. */
+function isUnprocessed(task: Task, inboxPath: string): boolean {
+  const date = task.scheduled ?? task.due;
+  return (
+    !task.done && task.path === inboxPath && !date && !task.fields.area && !task.fields.project
+  );
 }
 
 /** Lo que se puede cambiar de una tarea. `undefined` en un campo lo quita. */

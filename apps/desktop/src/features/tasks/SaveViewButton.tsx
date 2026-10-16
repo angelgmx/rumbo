@@ -1,5 +1,5 @@
 import type { SavedView } from "@rumbo/core";
-import { BookmarkPlusIcon } from "lucide-react";
+import { FilterIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
@@ -7,8 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-/** Guarda la vista actual con sus filtros para volver a ella desde la barra lateral. */
+/**
+ * Guarda la vista actual con sus filtros para volver a ella desde la barra lateral.
+ * Sin filtros no hay nada que guardar: la vista ya está en la barra.
+ */
 export function SaveViewButton({ view }: { view: Omit<SavedView, "name"> }) {
+  const hasFilters = Boolean(view.area || view.project || view.tag);
   const rumbo = useRumbo();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -24,8 +28,8 @@ export function SaveViewButton({ view }: { view: Omit<SavedView, "name"> }) {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger render={<Button variant="ghost" size="sm" />}>
-        <BookmarkPlusIcon data-icon="inline-start" />
+      <PopoverTrigger render={<Button variant="outline" disabled={!hasFilters} />}>
+        <FilterIcon data-icon="inline-start" />
         Guardar vista
       </PopoverTrigger>
       <PopoverContent className="w-64">

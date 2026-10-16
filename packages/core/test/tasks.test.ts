@@ -78,6 +78,14 @@ describe("isInView", () => {
     expect(view("upcoming")).toEqual(["Call the dentist", "Weekly review"]);
     expect(view("done")).toEqual(["Install VS Code"]);
   });
+
+  it("moves an inbox task with an area but no date to someday", () => {
+    const [task] = parseTasks("Inbox/Inbox.md", "- [ ] Learn Zod [area:: Desarrollo]");
+    const inView = (name: Parameters<typeof isInView>[1]) =>
+      isInView(task!, name, "2026-10-15", "Inbox/Inbox.md");
+    expect(inView("inbox")).toBe(false);
+    expect(inView("someday")).toBe(true);
+  });
 });
 
 describe("appendTaskDraft", () => {

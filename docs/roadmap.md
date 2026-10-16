@@ -87,7 +87,11 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] **Rutinas**: el día en una franja (rutinas, huecos libres, línea de ahora, la siguiente con «Empezar»), una tarjeta por rutina con sus días, bloques y cumplimiento, filtro por área y plantillas
 - [x] **Editor de rutina**: días y hora, bloques que se arrastran para ordenarlos, minutos y nombre en su sitio, las tareas que genera hoy cada bloque de tema, resumen y biblioteca de temas, hábitos y tareas para arrastrar
 - [x] Interruptor rediseñado (encendido con halo, foco con anillo, deshabilitado)
-- [ ] Contadores en Tareas y Foco
+- [x] Contadores en la interfaz: elegir el contador al crear una tarea, verlo en las filas de Tareas y en Foco, y usarlo en el detalle de la tarea (cronómetro, pomodoro, −/+ y progreso)
+- [x] Detalle de tarea en un panel lateral, con lo que la tarea guarda en el vault
+- [x] Tareas igual al diseño: captura en la barra lateral, áreas y proyectos con su número, filtros por área, proyecto y etiqueta, columnas en cada fila, Próximas agrupadas por día y Procesar inbox con «¿Qué es?»
+- [x] «Ahora» en Foco enseña el contador de la primera tarea del foco cuando no hay un bloque de agenda en curso
+- [ ] Registro de sesiones y estimado vs real (necesitan guardar el tiempo de cada sesión)
 - [ ] Foco v2: Empezar, solo 5 minutos, día malo, cerrar el día y modo enfoque
 
 **Nombres de la especificación (16 oct):**

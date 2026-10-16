@@ -153,13 +153,13 @@ Sin el campo, la tarea no tiene contador: se marca hecha y ya. Llegar al objetiv
 
 La app lee las tareas del **inbox**, de las **dailies** y de las notas de **proyecto**. Las casillas de otras notas (por ejemplo, la lista de conceptos de un tema) no son tareas.
 
-| Vista     | Qué tareas salen                                |
-| --------- | ----------------------------------------------- |
-| Inbox     | En el inbox, sin fecha, sin área y sin proyecto |
-| Hoy       | Con fecha de hoy o anterior, sin hacer          |
-| Próximas  | Con fecha futura                                |
-| Algún día | Sin fecha, fuera del inbox                      |
-| Hechas    | Marcadas                                        |
+| Vista     | Qué tareas salen                                                  |
+| --------- | ----------------------------------------------------------------- |
+| Inbox     | En el inbox, sin fecha, sin área y sin proyecto                   |
+| Hoy       | Con fecha de hoy o anterior, sin hacer                            |
+| Próximas  | Con fecha futura                                                  |
+| Algún día | Sin fecha y ya procesada (con área o proyecto, o fuera del inbox) |
+| Hechas    | Marcadas                                                          |
 
 ### Vistas guardadas
 
@@ -170,6 +170,7 @@ name: Negocio esta semana
 view: upcoming # inbox | today | upcoming | someday | done
 area: Negocio # opcional
 tag: citalash # opcional
+project: Citalash # opcional
 ```
 
 ### Procesar el inbox
