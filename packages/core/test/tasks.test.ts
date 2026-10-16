@@ -276,14 +276,14 @@ describe("habitHistoryFromTasks", () => {
 
 describe("tasks inside code blocks", () => {
   it("ignores checkboxes written as examples in a fenced block", () => {
-    const note = [
+    const spec = [
       "- [ ] Real task",
       "```markdown",
       "- [ ] Example task ⏳ 2026-10-16",
       "```",
       "- [ ] Another real task",
     ].join("\n");
-    const tasks = parseTasks("Notes/Spec.md", note);
+    const tasks = parseTasks("Notes/Spec.md", spec);
     expect(tasks.map((task) => [task.text, task.line])).toEqual([
       ["Real task", 0],
       ["Another real task", 4],
