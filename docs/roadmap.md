@@ -10,7 +10,7 @@ El proyecto avanza por fases. Una fase no empieza hasta que la anterior se usa d
 | 3. Rutinas y Foco sin fricción  | v0.3    | Rutinas, contadores por tarea, botón Empezar, modo 5 minutos, día malo, cerrar el día, modo enfoque | **Diseñada** · lógica en `core` |
 | 4. Calendario                   | v0.4    | Semana, día y mes con rutinas y hábitos, arrastrar tareas, avisos                                   | Pendiente                       |
 | 5. Notas y lectura fácil        | v0.5    | Árbol, lector, editor, búsqueda `Ctrl K`, modo dislexia                                             | Pendiente                       |
-| 6. Áreas, objetivos y proyectos | v0.6    | Áreas, visión, objetivos, proyectos y estimación de si llegas a tiempo                              | Pendiente                       |
+| 6. Áreas, objetivos y proyectos | v0.6    | Áreas, visión, objetivos, proyectos y estimación de si llegas a tiempo                              | **En curso**                    |
 | 7. IA: motor y panel            | v0.7    | Propuestas con vista previa, panel `Ctrl J`, perfil, crear rutas, proponer el día, delegar tareas   | **Base adelantada**             |
 | 8. IA tutor                     | v0.8    | Corregir ejercicios, preguntas socráticas, huecos de conocimiento, entrevistas                      | Pendiente                       |
 | 9. Métricas y coach             | v0.9    | Cinco bloques, métricas por área, coach con datos, revisiones                                       | Pendiente                       |
@@ -110,6 +110,22 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] Página **Ejercicios** por niveles y retos, y la nota de ejercicio: código para el IDE, pistas, tests, solución tapada, temporizador y «Mi solución» guardada en la nota
 - [x] La página de tema vive en `/areas/…` (se enlazará desde Áreas cuando exista)
 - [ ] Diagrama de la ruta con el diseño definitivo (`feat/roadmap-diagram`)
+
+## Fase 6 en detalle
+
+**Diseño:** láminas en `docs/design/06-objetivos`.
+
+**Objetivos (hecha):**
+
+- [x] Página **Objetivos** en el raíl, con tres vistas y filtro por área: tablero por estado (arrastrar cambia el estado), lista tipo Notion con scroll y por periodo (año y trimestre)
+- [x] Página de un objetivo: propiedades editables en su sitio, porqué, resultados clave con su avance y lo vinculado filtrado a él (tareas, proyectos, hábitos, rutas, notas y recursos) o «Sin plan»
+- [x] Crear y editar un objetivo en el panel lateral, en cinco pasos: qué, por qué, cómo lo medirás, qué te frenará y cómo llegarás (conectar proyectos, hábitos, rutas y notas)
+
+**Pendiente:**
+
+- [ ] Abrir un proyecto desde el objetivo (llega con la página de Proyectos)
+- [ ] Visión (`02-vision.png`)
+- [ ] Áreas y proyectos
 
 ## Fase 7 adelantada: base de la IA
 

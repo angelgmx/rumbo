@@ -4,6 +4,7 @@ import {
   CodeIcon,
   FlameIcon,
   InboxIcon,
+  TargetIcon,
   SunIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const SCREENS: { href: string; match: string; label: string; icon: LucideIcon }[
   { href: "/tareas/inbox", match: "/tareas/*?", label: "Tareas", icon: InboxIcon },
   { href: "/rutinas", match: "/rutinas/*?", label: "Rutinas", icon: ArrowRightLeftIcon },
   { href: "/habitos", match: "/habitos", label: "Hábitos", icon: FlameIcon },
+  { href: "/objetivos", match: "/objetivos/*?", label: "Objetivos", icon: TargetIcon },
   { href: "/roadmaps", match: "/roadmaps/*?", label: "Roadmaps", icon: BookOpenIcon },
   { href: "/ejercicios", match: "/ejercicios/*?", label: "Ejercicios", icon: CodeIcon },
 ];

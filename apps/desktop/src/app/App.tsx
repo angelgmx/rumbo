@@ -7,6 +7,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CloseDayScreen } from "@/features/close-day/CloseDayScreen";
 import { ExerciseScreen } from "@/features/exercises/ExerciseScreen";
 import { ExercisesScreen } from "@/features/exercises/ExercisesScreen";
+import { GoalScreen } from "@/features/goals/GoalScreen";
+import { GoalsScreen } from "@/features/goals/GoalsScreen";
 import { HabitsScreen } from "@/features/habits/HabitsScreen";
 import { RoadmapsScreen } from "@/features/roadmaps/RoadmapsScreen";
 import { RoutineEditorScreen } from "@/features/routines/editor/RoutineEditorScreen";
@@ -52,6 +54,8 @@ export function App() {
                       />
                       <Route path="/areas/:topic" component={TopicScreen} />
                       <Route path="/habitos" component={HabitsScreen} />
+                      <Route path="/objetivos" component={GoalsScreen} />
+                      <Route path="/objetivos/:id" component={GoalScreen} />
                       <Route path="/ajustes/ia" component={SettingsScreen} />
                     </Switch>
                   </AppShell>

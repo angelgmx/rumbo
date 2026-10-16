@@ -15,6 +15,8 @@ interface DateRange {
 
 interface DateRangePickerProps {
   value: DateRange;
+  /** Una sola fecha: sin interruptor de fin. */
+  single?: boolean;
   onChange: (range: DateRange) => void;
   onDone: () => void;
 }
@@ -25,7 +27,7 @@ const WEEKDAY_LETTERS = ["L", "M", "X", "J", "V", "S", "D"];
  * Calendario para elegir el día de inicio y, si se quiere, el de fin. Con una sola fecha,
  * elegir el día la guarda y cierra; con fin, el siguiente clic marca el fin.
  */
-export function DateRangePicker({ value, onChange, onDone }: DateRangePickerProps) {
+export function DateRangePicker({ value, single = false, onChange, onDone }: DateRangePickerProps) {
   const today = useRumbo().daily.today();
   const [month, setMonth] = useState((value.start ?? value.end ?? today).slice(0, 7));
   const [withEnd, setWithEnd] = useState(value.end !== undefined);
@@ -121,10 +123,20 @@ export function DateRangePicker({ value, onChange, onDone }: DateRangePickerProp
       </div>
 
       <div className="flex items-center gap-2 border-t pt-3 text-sm">
-        <Switch checked={withEnd} onCheckedChange={toggleEnd} aria-label="Añadir fecha de fin" />
-        <span className="flex-1 text-muted-foreground">
-          {withEnd ? summary(value, picking) : "Añadir fecha de fin"}
-        </span>
+        {single ? (
+          <span className="flex-1" />
+        ) : (
+          <>
+            <Switch
+              checked={withEnd}
+              onCheckedChange={toggleEnd}
+              aria-label="Añadir fecha de fin"
+            />
+            <span className="flex-1 text-muted-foreground">
+              {withEnd ? summary(value, picking) : "Añadir fecha de fin"}
+            </span>
+          </>
+        )}
         {(value.start || value.end) && (
           <Button
             type="button"
