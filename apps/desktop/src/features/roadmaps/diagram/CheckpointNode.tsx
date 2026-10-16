@@ -10,7 +10,8 @@ export function CheckpointNode({ data }: NodeProps<CheckpointFlowNode>) {
   const Lock = unlocked ? LockOpenIcon : LockIcon;
 
   return (
-    <div className="relative flex size-full flex-col justify-between rounded-lg border bg-card p-3.5 shadow-card">
+    // Los checkpoints son hitos: borde y fondo ámbar suaves para distinguirlos de los módulos.
+    <div className="relative flex size-full flex-col justify-between rounded-lg border border-warning/45 bg-warning/[0.06] p-3.5 shadow-card">
       <FlowHandles />
       <div className="flex items-start gap-3">
         <span className="grid size-7 shrink-0 place-items-center rounded-md bg-warning/12 text-warning">

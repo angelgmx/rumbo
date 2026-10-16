@@ -519,3 +519,16 @@ describe("module resources", () => {
     expect(files.get(path)).not.toContain("resources:");
   });
 });
+
+describe("vault refresh", () => {
+  it("does not repaint when a note is saved again without changes", async () => {
+    const path = "Areas/Python/Python basics.md";
+    const before = rumbo.store.version;
+    await rumbo.store.refresh(path);
+    expect(rumbo.store.version).toBe(before);
+
+    files.set(path, `${files.get(path)!}\nUna línea nueva.`);
+    await rumbo.store.refresh(path);
+    expect(rumbo.store.version).toBe(before + 1);
+  });
+});

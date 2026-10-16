@@ -1,7 +1,10 @@
 import { BaseEdge, getBezierPath, type EdgeProps } from "@xyflow/react";
 import type { DiagramEdge } from "./types";
 
-/** Tramo recorrido: línea sólida verde. Pendiente: discontinuo y neutro. */
+/**
+ * Tramo recorrido: línea sólida verde. Pendiente: discontinua y neutra.
+ * El grosor no escala con el zoom, así la ruta se sigue leyendo aunque se vea entera.
+ */
 export function FlowEdge({
   id,
   sourceX,
@@ -10,6 +13,7 @@ export function FlowEdge({
   targetY,
   sourcePosition,
   targetPosition,
+  markerEnd,
   data,
 }: EdgeProps<DiagramEdge>) {
   const [path] = getBezierPath({
@@ -26,11 +30,12 @@ export function FlowEdge({
     <BaseEdge
       id={id}
       path={path}
+      markerEnd={markerEnd}
       style={{
-        strokeWidth: 1.5,
+        strokeWidth: 2,
+        vectorEffect: "non-scaling-stroke",
         strokeDasharray: traveled ? undefined : "6 5",
         stroke: traveled ? "var(--success)" : "var(--muted-foreground)",
-        opacity: traveled ? 1 : 0.55,
       }}
     />
   );

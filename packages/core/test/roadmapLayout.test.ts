@@ -14,43 +14,59 @@ function place(input: LayoutInput, id: string) {
 }
 
 describe("layoutRoadmap", () => {
-  it("heads a track with its own item and stacks its modules below", () => {
+  it("heads a lone track with its own item and lays its modules out in a snake", () => {
     const input: LayoutInput = {
       tracks: ["a"],
-      modules: [module("m2", 2), module("m1", 1), module("m3", 3)],
+      modules: [6, 2, 5, 1, 3, 4].map((order) => module(`m${order}`, order)),
       checkpoints: [],
     };
     const layout = layoutRoadmap(input);
     expect(layout.items.map(({ id, column, row }) => [id, column, row])).toEqual([
       ["track:a", 0, 0],
       ["m1", 0, 1],
-      ["m2", 0, 2],
-      ["m3", 0, 3],
+      ["m2", 1, 1],
+      ["m3", 2, 1],
+      ["m4", 3, 1],
+      ["m5", 3, 2],
+      ["m6", 2, 2],
     ]);
-    expect(layout).toMatchObject({ columns: 1, rows: 4 });
+    expect(layout).toMatchObject({ columns: 4, rows: 3 });
   });
 
-  it("places a checkpoint right below the module it hangs from", () => {
+  it("places a checkpoint right after the module it hangs from", () => {
     const input: LayoutInput = {
       tracks: ["a"],
       modules: [module("m1", 1), module("m2", 2)],
       checkpoints: [{ id: "c1", after: "m1" }],
     };
-    expect(place(input, "c1")).toMatchObject({ kind: "checkpoint", column: 0, row: 2 });
-    expect(place(input, "m2")).toMatchObject({ row: 3 });
+    expect(place(input, "c1")).toMatchObject({ kind: "checkpoint", column: 1, row: 1 });
+    expect(place(input, "m2")).toMatchObject({ column: 2, row: 1 });
   });
 
-  it("links every item to the next one in its column", () => {
+  it("links sideways within a row and from bottom to top across rows", () => {
     const input: LayoutInput = {
       tracks: ["a"],
-      modules: [module("m1", 1), module("m2", 2)],
-      checkpoints: [{ id: "c1", after: "m2" }],
+      modules: [1, 2, 3, 4, 5].map((order) => module(`m${order}`, order)),
+      checkpoints: [],
     };
-    expect(layoutRoadmap(input).links).toEqual([
-      { from: "track:a", to: "m1" },
-      { from: "m1", to: "m2" },
-      { from: "m2", to: "c1" },
-    ]);
+    const links = layoutRoadmap(input).links;
+    expect(links[0]).toEqual({ from: "track:a", to: "m1", fromSide: "bottom", toSide: "top" });
+    expect(links[1]).toEqual({ from: "m1", to: "m2", fromSide: "right", toSide: "left" });
+    expect(links[4]).toEqual({ from: "m4", to: "m5", fromSide: "bottom", toSide: "top" });
+  });
+
+  it("links leftwards on the rows that come back", () => {
+    const input: LayoutInput = {
+      tracks: ["a"],
+      modules: [1, 2, 3, 4, 5, 6].map((order) => module(`m${order}`, order)),
+      checkpoints: [],
+    };
+    expect(layoutRoadmap(input).links.at(-1)).toEqual({
+      from: "m5",
+      to: "m6",
+      fromSide: "left",
+      toSide: "right",
+    });
   });
 
   it("stacks tracks that do not overlap and joins the end of one to the head of the next", () => {
@@ -59,9 +75,14 @@ describe("layoutRoadmap", () => {
       modules: [module("m1", 1), module("m2", 2), module("m3", 3, "b")],
       checkpoints: [],
     };
-    expect(place(input, "track:b")).toMatchObject({ column: 0, row: 3 });
-    expect(place(input, "m3")).toMatchObject({ column: 0, row: 4 });
-    expect(layoutRoadmap(input).links).toContainEqual({ from: "m2", to: "track:b" });
+    expect(place(input, "track:b")).toMatchObject({ column: 0, row: 2 });
+    expect(place(input, "m3")).toMatchObject({ column: 0, row: 3 });
+    expect(layoutRoadmap(input).links).toContainEqual({
+      from: "m2",
+      to: "track:b",
+      fromSide: "bottom",
+      toSide: "top",
+    });
   });
 
   it("puts overlapping tracks side by side on the same rows", () => {

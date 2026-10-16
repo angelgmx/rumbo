@@ -1,8 +1,15 @@
 import type { ModuleSummary, TopicSummary } from "@rumbo/core";
-import { Background, BackgroundVariant, MiniMap, ReactFlow } from "@xyflow/react";
+import {
+  Background,
+  BackgroundVariant,
+  MiniMap,
+  ReactFlow,
+  useEdgesState,
+  useNodesState,
+} from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTheme } from "next-themes";
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { buildGraph } from "./buildGraph";
 import { CheckpointNode } from "./CheckpointNode";
@@ -22,6 +29,14 @@ function minimapColor(node: DiagramNode): string {
   if (node.data.state === "current") return "var(--primary)";
   if (node.data.state === "mastered") return "color-mix(in srgb, var(--success) 65%, var(--card))";
   return "var(--secondary)";
+}
+
+function keepMeasures(next: DiagramNode[], current: DiagramNode[]): DiagramNode[] {
+  const previous = new Map(current.map((node) => [node.id, node]));
+  return next.map((node) => {
+    const old = previous.get(node.id);
+    return old ? { ...node, position: old.position, measured: old.measured } : node;
+  });
 }
 
 interface DiagramCanvasProps {
@@ -44,13 +59,25 @@ export function DiagramCanvas({
   children,
 }: DiagramCanvasProps) {
   const { resolvedTheme } = useTheme();
-  const { nodes, edges } = useMemo(() => buildGraph(topic, selected), [topic, selected]);
+  const graph = useMemo(() => buildGraph(topic, selected), [topic, selected]);
+  // React Flow guarda en su estado lo que mide de cada tarjeta (tamaño y puntos de enganche).
+  // Si al recargar datos le diéramos tarjetas nuevas sin esas medidas, los tramos desaparecerían:
+  // por eso se conservan las medidas y la posición (por si se ha arrastrado) de cada tarjeta.
+  const [nodes, setNodes, onNodesChange] = useNodesState(graph.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(graph.edges);
+
+  useEffect(() => {
+    setNodes((current) => keepMeasures(graph.nodes, current));
+    setEdges(graph.edges);
+  }, [graph, setNodes, setEdges]);
 
   return (
     <div className={cn("bg-card", className)}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         nodeTypes={NODE_TYPES}
         edgeTypes={EDGE_TYPES}
         colorMode={resolvedTheme === "dark" ? "dark" : "light"}
