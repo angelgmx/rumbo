@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { listItem } from "@/lib/motion";
 import type { TaskGroup } from "./groupByDay";
 import { TaskRow } from "./TaskRow";
+import { TaskRowMenu } from "./TaskRowMenu";
 
 interface TaskListProps {
   today: string;
@@ -63,6 +64,7 @@ function Rows({
             onToggle={(done) => onToggle(task, done)}
             onOpen={() => onOpen(task)}
             aside={aside?.(task)}
+            menu={<TaskRowMenu task={task} onOpen={() => onOpen(task)} />}
           />
         </motion.div>
       ))}

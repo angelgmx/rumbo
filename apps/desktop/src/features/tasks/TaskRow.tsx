@@ -27,6 +27,7 @@ export function TaskRow({
   onToggle,
   onOpen,
   aside,
+  menu,
 }: {
   task: Task;
   today: string;
@@ -38,6 +39,8 @@ export function TaskRow({
   onOpen: () => void;
   /** Algo más al final de la fila, como la propuesta de la IA. */
   aside?: ReactNode;
+  /** El menú «…» de la fila. */
+  menu?: ReactNode;
 }) {
   const date = task.scheduled ?? task.due;
   const late = !task.done && date !== undefined && date < today;
@@ -48,7 +51,7 @@ export function TaskRow({
   const when = [dateLabel, task.time].filter(Boolean).join(" ");
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 transition-colors duration-(--dur-fast) hover:bg-muted/40">
+    <div className="group flex items-center gap-3 px-4 py-3 transition-colors duration-(--dur-fast) hover:bg-muted/40">
       <Checkbox
         checked={task.done}
         onCheckedChange={(checked) => onToggle(checked === true)}
@@ -105,6 +108,7 @@ export function TaskRow({
         <StepsChip steps={task.steps} />
       </div>
       {aside}
+      {menu}
     </div>
   );
 }
