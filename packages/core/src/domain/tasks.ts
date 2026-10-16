@@ -71,6 +71,7 @@ export function parseTasks(path: string, source: string): Task[] {
   const tasks: Task[] = [];
   const lines = source.split("\n");
   let inAgenda = false;
+  let inCode = false;
   let parent: { task: Task; indent: number; notes: string[] } | undefined;
 
   const closeParent = () => {
@@ -79,6 +80,13 @@ export function parseTasks(path: string, source: string): Task[] {
   };
 
   lines.forEach((line, index) => {
+    // Como en Obsidian, una casilla dentro de un bloque de código es un ejemplo, no una tarea.
+    if (/^\s*(```|~~~)/.test(line)) {
+      inCode = !inCode;
+      closeParent();
+      return;
+    }
+    if (inCode) return;
     if (/^#{1,6}\s/.test(line)) {
       closeParent();
       inAgenda = /^#{1,6}\s+Agenda\b/.test(line);
