@@ -84,6 +84,18 @@ export class TaskService {
     return area && String(area.data.name ?? area.name);
   }
 
+  /**
+   * El objetivo al que empuja una tarea: el de su hábito o, si no tiene,
+   * el del hábito de la ruta de su módulo. Es el título de la nota del objetivo.
+   */
+  goalOf(links: { module?: string; habit?: string }): string | undefined {
+    const roadmap = this.linked(this.named(links.module), "roadmap");
+    const key = links.habit ?? roadmap?.data.habit;
+    const habit = this.store.notesOfType("habit").find((note) => note.data.key === key);
+    const goal = this.linked(habit, "goal");
+    return goal && String(goal.data.title ?? goal.name);
+  }
+
   async setDone(task: Task, done: boolean): Promise<void> {
     const today = this.daily.today();
     await this.edit(task.path, (source) => setTaskDone(source, task.line, done, today));
