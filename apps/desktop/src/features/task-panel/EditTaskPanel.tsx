@@ -52,6 +52,13 @@ export function EditTaskPanel({
       onClose();
     });
 
+  const inFocus = task.focusOn === rumbo.daily.today();
+  const toggleFocus = () =>
+    attempt(async () => {
+      const done = await rumbo.tasks.setFocus(task, !inFocus);
+      if (!done) toast("El foco de hoy ya tiene 3 tareas");
+    });
+
   function begin() {
     flush();
     session.start(taskRequest(rumbo, task));
@@ -61,7 +68,12 @@ export function EditTaskPanel({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <TaskPanelHeader context={context} last={context.module} onClose={onClose}>
-        <TaskMenu onDuplicate={() => void duplicate()} onDelete={() => void remove()} />
+        <TaskMenu
+          inFocus={inFocus}
+          onToggleFocus={() => void toggleFocus()}
+          onDuplicate={() => void duplicate()}
+          onDelete={() => void remove()}
+        />
       </TaskPanelHeader>
       <TaskPanelBody
         draft={draft}

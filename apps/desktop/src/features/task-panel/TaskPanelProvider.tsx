@@ -57,5 +57,5 @@ export function TaskPanelProvider({ children }: { children: ReactNode }) {
 }
 
 export function panelKey(target: { task?: Task }): string {
-  return target.task ? `${target.task.path}:${target.task.line}` : "new";
+  return target.task ? `task:${target.task.id}` : "new";
 }

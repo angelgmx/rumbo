@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
 import { applyTitle, EMPTY_DRAFT } from "./taskDraft";
 
-export interface NewTask {
+interface NewTask {
   draft: TaskDraft;
   canCreate: boolean;
   patch: (changes: Partial<TaskDraft>) => void;

@@ -7,7 +7,7 @@ export interface AiSettings {
   model: string;
 }
 
-export interface AiProviderInfo {
+interface AiProviderInfo {
   label: string;
   description: string;
   baseUrl: string;

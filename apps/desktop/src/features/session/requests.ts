@@ -3,7 +3,6 @@ import {
   exerciseMinutes,
   nextStudyStep,
   sessionMinutes,
-  taskToDraft,
   type Exercise,
   type ModuleSummary,
   type Rumbo,
@@ -14,12 +13,12 @@ import type { SessionRequest } from "./types";
 
 /** Una tarea: su módulo, si lo tiene, es donde se trabaja; el tiempo, de lo que le queda por estimar. */
 export function taskRequest(rumbo: Rumbo, task: Task): SessionRequest {
-  const { module: name, duration, spent } = taskToDraft(task);
+  const { module: name, duration, spent } = task;
   const found = name ? rumbo.learning.findModule(name) : undefined;
   return {
     title: task.text,
     minutes: sessionMinutes(duration, spent),
-    task: { path: task.path, line: task.line, text: task.text },
+    task: { id: task.id },
     place: found && { topic: found.topic.path, module: found.module.name },
   };
 }

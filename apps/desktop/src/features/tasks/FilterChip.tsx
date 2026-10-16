@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-export interface FilterOption {
+interface FilterOption {
   value: string;
   count: number;
   icon?: ReactNode;

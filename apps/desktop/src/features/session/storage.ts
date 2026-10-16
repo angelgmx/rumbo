@@ -5,7 +5,7 @@ import type { SessionState } from "./types";
 const SESSION_KEY = "rumbo.session";
 const WIDGET_KEY = "rumbo.session.widget";
 
-export interface StoredSession {
+interface StoredSession {
   state: SessionState;
   secondsLeft: number;
   /** Cuándo termina, si estaba en marcha. */
@@ -20,7 +20,7 @@ export interface WidgetLook {
   hidden: boolean;
 }
 
-export const DEFAULT_LOOK: WidgetLook = { corner: "bottom-right", hidden: false };
+const DEFAULT_LOOK: WidgetLook = { corner: "bottom-right", hidden: false };
 
 export function loadSession(): StoredSession | undefined {
   const value = read(SESSION_KEY);

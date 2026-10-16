@@ -37,9 +37,10 @@ export function useSessionEngine(): { session?: ActiveSession; actions: SessionA
 
   function record(request: SessionRequest, seconds: number) {
     const minutes = seconds >= MIN_CREDIT_SECONDS ? seconds / 60 : 0;
-    if (!request.task || minutes === 0) return;
+    // Las sesiones guardadas antes de la base de datos señalaban la tarea por su línea: no hay id.
+    if (typeof request.task?.id !== "number" || minutes === 0) return;
     rumbo.tasks
-      .recordSession(request.task, minutes)
+      .recordSession(request.task.id, minutes)
       .catch(() => toast.error("No se ha podido apuntar el tiempo en la tarea"));
   }
 

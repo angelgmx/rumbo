@@ -62,7 +62,8 @@ Cada capa solo usa las de debajo. Nunca al revés.
 | `dates.ts`       | Fechas como texto `AAAA-MM-DD` (sin zonas horarias), días de la semana, sumar días.                      |
 | `habits.ts`      | Esquema Zod del hábito, si un valor cuenta como hecho, racha actual, mejor racha y cumplimiento.         |
 | `daily.ts`       | Ruta de la daily de un día, contenido de una daily nueva e historial de hábitos a partir de las dailies. |
-| `tasks.ts`       | Leer tareas en formato del plugin Tasks, marcarlas, añadirlas y decidir en qué vista sale cada una.      |
+| `tasks.ts`       | El modelo de tarea y en qué vista sale cada una.                                                         |
+| `noteTasks.ts`   | Leer las casillas de las notas antiguas (formato del plugin Tasks) para importarlas.                     |
 | `agenda.ts`      | Leer y añadir bloques con hora bajo `## Agenda` (formato del plugin Day Planner).                        |
 | `capture.ts`     | Captura rápida en lenguaje natural («gym mañana 18:00 1h30 #gym») y título de tarea («hoy 45m !alta»).   |
 | `checkbox.ts`    | Marcar o desmarcar una casilla de Markdown en su línea.                                                  |
@@ -93,7 +94,7 @@ Cada capa solo usa las de debajo. Nunca al revés.
 | `vaultStore.ts`         | Lee y escribe, mantiene el índice y avisa de los cambios (`subscribe`).                                                                                                                             |
 | `dailyService.ts`       | Fecha de hoy, ruta de la daily y crearla con la plantilla si falta.                                                                                                                                 |
 | `habitService.ts`       | Lista de hábitos con su estado de hoy, rachas y cumplimiento; guardar el valor del día; crear, editar, archivar y eliminar hábitos.                                                                 |
-| `taskService.ts`        | Tareas por vista, foco del día (máximo 3), marcar, crear, editar (con pasos y notas), duplicar, borrar, área heredada y captura rápida.                                                             |
+| `taskService.ts`        | Tareas por vista, foco del día (máximo 3), crear, editar, duplicar, borrar, archivar, área heredada y captura rápida. Sobre la base de datos.                                                       |
 | `agendaService.ts`      | Bloques de un día, añadir y marcar.                                                                                                                                                                 |
 | `progressService.ts`    | Plan cumplido de cada día y de la semana (hábitos que tocaban + bloques de la agenda).                                                                                                              |
 | `newVault.ts`           | `createNewVault(fs)`: crea un vault nuevo con lo mínimo para empezar.                                                                                                                               |
@@ -122,6 +123,7 @@ La app guarda proveedor, URL y modelo en sus ajustes y la clave en el llavero de
 | `migrations.ts`     | El esquema en castellano, por versiones (ver [Modelo de datos](modelo-de-datos.md)).  |
 | `appDatabase.ts`    | Abre la base de datos, la sube a la última versión y avisa a la UI en cada escritura. |
 | `ideaRepository.ts` | Las ideas: listar, añadir, editar y borrar.                                           |
+| `taskRepository.ts` | Las tareas, con una copia en memoria que solo cambia cuando la escritura ha ido bien. |
 
 `changeFeed.ts` (en la raíz de `core`) es el canal de cambios común: el vault y la base de datos avisan por él y la UI repinta. `app/vaultImport.ts` copia una vez a la base de datos lo que antes vivía en notas.
 

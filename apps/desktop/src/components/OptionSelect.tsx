@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export interface Option {
+interface Option {
   label: string;
   /** `null` es "ninguno". Base UI no reconoce "" como vacío y enseñaría otra opción. */
   value: string | null;

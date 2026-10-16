@@ -12,7 +12,7 @@ export function useFocusModeDetails(request: SessionRequest) {
   const time = timeOf(useNow());
   const day = useFocusDay(today);
   const task = useVaultQuery(
-    (r) => (request.task ? r.tasks.locate(request.task) : undefined),
+    (r) => (request.task ? r.tasks.get(request.task.id) : undefined),
     [request.task],
   ).data;
 

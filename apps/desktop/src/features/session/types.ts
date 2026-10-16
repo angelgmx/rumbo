@@ -10,7 +10,7 @@ export interface SessionRequest {
   minutes: number;
   place?: SessionPlace;
   /** La tarea en cuyo tiempo real se apunta lo trabajado. */
-  task?: Pick<Task, "path" | "line" | "text">;
+  task?: Pick<Task, "id">;
 }
 
 export interface SessionState {

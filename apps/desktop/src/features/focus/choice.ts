@@ -37,9 +37,7 @@ export function describeChoice(choice: FocusChoice): { title: string; subtitle: 
 /** «Foco 01»: el puesto de la tarea elegida en el foco del día, si está en él. */
 export function focusNumber(choice: FocusChoice | undefined, focus: Task[]): string | undefined {
   if (choice?.kind !== "task") return undefined;
-  const index = focus.findIndex(
-    ({ path, line }) => path === choice.task.path && line === choice.task.line,
-  );
+  const index = focus.findIndex(({ id }) => id === choice.task.id);
   return index === -1 ? undefined : formatFocusNumber(index);
 }
 

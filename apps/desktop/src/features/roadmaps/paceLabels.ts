@@ -1,7 +1,7 @@
 import type { RoadmapSummary } from "@rumbo/core";
 import { formatDayMonth, formatMinutes } from "@/lib/format";
 
-export interface PaceLabel {
+interface PaceLabel {
   text: string;
   /** Clase de color del texto: text-warning, text-success… */
   tone: string;

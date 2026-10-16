@@ -9,7 +9,7 @@ import {
 
 export type HabitKind = HabitInput["kind"];
 
-export interface HabitKindInfo {
+interface HabitKindInfo {
   value: HabitKind;
   title: string;
   description: string;

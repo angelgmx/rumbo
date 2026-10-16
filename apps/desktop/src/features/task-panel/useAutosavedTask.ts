@@ -6,7 +6,7 @@ import { useVaultQuery } from "@/hooks/useVaultQuery";
 
 const SAVE_DELAY_MS = 300;
 
-export interface AutosavedTask {
+interface AutosavedTask {
   /** La tarea como está ahora en el vault. */
   task: Task;
   draft: TaskDraft;
@@ -21,9 +21,7 @@ export interface AutosavedTask {
  */
 export function useAutosavedTask(initial: Task): AutosavedTask {
   const rumbo = useRumbo();
-  const all = useVaultQuery((r) => r.tasks.all()).data ?? [];
-  const task =
-    all.find((other) => other.path === initial.path && other.line === initial.line) ?? initial;
+  const task = useVaultQuery((r) => r.tasks.get(initial.id), [initial.id]).data ?? initial;
 
   const [pending, setPending] = useState<Partial<TaskDraft>>({});
   const queued = useRef<Partial<TaskDraft>>({});

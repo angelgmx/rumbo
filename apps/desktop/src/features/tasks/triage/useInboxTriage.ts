@@ -36,11 +36,8 @@ export function useInboxTriage() {
     forget(suggestion);
   }
 
-  /** La propuesta de esta tarea, si hay. Por texto: aceptar otras mueve las líneas. */
-  const forTask = (task: Task) =>
-    suggestions.find(
-      (candidate) => candidate.task.path === task.path && candidate.task.text === task.text,
-    );
+  /** La propuesta de esta tarea, si hay. */
+  const forTask = (task: Task) => suggestions.find((candidate) => candidate.task.id === task.id);
 
   return {
     ready: ai !== undefined,

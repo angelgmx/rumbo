@@ -22,9 +22,8 @@ Rumbo lee y escribe un vault de Obsidian normal. No hay base de datos: cada nota
 folders:
   daily: 04 - Diario # carpeta de las dailies
   daily_format: YYYY/MM/YYYY-MM-DD # subcarpetas y nombre de cada daily
-  inbox: 00 - Inbox/Inbox.md # fichero donde caen las capturas
+  inbox: 00 - Inbox/Inbox.md # solo para importar las tareas antiguas una vez
   ideas: 00 - Inbox/Ideas.md # solo para importar las ideas antiguas una vez
-  archive: 00 - Inbox/Archivo de tareas.md # opcional; por defecto, junto al inbox
   habits: Hábitos
   goals: Objetivos
   projects: Proyectos # por defecto, Projects
@@ -104,10 +103,6 @@ habits:
   lectura: 20
 ---
 
-## Foco de hoy
-
-- [ ] Terminar los ejercicios de Strings
-
 ## Agenda
 
 - [ ] 09:00 - 09:45 Clase de inglés #inglés
@@ -120,7 +115,6 @@ habits:
 - Terminaste 2 tareas.
 ```
 
-- **Foco de hoy:** como mucho 3 tareas.
 - **Día malo:** con `bad_day: true` ese día los hábitos no rompen la racha (se salta, y si hiciste algo, cuenta). Como mucho 2 al mes: Foco no deja marcar más. Se quita borrando la línea.
 - **Agenda:** bloques con hora en el formato del plugin Day Planner (`HH:MM - HH:MM texto`). Se muestran ordenados por hora.
 - **Cerrar el día:** guarda la energía (`energy`) y «Lo que salió bien» en la daily de hoy. La hora de mañana y lo primero que harás van como un bloque de la agenda de la daily de mañana (`- [ ] 10:00 Abre Strings y lee 1 minuto`), así salen en Tu día y en «Ahora».
@@ -128,58 +122,19 @@ habits:
 
 ### Tareas
 
-Casillas en el formato del plugin **Tasks**, así funcionan igual en Obsidian:
+Las tareas viven en la base de datos de la app (tabla `tareas`, ver [Modelo de datos](modelo-de-datos.md)): título, estado, fechas, prioridad, repetición, duración estimada y tiempo real, área, proyecto, módulo, hábito, pasos, notas, etiquetas y el día en que están en el foco (como mucho 3 por día).
 
-```markdown
-- [ ] Revisar PR de Citalash 📅 2026-10-16 #negocio
-- [ ] Reservar clases ⏳ 2026-10-18 🔁 every week
-- [x] Clase de conversación ✅ 2026-10-14
-- [ ] Leer la documentación [area:: Desarrollo]
-```
+| Vista     | Qué tareas salen                                                       |
+| --------- | ---------------------------------------------------------------------- |
+| Inbox     | Sin hacer, sin fecha, sin área y sin proyecto                          |
+| Hoy       | Con fecha de hoy o anterior, sin hacer                                 |
+| Próximas  | Con fecha futura                                                       |
+| Algún día | Sin fecha y ya procesadas (con área o proyecto)                        |
+| Hechas    | Las terminadas en los últimos 14 días; «Ver anteriores» añade el resto |
 
-| Marca             | Significado                                                      |
-| ----------------- | ---------------------------------------------------------------- |
-| `📅 fecha`        | Fecha límite                                                     |
-| `⏳ fecha`        | Fecha en la que la quiero hacer                                  |
-| `✅ fecha`        | Hecha ese día (la app la pone al marcar)                         |
-| `🔁 texto`        | Se repite                                                        |
-| `#etiqueta`       | Etiqueta                                                         |
-| `[clave:: valor]` | Campo de Dataview (`area`, `habit`, `project`, `module`, `due`…) |
+**Archivar hechas** las quita de «Hechas» sin borrarlas. Las de un hábito no se archivan: son su historial.
 
-**Tiempo real.** La sesión de trabajo apunta en la tarea los minutos que ha medido, sumados, en el campo `spent`. Junto a `duration` (lo estimado) forman «Estimado / real» en el detalle de la tarea:
-
-```markdown
-- [ ] Leer [duration:: 30m] [spent:: 12] ⏳ 2026-10-16
-```
-
-El progreso de una tarea son sus pasos (ver abajo): «2 de 3 pasos». Sin pasos, la tarea es una casilla. Las tareas de vaults anteriores pueden llevar `[counter:: minutes 12/30]`: la app ya no lo usa ni lo escribe, pero lo respeta al editar la tarea.
-
-`project` y `module` llevan un enlace a la nota: `[project:: [[Rumbo]]]`, `[module:: [[Dominio — Strings]]]`. Si la tarea no tiene `area`, el panel de tarea le pone la del módulo (la de su ruta) o, si no, la del proyecto.
-
-**Pasos y notas.** Lo que cuelga de una tarea con más sangría, hasta la primera línea en blanco, es suyo: las casillas son sus **pasos** (no cuentan como tareas aparte) y el resto de líneas, sus **notas**.
-
-```markdown
-- [ ] Preparar la demo del lunes [area:: Negocio] ⏳ 2026-10-19
-      Enviar el enlace antes de las 10:00
-  - [x] Guion de 5 minutos
-  - [ ] Ensayar
-```
-
-La app lee las tareas del **inbox**, de las **dailies** y de las notas de **proyecto**. Las casillas de otras notas (por ejemplo, la lista de conceptos de un tema) no son tareas.
-
-| Vista     | Qué tareas salen                                                  |
-| --------- | ----------------------------------------------------------------- |
-| Inbox     | En el inbox, sin fecha, sin área y sin proyecto                   |
-| Hoy       | Con fecha de hoy o anterior, sin hacer                            |
-| Próximas  | Con fecha futura                                                  |
-| Algún día | Sin fecha y ya procesada (con área o proyecto, o fuera del inbox) |
-| Hechas    | Marcadas                                                          |
-
-Las casillas sin texto (las de una plantilla, con solo espacios, fechas o campos) no son tareas y no salen en ninguna vista.
-
-**Hechas** enseña las completadas (con `✅ fecha`) en los últimos 14 días, agrupadas por día; «Ver anteriores» añade el resto. Las hechas sin `✅` solo salen con «Ver anteriores».
-
-**Archivar hechas del inbox** mueve las tareas hechas de la nota del inbox, con sus pasos y notas, al final de `folders.archive` (por defecto `Archivo de tareas.md`, junto al inbox). No toca ninguna otra línea del inbox ni las tareas hechas de dailies y proyectos.
+**Importar del vault.** La primera vez que Rumbo abre la base de datos copia las casillas del inbox, de las dailies y de las notas de proyecto (formato del plugin **Tasks**: `⏳`, `📅`, `✅`, `🔁`, `#etiqueta`, `[area:: …]`, `[project:: [[…]]]`, pasos y notas con sangría). Una tarea de una daily sin fecha queda para ese día; las de «Foco de hoy», en el foco de ese día. Las notas no se tocan.
 
 ### Vistas guardadas
 

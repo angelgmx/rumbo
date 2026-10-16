@@ -36,7 +36,6 @@ import { findView, IDEAS_VIEW, TASK_VIEWS, type TaskViewInfo } from "./taskViews
 export function TasksScreen() {
   const rumbo = useRumbo();
   const today = rumbo.daily.today();
-  const inboxPath = rumbo.store.config.folders.inbox;
   const viewSlug = useParams<{ view: string }>().view;
   const showIdeas = viewSlug === IDEAS_VIEW.slug;
   const current = findView(viewSlug);
@@ -56,7 +55,7 @@ export function TasksScreen() {
   const ideas = useVaultQuery((r) => r.ideas.list()).data ?? [];
   const savedViews = useVaultQuery((r) => r.views.list()).data ?? [];
 
-  const inView = (task: Task, view: TaskView) => isInView(task, view, today, inboxPath);
+  const inView = (task: Task, view: TaskView) => isInView(task, view, today);
   const pending = all.filter((task) => !task.done);
   const counts: Record<string, number> = {
     ...Object.fromEntries(
@@ -82,7 +81,7 @@ export function TasksScreen() {
 
   const listProps = {
     today,
-    showSource: current.view === "inbox",
+    showCaptured: current.view === "inbox",
     onToggle: (task: Task, done: boolean) => rumbo.tasks.setDone(task, done),
     onOpen: taskPanel.edit,
   };
@@ -111,9 +110,7 @@ export function TasksScreen() {
           ) : (
             <>
               {current.view === "done" && (
-                <ArchiveDoneButton
-                  count={all.filter((task) => task.done && task.path === inboxPath).length}
-                />
+                <ArchiveDoneButton count={all.filter((task) => task.done && !task.habit).length} />
               )}
               <SaveViewButton view={{ view: current.view, ...filter }} />
             </>

@@ -38,7 +38,7 @@ export function HabitTasks({ habit, tasks }: { habit: Habit; tasks: Task[] }) {
       )}
       {tasks.map((task) => (
         <label
-          key={`${task.path}:${task.line}`}
+          key={task.id}
           className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted"
         >
           <Checkbox

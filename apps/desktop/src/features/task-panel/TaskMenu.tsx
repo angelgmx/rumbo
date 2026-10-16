@@ -1,4 +1,4 @@
-import { CopyIcon, EllipsisIcon, Trash2Icon } from "lucide-react";
+import { CopyIcon, EllipsisIcon, SunIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,11 +10,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DeleteTaskDialog } from "./DeleteTaskDialog";
 
-/** El menú «…» de la tarea: duplicarla o eliminarla (esto, con confirmación). */
+/** El menú «…» de la tarea: meterla en el foco de hoy, duplicarla o eliminarla (con confirmación). */
 export function TaskMenu({
+  inFocus,
+  onToggleFocus,
   onDuplicate,
   onDelete,
 }: {
+  inFocus: boolean;
+  onToggleFocus: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
 }) {
@@ -29,6 +33,10 @@ export function TaskMenu({
           <EllipsisIcon />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onToggleFocus}>
+            <SunIcon />
+            {inFocus ? "Quitar del foco de hoy" : "Al foco de hoy"}
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={onDuplicate}>
             <CopyIcon />
             Duplicar

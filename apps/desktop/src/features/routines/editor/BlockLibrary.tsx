@@ -152,7 +152,7 @@ function useLibraryItems(summary: RoutineSummary, tab: LibraryTab): LibraryItem[
             .all()
             .filter((task) => !task.done)
             .map((task) => ({
-              id: `${task.path}:${task.line}`,
+              id: `task:${task.id}`,
               title: task.text,
               detail: task.scheduled ?? task.due,
               block: { kind: "task", title: task.text, minutes: DEFAULT_MINUTES },

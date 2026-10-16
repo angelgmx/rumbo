@@ -3,7 +3,7 @@ import {
   ArrowRightIcon,
   CheckIcon,
   ClockIcon,
-  FileTextIcon,
+  InboxIcon,
   LightbulbIcon,
   Trash2Icon,
   type LucideIcon,
@@ -24,8 +24,8 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
+import { formatDayMonth } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { noteName } from "./taskLabels";
 
 type Kind = "task" | "someday" | "idea" | "delete";
 
@@ -52,17 +52,15 @@ const DURATIONS = [
 export function ProcessInboxDialog() {
   const rumbo = useRumbo();
   const today = rumbo.daily.today();
-  const inboxPath = rumbo.store.config.folders.inbox;
   const [open, setOpen] = useState(false);
   // Las saltadas se quedan en el inbox; las recordamos para no volver a enseñarlas ahora.
-  const [skipped, setSkipped] = useState<string[]>([]);
+  const [skipped, setSkipped] = useState<number[]>([]);
   const [total, setTotal] = useState(0);
 
   const inbox =
-    useVaultQuery((r) => r.tasks.all()).data?.filter((task) =>
-      isInView(task, "inbox", today, inboxPath),
-    ) ?? [];
-  const pending = inbox.filter((task) => !skipped.includes(task.text));
+    useVaultQuery((r) => r.tasks.all()).data?.filter((task) => isInView(task, "inbox", today)) ??
+    [];
+  const pending = inbox.filter((task) => !skipped.includes(task.id));
   const current = pending[0];
   const position = total - pending.length + 1;
 
@@ -93,10 +91,10 @@ export function ProcessInboxDialog() {
         </header>
         {current ? (
           <TaskDecision
-            key={`${current.path}:${current.line}`}
+            key={current.id}
             task={current}
             today={today}
-            onSkip={() => setSkipped((list) => [...list, current.text])}
+            onSkip={() => setSkipped((list) => [...list, current.id])}
           />
         ) : (
           <Empty className="py-12">
@@ -140,8 +138,8 @@ function TaskDecision({ task, today, onSkip }: { task: Task; today: string; onSk
         <div className="rounded-xl border bg-muted/30 p-5">
           <p className="text-lg font-medium">{task.text}</p>
           <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-            <FileTextIcon className="size-3.5" />
-            Capturado en {noteName(task.path)}
+            <InboxIcon className="size-3.5" />
+            Capturada el {formatDayMonth(task.created)}
           </p>
         </div>
 

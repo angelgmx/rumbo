@@ -6,7 +6,6 @@ import { CaptureBox } from "@/features/capture/CaptureBox";
 import { AreaDot } from "@/features/tasks/AreaDot";
 import { StepsChip } from "@/features/tasks/StepsChip";
 import { areaOf } from "@/features/tasks/taskFilters";
-import { withKeys } from "@/features/tasks/taskKeys";
 import { listItem } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { formatFocusNumber } from "./choice";
@@ -29,8 +28,8 @@ export function UntimedCard({ focus, tasks, onToggle, onOpen }: UntimedCardProps
       </CardHeader>
       <CardContent className="flex flex-col gap-1">
         <AnimatePresence initial={false}>
-          {withKeys([...focus, ...tasks]).map(({ task, key }, index) => (
-            <motion.div key={key} {...listItem} className="overflow-hidden">
+          {[...focus, ...tasks].map((task, index) => (
+            <motion.div key={task.id} {...listItem} className="overflow-hidden">
               <TaskLine
                 task={task}
                 label={index < focus.length ? formatFocusNumber(index) : undefined}

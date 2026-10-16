@@ -1,13 +1,13 @@
 import type { Priority, Task } from "@rumbo/core";
 import type { ReactNode } from "react";
-import { ClockIcon, FileTextIcon, FolderKanbanIcon, RepeatIcon } from "lucide-react";
+import { ClockIcon, FolderKanbanIcon, InboxIcon, RepeatIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { formatShortDay } from "@/lib/format";
+import { formatDayMonth, formatShortDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { AreaDot } from "./AreaDot";
 import { StepsChip } from "./StepsChip";
 import { areaOf, projectOf } from "./taskFilters";
-import { noteName, PRIORITY_LABEL } from "./taskLabels";
+import { PRIORITY_LABEL } from "./taskLabels";
 
 const PRIORITY_STYLE: Record<Priority, string> = {
   high: "border-destructive/40 bg-destructive/10 text-destructive",
@@ -22,7 +22,7 @@ const PRIORITY_STYLE: Record<Priority, string> = {
 export function TaskRow({
   task,
   today,
-  showSource = false,
+  showCaptured = false,
   showDate = true,
   onToggle,
   onOpen,
@@ -30,8 +30,8 @@ export function TaskRow({
 }: {
   task: Task;
   today: string;
-  /** Debajo del título, la nota de donde viene (en el Inbox). */
-  showSource?: boolean;
+  /** Debajo del título, cuándo la capturaste (en el Inbox). */
+  showCaptured?: boolean;
   /** Si la lista ya está agrupada por día, la fecha sobra. */
   showDate?: boolean;
   onToggle: (done: boolean) => void;
@@ -59,10 +59,10 @@ export function TaskRow({
         <span className={cn("truncate", task.done && "text-muted-foreground line-through")}>
           {task.text}
         </span>
-        {showSource && (
+        {showCaptured && (
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <FileTextIcon className="size-3" />
-            {noteName(task.path)}
+            <InboxIcon className="size-3" />
+            Capturada el {formatDayMonth(task.created)}
           </span>
         )}
       </button>

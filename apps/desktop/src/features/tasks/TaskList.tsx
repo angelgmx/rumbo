@@ -4,12 +4,11 @@ import type { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { listItem } from "@/lib/motion";
 import type { TaskGroup } from "./groupByDay";
-import { withKeys } from "./taskKeys";
 import { TaskRow } from "./TaskRow";
 
 interface TaskListProps {
   today: string;
-  showSource?: boolean;
+  showCaptured?: boolean;
   onToggle: (task: Task, done: boolean) => void;
   onOpen: (task: Task) => void;
   aside?: (task: Task) => ReactNode;
@@ -46,7 +45,7 @@ export function TaskList({ tasks, ...props }: TaskListProps & { tasks: Task[] })
 function Rows({
   tasks,
   today,
-  showSource,
+  showCaptured,
   showDate,
   onToggle,
   onOpen,
@@ -54,12 +53,12 @@ function Rows({
 }: TaskListProps & { tasks: Task[]; showDate: boolean }) {
   return (
     <AnimatePresence initial={false}>
-      {withKeys(tasks).map(({ task, key }) => (
-        <motion.div key={key} {...listItem} className="overflow-hidden border-b last:border-0">
+      {tasks.map((task) => (
+        <motion.div key={task.id} {...listItem} className="overflow-hidden border-b last:border-0">
           <TaskRow
             task={task}
             today={today}
-            showSource={showSource}
+            showCaptured={showCaptured}
             showDate={showDate}
             onToggle={(done) => onToggle(task, done)}
             onOpen={() => onOpen(task)}

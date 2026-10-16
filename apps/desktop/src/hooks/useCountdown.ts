@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useState } from "react";
 
-export interface Countdown {
+interface Countdown {
   secondsLeft: number;
   running: boolean;
   start: (minutes: number) => void;

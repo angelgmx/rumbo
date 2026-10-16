@@ -10,7 +10,7 @@ import {
 import { useRumbo } from "@/app/RumboContext";
 import { STATUS_LABEL } from "@/features/roadmaps/moduleStatus";
 
-export interface BlockDetails {
+interface BlockDetails {
   title: string;
   subtitle: string;
   habit?: HabitSummary;

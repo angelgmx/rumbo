@@ -2,7 +2,7 @@ import type { Rumbo } from "@rumbo/core";
 import { useEffect, useState } from "react";
 import { useRumbo, useVaultVersion } from "@/app/RumboContext";
 
-export interface VaultQuery<T> {
+interface VaultQuery<T> {
   data: T | undefined;
   error: Error | undefined;
 }
