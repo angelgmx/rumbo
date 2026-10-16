@@ -1,13 +1,20 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createRumbo, type Rumbo } from "../src";
+import { habitSchema } from "../src/domain/habits";
 import {
   blockTitle,
+  insertBlock,
   isRoutineOn,
   moduleBlockTasks,
   moveBlock,
+  nextRoutineDay,
+  removeBlock,
+  routineClashes,
   routineEnd,
   routineSchema,
   timedBlocks,
+  updateBlock,
+  weeklyCompliance,
 } from "../src/domain/routines";
 import { parseNote } from "../src/vault/frontmatter";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
@@ -50,6 +57,43 @@ describe("routine domain", () => {
   it("moves a block and ignores impossible moves", () => {
     expect(moveBlock(["a", "b", "c"], 2, 0)).toEqual(["c", "a", "b"]);
     expect(moveBlock(["a", "b"], 0, 5)).toEqual(["a", "b"]);
+  });
+
+  it("adds, removes and edits blocks without touching the others", () => {
+    expect(insertBlock(["a", "c"], "b", 1)).toEqual(["a", "b", "c"]);
+    expect(insertBlock(["a"], "b")).toEqual(["a", "b"]);
+    expect(removeBlock(["a", "b", "c"], 1)).toEqual(["a", "c"]);
+    expect(updateBlock([{ minutes: 10, x: 1 }], 0, { minutes: 20 })).toEqual([
+      { minutes: 20, x: 1 },
+    ]);
+  });
+
+  it("finds the next day it runs", () => {
+    // Desde el lunes 19, la siguiente es el miércoles 21.
+    expect(nextRoutineDay(routine, "2026-10-19")).toBe("2026-10-21");
+    expect(nextRoutineDay({ ...routine, active: false }, "2026-10-19")).toBeUndefined();
+  });
+
+  it("detects routines that overlap on a shared day", () => {
+    const gym = routineSchema.parse({ start: "19:00", days: ["wed", "fri"], blocks: [] });
+    const gymWithBlocks = { ...gym, blocks: [{ kind: "custom" as const, minutes: 60 }] };
+    const late = { ...gymWithBlocks, start: "20:00" };
+    expect(routineClashes(routine, [{ title: "Gym", routine: gymWithBlocks }])).toEqual([
+      { title: "Gym", days: ["wed"] },
+    ]);
+    expect(routineClashes(routine, [{ title: "Gym", routine: late }])).toEqual([]);
+  });
+
+  it("measures how often its habits were done on its days", () => {
+    const habit = habitSchema.parse({ key: "ingles", name: "Inglés" });
+    // Semana del lunes 12: tocaba lunes 12 y miércoles 14, se hizo uno.
+    const history = new Map([
+      ["2026-10-12", true],
+      ["2026-10-19", true],
+    ]);
+    const weeks = weeklyCompliance(routine, [{ habit, history }], "2026-10-19", 2);
+    expect(weeks).toEqual([0.5, 1]);
+    expect(weeklyCompliance(routine, [], "2026-10-19")).toEqual([]);
   });
 
   it("turns a topic block into today's tasks with counters", () => {
@@ -131,6 +175,29 @@ describe("RoutineService", () => {
     expect(await rumbo.routines.createFromTemplate("study")).toBe(
       "Routines/Rutina de estudio 2.md",
     );
+  });
+
+  it("knows its habits, its weeks and the routines it clashes with", () => {
+    const [summary] = rumbo.routines.list().routines;
+    expect(summary!.habits.map(({ habit }) => habit.key)).toEqual(["reading"]);
+    expect(summary!.weeks).toHaveLength(4);
+    expect(summary!.next).toBeUndefined();
+    expect(summary!.clashes).toEqual([]);
+  });
+
+  it("changes its time and its blocks", async () => {
+    await rumbo.routines.update(ROUTINE, { start: "19:00" });
+    await rumbo.routines.addBlock(ROUTINE, { kind: "break", minutes: 5 }, 0);
+    await rumbo.routines.updateBlock(ROUTINE, 1, { minutes: 20 });
+    await rumbo.routines.removeBlock(ROUTINE, 4);
+    const [summary] = rumbo.routines.list().routines;
+    expect(summary!.blocks.map(({ kind, start }) => [kind, start])).toEqual([
+      ["break", "19:00"],
+      ["habit", "19:05"],
+      ["module", "19:25"],
+      ["break", "20:10"],
+    ]);
+    expect(files.get(ROUTINE)).toContain("- kind: break\n    minutes: 5");
   });
 
   it("reorders the blocks", async () => {

@@ -29,7 +29,7 @@ export type { VaultStore } from "./app/vaultStore";
 export type { HabitList, HabitSummary } from "./app/habitService";
 export { MAX_FOCUS, type CaptureResult } from "./app/taskService";
 export type { DayProgress } from "./app/progressService";
-export type { RoutineList, RoutineSummary } from "./app/routineService";
+export type { RoutineChanges, RoutineList, RoutineSummary } from "./app/routineService";
 export type { PomodoroSettings } from "./vault/config";
 
 export {
@@ -88,11 +88,14 @@ export {
 export {
   BLOCK_KINDS,
   blockTitle,
+  isRoutineOn,
   ROUTINE_KINDS,
   ROUTINE_TEMPLATES,
+  routineSchema,
   type BlockKind,
   type Routine,
   type RoutineBlock,
+  type RoutineClash,
   type RoutineInput,
   type RoutineTemplate,
   type TimedBlock,
