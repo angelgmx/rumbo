@@ -7,6 +7,7 @@ import { useCountdown } from "@/hooks/useCountdown";
 import { timeOf, useNow } from "@/hooks/useNow";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { capitalize, formatDay } from "@/lib/format";
+import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { hasCounter } from "@/features/counters/countedTask";
 import { NextStepCard } from "@/features/roadmaps/NextStepCard";
 import { ReviewTodayCard } from "@/features/roadmaps/ReviewDialog";
@@ -21,6 +22,7 @@ const DEFAULT_FOCUS_MINUTES = 50;
 
 export function FocusScreen() {
   const rumbo = useRumbo();
+  const taskPanel = useTaskPanel();
   const today = rumbo.daily.today();
   const now = useNow();
   const timer = useCountdown(DEFAULT_FOCUS_MINUTES, () =>
@@ -100,6 +102,7 @@ export function FocusScreen() {
                 focus={focus}
                 tasks={otherTasks}
                 onToggle={toggleTask}
+                onOpen={taskPanel.edit}
                 onCapture={async (text) => void (await rumbo.tasks.capture(text))}
               />
             </div>

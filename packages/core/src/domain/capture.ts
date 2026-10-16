@@ -1,10 +1,12 @@
 import { addMinutesToTime } from "./agenda";
 import { addDays, WEEKDAYS, weekdayOf, type IsoDate } from "./dates";
+import type { Priority } from "./tasks";
 
 // Captura rápida en lenguaje natural:
 //   "gym mañana 18:00 1h30 #gym"  → bloque en la agenda de mañana, de 18:00 a 19:30
 //   "llamar al dentista viernes"  → tarea para el viernes
 //   "idea para Citalash"          → tarea sin fecha en el inbox
+// El título del panel de tarea usa otra lectura: sin hora, con prioridad («!alta»).
 
 export interface Capture {
   text: string;
@@ -16,24 +18,38 @@ export interface Capture {
 
 const SPANISH_WEEKDAYS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
 
-export function parseCapture(input: string, today: IsoDate): Capture {
-  let rest = ` ${input.trim()} `;
-  const take = (pattern: RegExp): RegExpExecArray | null => {
-    const match = pattern.exec(rest);
-    if (match) rest = rest.replace(match[0], " ");
-    return match;
-  };
+const TAG = /\s#([\p{L}\p{N}_/-]+)(?=\s)/u;
+const DURATION = /\s(?:(\d+)h(\d{1,2})?|(\d+)\s?min|(\d+)m)(?=\s)/;
+const PRIORITY_WORDS: Record<string, Priority> = { alta: "high", media: "medium", baja: "low" };
 
-  const tags = [...rest.matchAll(/\s#([\p{L}\p{N}_/-]+)/gu)].map((m) => m[1]!);
+type Take = (pattern: RegExp) => RegExpExecArray | null;
+
+/** Quita del texto lo que encaja con el patrón y lo devuelve; el resto sigue en `rest()`. */
+function scanner(input: string): { take: Take; rest: () => string } {
+  let rest = ` ${input.trim()} `;
+  return {
+    take(pattern) {
+      const match = pattern.exec(rest);
+      if (match) rest = rest.replace(match[0], " ");
+      return match;
+    },
+    rest: () => rest,
+  };
+}
+
+export function parseCapture(input: string, today: IsoDate): Capture {
+  const { take, rest } = scanner(input);
+
+  const tags = [...rest().matchAll(/\s#([\p{L}\p{N}_/-]+)/gu)].map((m) => m[1]!);
   const date = takeDate(take, today);
   const time = take(/\s(\d{1,2})(?::(\d{2})|h)(?=\s)/);
-  const duration = take(/\s(?:(\d+)h(\d{1,2})?|(\d+)\s?min|(\d+)m)(?=\s)/);
+  const duration = take(DURATION);
 
   const start = time ? toTime(Number(time[1]), Number(time[2] ?? 0)) : undefined;
   const minutes = duration ? durationInMinutes(duration) : undefined;
 
   return {
-    text: rest.replace(/\s+/g, " ").trim(),
+    text: rest().replace(/\s+/g, " ").trim(),
     // Si solo hay hora, es para hoy.
     date: date ?? (start ? today : undefined),
     start,
@@ -42,10 +58,38 @@ export function parseCapture(input: string, today: IsoDate): Capture {
   };
 }
 
-function takeDate(
-  take: (pattern: RegExp) => RegExpExecArray | null,
-  today: IsoDate,
-): IsoDate | undefined {
+export interface TaskTitle {
+  text: string;
+  date?: IsoDate;
+  /** Minutos. */
+  duration?: number;
+  priority?: Priority;
+  tags: string[];
+}
+
+/**
+ * Lee el título de una tarea escrito como te salga: «ejercicios strings hoy 45m !alta #java».
+ * Lo que reconoce sale del texto; una hora suelta se queda en él, porque una tarea no lleva hora.
+ */
+export function parseTaskTitle(input: string, today: IsoDate): TaskTitle {
+  const { take, rest } = scanner(input);
+
+  const tags: string[] = [];
+  for (let tag = take(TAG); tag; tag = take(TAG)) tags.push(tag[1]!);
+  const date = takeDate(take, today);
+  const duration = take(DURATION);
+  const priority = take(/\s!(alta|media|baja)(?=\s)/i);
+
+  return {
+    text: rest().replace(/\s+/g, " ").trim(),
+    date,
+    duration: duration ? durationInMinutes(duration) : undefined,
+    priority: priority ? PRIORITY_WORDS[priority[1]!.toLowerCase()] : undefined,
+    tags,
+  };
+}
+
+function takeDate(take: Take, today: IsoDate): IsoDate | undefined {
   if (take(/\spasado mañana(?=\s)/i)) return addDays(today, 2);
   if (take(/\smañana(?=\s)/i)) return addDays(today, 1);
   if (take(/\shoy(?=\s)/i)) return today;

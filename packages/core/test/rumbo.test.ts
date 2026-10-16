@@ -71,6 +71,48 @@ describe("tasks", () => {
   });
 });
 
+describe("editing tasks", () => {
+  it("keeps both changes when two edits arrive at once", async () => {
+    const [task] = await rumbo.tasks.list("inbox");
+    await Promise.all([
+      rumbo.tasks.update(task!, { priority: "high" }),
+      rumbo.tasks.update(task!, { duration: 30 }),
+    ]);
+    expect(files.get("Inbox/Inbox.md")).toContain("[duration:: 30m] ⏫");
+  });
+
+  it("duplicates a task and returns the copy", async () => {
+    const [task] = await rumbo.tasks.list("inbox");
+    const copy = await rumbo.tasks.duplicate(task!);
+    expect(copy).toMatchObject({ text: "Buy a new notebook", done: false });
+    expect(copy!.line).toBeGreaterThan(task!.line);
+    expect((await rumbo.tasks.list("inbox")).filter((t) => t.text === task!.text)).toHaveLength(2);
+  });
+
+  it("removes a task from its note", async () => {
+    const [task] = await rumbo.tasks.list("inbox");
+    await rumbo.tasks.remove(task!);
+    expect(await rumbo.tasks.list("inbox")).toEqual([]);
+  });
+});
+
+describe("inherited area", () => {
+  it("comes from the roadmap of the module", () => {
+    expect(rumbo.tasks.inheritedArea({ module: "Mastery — Variables" })).toBe("Python");
+  });
+
+  it("comes from the area of the project when there is no module", async () => {
+    files.set("Projects/Rumbo.md", '---\ntype: project\narea: "[[Python]]"\n---\n');
+    await rumbo.store.refresh("Projects/Rumbo.md");
+    expect(rumbo.tasks.inheritedArea({ project: "Rumbo" })).toBe("Python");
+  });
+
+  it("is nothing when the links point nowhere", () => {
+    expect(rumbo.tasks.inheritedArea({})).toBeUndefined();
+    expect(rumbo.tasks.inheritedArea({ module: "Nope", project: "Nope" })).toBeUndefined();
+  });
+});
+
 describe("agenda", () => {
   it("ticks a block of today's agenda", async () => {
     const [block] = await rumbo.agenda.blocks("2026-10-15");

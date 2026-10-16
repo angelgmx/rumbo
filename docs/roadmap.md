@@ -35,7 +35,7 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] Pantalla Hoy: tu día (agenda), foco, hábitos
 - [x] Pantalla Hábitos: tracker semanal, mapa de calor y estadísticas
 - [x] Pantalla Tareas: Inbox, Hoy, Próximas, Algún día, Hechas
-- [x] Captura rápida (`Ctrl N`) y crear tarea
+- [x] Captura rápida en el Inbox y crear tarea
 - [x] Tema claro y oscuro, animaciones que respetan «reducir movimiento»
 - [x] Procesar el inbox uno a uno
 - [x] Vistas guardadas de tareas
@@ -88,7 +88,7 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] **Editor de rutina**: días y hora, bloques que se arrastran para ordenarlos, minutos y nombre en su sitio, las tareas que genera hoy cada bloque de tema, resumen y biblioteca de temas, hábitos y tareas para arrastrar
 - [x] Interruptor rediseñado (encendido con halo, foco con anillo, deshabilitado)
 - [x] Contadores en la interfaz: elegir el contador al crear una tarea, verlo en las filas de Tareas y en Foco, y usarlo en el detalle de la tarea (cronómetro, pomodoro, −/+ y progreso)
-- [x] Detalle de tarea en un panel lateral, con lo que la tarea guarda en el vault
+- [x] **Panel de tarea** lateral, estilo Notion, único para crear, ver y editar (`Ctrl N`, los botones «Nueva tarea» y pulsar una tarea): título grande (en lenguaje natural al crear, que rellena las propiedades), lista de propiedades (estado, cuándo, fecha límite, duración, prioridad, repetir, área heredada del módulo o proyecto, proyecto, módulo, etiquetas y contador), notas y pasos. Al editar cada cambio se guarda al momento en la línea de la tarea; hay «Duplicar» y «Eliminar» (con confirmación). Al crear, pie con «Crear tarea» (`Ctrl Enter`) y «Crear otra»
 - [x] Tareas igual al diseño: captura en la barra lateral, áreas y proyectos con su número, filtros por área, proyecto y etiqueta, columnas en cada fila, Próximas agrupadas por día y Procesar inbox con «¿Qué es?»
 - [x] «Ahora» en Foco enseña el contador de la primera tarea del foco cuando no hay un bloque de agenda en curso
 - [ ] Registro de sesiones y estimado vs real (necesitan guardar el tiempo de cada sesión)

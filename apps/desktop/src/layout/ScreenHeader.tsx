@@ -3,23 +3,23 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 import { Separator } from "@/components/ui/separator";
-import { useQuickCapture } from "@/features/capture/QuickCapture";
+import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { useSidebar } from "./SidebarState";
 
 /**
- * Barra de arriba de cada pantalla: barra lateral, dónde estás y la captura rápida a mano.
- * Las pantallas que ya tienen la captura en su barra lateral (Tareas) la quitan de aquí.
+ * Barra de arriba de cada pantalla: barra lateral, dónde estás y «Nueva tarea» a mano.
+ * El Inbox lo quita porque ya tiene su captura al lado.
  */
 export function ScreenHeader({
   title,
   actions,
-  quickCapture = true,
+  newTask = true,
 }: {
   title: ReactNode;
   actions?: ReactNode;
-  quickCapture?: boolean;
+  newTask?: boolean;
 }) {
-  const { open } = useQuickCapture();
+  const { create } = useTaskPanel();
   const sidebar = useSidebar();
 
   return (
@@ -35,10 +35,10 @@ export function ScreenHeader({
       <Separator orientation="vertical" className="h-5" />
       <div className="min-w-0 flex-1 truncate text-sm">{title}</div>
       {actions}
-      {quickCapture && (
-        <Button onClick={open}>
+      {newTask && (
+        <Button onClick={create}>
           <PlusIcon data-icon="inline-start" />
-          Captura rápida
+          Nueva tarea
           <Kbd className="bg-primary-foreground/20 text-primary-foreground">Ctrl N</Kbd>
         </Button>
       )}

@@ -124,14 +124,14 @@ Casillas en el formato del plugin **Tasks**, así funcionan igual en Obsidian:
 - [ ] Leer la documentación [area:: Desarrollo]
 ```
 
-| Marca             | Significado                                            |
-| ----------------- | ------------------------------------------------------ |
-| `📅 fecha`        | Fecha límite                                           |
-| `⏳ fecha`        | Fecha en la que la quiero hacer                        |
-| `✅ fecha`        | Hecha ese día (la app la pone al marcar)               |
-| `🔁 texto`        | Se repite                                              |
-| `#etiqueta`       | Etiqueta                                               |
-| `[clave:: valor]` | Campo de Dataview (`area`, `habit`, `project`, `due`…) |
+| Marca             | Significado                                                      |
+| ----------------- | ---------------------------------------------------------------- |
+| `📅 fecha`        | Fecha límite                                                     |
+| `⏳ fecha`        | Fecha en la que la quiero hacer                                  |
+| `✅ fecha`        | Hecha ese día (la app la pone al marcar)                         |
+| `🔁 texto`        | Se repite                                                        |
+| `#etiqueta`       | Etiqueta                                                         |
+| `[clave:: valor]` | Campo de Dataview (`area`, `habit`, `project`, `module`, `due`…) |
 
 **Contador.** Una tarea puede llevar un contador en el campo `counter`, con su tipo y `actual/objetivo`:
 
@@ -150,6 +150,17 @@ Casillas en el formato del plugin **Tasks**, así funcionan igual en Obsidian:
 | `progress` | Pasos de un total                      | +1 / −1, sin pasar del objetivo                 |
 
 Sin el campo, la tarea no tiene contador: se marca hecha y ya. Llegar al objetivo **no** marca la tarea; eso lo decides tú. Al cambiar el contador solo se reescribe su campo, y si la tarea no lo tenía se pone antes de los emojis de Tasks (que los lee desde el final de la línea).
+
+`project` y `module` llevan un enlace a la nota: `[project:: [[Rumbo]]]`, `[module:: [[Dominio — Strings]]]`. Si la tarea no tiene `area`, el panel de tarea le pone la del módulo (la de su ruta) o, si no, la del proyecto.
+
+**Pasos y notas.** Lo que cuelga de una tarea con más sangría, hasta la primera línea en blanco, es suyo: las casillas son sus **pasos** (no cuentan como tareas aparte) y el resto de líneas, sus **notas**.
+
+```markdown
+- [ ] Preparar la demo del lunes [area:: Negocio] ⏳ 2026-10-19
+      Enviar el enlace antes de las 10:00
+  - [x] Guion de 5 minutos
+  - [ ] Ensayar
+```
 
 La app lee las tareas del **inbox**, de las **dailies** y de las notas de **proyecto**. Las casillas de otras notas (por ejemplo, la lista de conceptos de un tema) no son tareas.
 
@@ -190,6 +201,8 @@ Lo que escribes en la captura rápida se interpreta así:
 | `idea para Citalash`          | Tarea en el inbox, sin fecha                    |
 
 Palabras de fecha: `hoy`, `mañana`, `pasado mañana`, el nombre de un día (`lunes`… `domingo`) y `día/mes`.
+
+El título de la **panel de tarea** (`Ctrl N`) se lee parecido, pero una tarea no lleva hora: `ejercicios strings hoy 45m !alta #java` pone la fecha, la duración, la prioridad (`!alta`, `!media`, `!baja`) y la etiqueta en sus propiedades y deja «ejercicios strings» como título. Las palabras se leen al terminar de escribirlas.
 
 ### Área — `type: area`
 

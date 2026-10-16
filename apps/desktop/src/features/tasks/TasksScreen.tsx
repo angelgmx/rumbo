@@ -12,16 +12,15 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Kbd } from "@/components/ui/kbd";
+import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { formatDay } from "@/lib/format";
 import { AreaDot } from "./AreaDot";
-import { CreateTaskDialog } from "./CreateTaskDialog";
 import { FilterChip } from "./FilterChip";
 import { groupByDay } from "./groupByDay";
 import { ProcessInboxDialog } from "./ProcessInboxDialog";
 import { SaveViewButton } from "./SaveViewButton";
-import { TaskDetailSheet } from "./TaskDetailSheet";
 import { areaOf, countBy, matchesFilter, projectOf, type TaskFilter } from "./taskFilters";
 import { GroupedTaskList, TaskList } from "./TaskList";
 import { TasksSidebar } from "./TasksSidebar";
@@ -33,7 +32,7 @@ export function TasksScreen() {
   const inboxPath = rumbo.store.config.folders.inbox;
   const current = findView(useParams<{ view: string }>().view);
   const [filter, setFilter] = useState<TaskFilter>({});
-  const [openKey, setOpenKey] = useState<string>();
+  const taskPanel = useTaskPanel();
 
   const [, navigate] = useLocation();
   const all = useVaultQuery((r) => r.tasks.all()).data ?? [];
@@ -46,8 +45,6 @@ export function TasksScreen() {
   );
   const inCurrentView = all.filter((task) => inView(task, current.view));
   const tasks = inCurrentView.filter((task) => matchesFilter(task, filter)).sort(byDate);
-  // Se busca en cada lectura del vault, así el panel enseña el contador al día.
-  const openTask = all.find((task) => taskKey(task) === openKey);
 
   function openSavedView(saved: SavedView) {
     const info = TASK_VIEWS.find((candidate) => candidate.view === saved.view);
@@ -59,13 +56,13 @@ export function TasksScreen() {
     today,
     showSource: current.view === "inbox",
     onToggle: (task: Task, done: boolean) => rumbo.tasks.setDone(task, done),
-    onOpen: (task: Task) => setOpenKey(taskKey(task)),
+    onOpen: taskPanel.edit,
   };
 
   return (
     <>
       <ScreenHeader
-        quickCapture={false}
+        newTask={current.view !== "inbox"}
         title={
           <span className="flex items-center gap-1.5 text-muted-foreground">
             Tareas
@@ -77,10 +74,7 @@ export function TasksScreen() {
           current.view === "inbox" ? (
             <ProcessInboxDialog />
           ) : (
-            <>
-              <SaveViewButton view={{ view: current.view, ...filter }} />
-              <CreateTaskDialog />
-            </>
+            <SaveViewButton view={{ view: current.view, ...filter }} />
           )
         }
       />
@@ -158,7 +152,6 @@ export function TasksScreen() {
           </div>
         </main>
       </div>
-      <TaskDetailSheet task={openTask} onClose={() => setOpenKey(undefined)} />
     </>
   );
 }
@@ -213,8 +206,6 @@ function EmptyList({ view }: { view: TaskView }) {
     </Empty>
   );
 }
-
-const taskKey = (task: Task) => `${task.path}:${task.line}`;
 
 /** Primero lo que tiene fecha (la más cercana arriba); lo que no tiene, al final. */
 function byDate(a: Task, b: Task): number {
