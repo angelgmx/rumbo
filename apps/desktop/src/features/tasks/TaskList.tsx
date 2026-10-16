@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { listItem } from "@/lib/motion";
 import type { TaskGroup } from "./groupByDay";
+import { withKeys } from "./taskKeys";
 import { TaskRow } from "./TaskRow";
 
 interface TaskListProps {
@@ -53,12 +54,8 @@ function Rows({
 }: TaskListProps & { tasks: Task[]; showDate: boolean }) {
   return (
     <AnimatePresence initial={false}>
-      {tasks.map((task) => (
-        <motion.div
-          key={`${task.path}:${task.text}`}
-          {...listItem}
-          className="overflow-hidden border-b last:border-0"
-        >
+      {withKeys(tasks).map(({ task, key }) => (
+        <motion.div key={key} {...listItem} className="overflow-hidden border-b last:border-0">
           <TaskRow
             task={task}
             today={today}

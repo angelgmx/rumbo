@@ -1,14 +1,15 @@
-import { AiError, openAiCompatible, type AiFailure, type AiProvider } from "@rumbo/core";
+import { AiError, anthropic, openAiCompatible, type AiFailure, type AiProvider } from "@rumbo/core";
 import { httpFetch } from "@/platform/httpFetch";
 import { AI_PROVIDERS, type AiSettings } from "./aiSettings";
 
 export function createAiProvider(settings: AiSettings, key: string | undefined): AiProvider {
-  return openAiCompatible({
+  const options = {
     baseUrl: settings.baseUrl,
     model: settings.model,
     apiKey: AI_PROVIDERS[settings.provider].needsKey ? key : undefined,
     fetch: httpFetch,
-  });
+  };
+  return settings.provider === "anthropic" ? anthropic(options) : openAiCompatible(options);
 }
 
 const FAILURES: Record<AiFailure, string> = {
