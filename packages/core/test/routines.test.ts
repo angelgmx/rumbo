@@ -171,6 +171,20 @@ describe("RoutineService", () => {
     expect(rumbo.routines.today()).toEqual([]);
   });
 
+  it("removes the routine note", async () => {
+    const path = await rumbo.routines.create({
+      title: "Borrar",
+      days: "daily",
+      start: "07:00",
+      blocks: [],
+    });
+
+    await rumbo.routines.remove(path);
+
+    expect(files.has(path)).toBe(false);
+    expect(rumbo.routines.list().routines.some((summary) => summary.path === path)).toBe(false);
+  });
+
   it("creates a routine from a template", async () => {
     const path = await rumbo.routines.createFromTemplate("study", { area: "Python" });
     expect(path).toBe("Routines/Rutina de estudio.md");

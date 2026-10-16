@@ -1,4 +1,3 @@
-import { stringify } from "yaml";
 import type { IsoDate } from "../domain/dates";
 import { habitSchema, type Habit, type HabitSchedule } from "../domain/habits";
 import { linkTarget } from "../domain/links";
@@ -27,7 +26,7 @@ import {
   type TimedBlock,
 } from "../domain/routines";
 import type { TaskDraft } from "../domain/tasks";
-import { setFrontmatter } from "../vault/frontmatter";
+import { newNoteSource, setFrontmatter } from "../vault/frontmatter";
 import type { DailyService } from "./dailyService";
 import type { HabitService, HabitSummary } from "./habitService";
 import type { LearningService, ModuleSummary, RoadmapSummary } from "./learningService";
@@ -204,12 +203,14 @@ export class RoutineService {
       area: input.area ? `[[${linkTarget(input.area) ?? input.area}]]` : undefined,
       active: input.active ?? true,
     };
-    const clean = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined));
-    const frontmatter = stringify(clean, { lineWidth: 0 }).trimEnd();
-
-    const path = await this.freePath(input.title);
-    await this.store.write(path, `---\n${frontmatter}\n---\n\n# ${input.title}\n`);
+    const path = await this.store.freePath(this.store.config.folders.routines, input.title);
+    await this.store.write(path, newNoteSource(fields, input.title));
     return path;
+  }
+
+  /** Borra la nota de la rutina. Lo que ya hiciste (hábitos, tareas) se queda en tus notas. */
+  async remove(path: string): Promise<void> {
+    await this.store.remove(path);
   }
 
   /** Cambia un bloque de sitio. Se mueve la entrada tal cual, con los campos que tenga. */
@@ -327,14 +328,6 @@ export class RoutineService {
       if (module) return { roadmap, module };
     }
     return undefined;
-  }
-
-  private async freePath(title: string): Promise<string> {
-    const folder = this.store.config.folders.routines;
-    const fileName = title.trim().replace(/[\\/:*?"<>|#^[\]]/g, "-");
-    let path = `${folder}/${fileName}.md`;
-    for (let n = 2; await this.store.exists(path); n++) path = `${folder}/${fileName} ${n}.md`;
-    return path;
   }
 }
 
