@@ -2,6 +2,7 @@
 // La IA solo propone; aplicar cada propuesta lo decide el usuario.
 import { z } from "zod";
 import type { AiMessage } from "../ports";
+import { jsonInAnswer } from "./aiJson";
 import { addDays, SPANISH_WEEKDAYS, toIsoDate, WEEKDAYS, weekdayOf, type IsoDate } from "./dates";
 
 export const TRIAGE_KINDS = ["task", "idea", "project", "goal"] as const;
@@ -74,7 +75,7 @@ export function parseTriage(
   items: string[],
   context: TriageContext,
 ): Map<number, TriageProposal> | undefined {
-  const parsed = answerSchema.safeParse(jsonIn(answer));
+  const parsed = answerSchema.safeParse(jsonInAnswer(answer));
   if (!parsed.success) return undefined;
 
   const proposals = new Map<number, TriageProposal>();
@@ -95,18 +96,6 @@ export function parseTriage(
 /** Una tarea sin área ni fecha seguiría en el Inbox: aceptarla no haría nada. */
 export function changesSomething(proposal: TriageProposal): boolean {
   return proposal.kind !== "task" || proposal.area !== undefined || proposal.date !== undefined;
-}
-
-// Algunos modelos envuelven el JSON en texto o en un bloque de código.
-function jsonIn(answer: string): unknown {
-  const start = answer.indexOf("{");
-  const end = answer.lastIndexOf("}");
-  if (start === -1 || end < start) return undefined;
-  try {
-    return JSON.parse(answer.slice(start, end + 1));
-  } catch {
-    return undefined;
-  }
 }
 
 function knownArea(area: string | null | undefined, areas: string[]): string | undefined {
