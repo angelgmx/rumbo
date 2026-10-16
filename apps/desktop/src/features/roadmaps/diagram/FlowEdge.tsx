@@ -1,5 +1,7 @@
-import { BaseEdge, getBezierPath, type EdgeProps } from "@xyflow/react";
+import { BaseEdge, getSmoothStepPath, type EdgeProps } from "@xyflow/react";
 import type { DiagramEdge } from "./types";
+
+const CORNER_RADIUS = 14;
 
 /**
  * Tramo recorrido: línea sólida verde. Pendiente: discontinua y neutra.
@@ -16,13 +18,14 @@ export function FlowEdge({
   markerEnd,
   data,
 }: EdgeProps<DiagramEdge>) {
-  const [path] = getBezierPath({
+  const [path] = getSmoothStepPath({
     sourceX,
     sourceY,
     sourcePosition,
     targetX,
     targetY,
     targetPosition,
+    borderRadius: CORNER_RADIUS,
   });
   const traveled = data?.traveled ?? false;
 

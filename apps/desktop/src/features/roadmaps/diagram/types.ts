@@ -1,18 +1,24 @@
-import type { ChallengeSummary, ModuleSummary } from "@rumbo/core";
+import type { ChallengeSummary, ModuleSummary, RoadmapSummary } from "@rumbo/core";
 import type { Edge, Node } from "@xyflow/react";
 
 export type ModuleState = "mastered" | "learning" | "current" | "idle";
 
 export interface ModuleNodeData extends Record<string, unknown> {
   module: ModuleSummary;
+  roadmap: RoadmapSummary;
+  href: string;
   state: ModuleState;
   progress: number;
-  meta: string;
+  /** Fechas previstas y próxima sesión, si hay horario. */
+  range?: string;
+  next?: string;
+  chips: string[];
 }
 
 export interface CheckpointNodeData extends Record<string, unknown> {
   challenge: ChallengeSummary;
   heading: string;
+  requires: string;
   date?: string;
   unlocked: boolean;
 }

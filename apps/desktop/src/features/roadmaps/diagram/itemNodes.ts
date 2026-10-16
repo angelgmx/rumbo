@@ -1,9 +1,8 @@
 import type { LayoutItem } from "@rumbo/core";
-import { formatDayMonth, formatMinutes } from "@/lib/format";
-import { isUnlocked } from "../checkpoints";
+import { formatMinutes } from "@/lib/format";
 import { itemPosition, itemSize } from "./geometry";
-import { finishOf, type GraphContext } from "./graphContext";
-import { moduleProgress, moduleState } from "./moduleState";
+import type { GraphContext } from "./graphContext";
+import { checkpointData, moduleData } from "./nodeData";
 import type { DiagramNode, TrackFlowNode } from "./types";
 
 /** Una cabecera de pista, un módulo o un checkpoint por elemento del reparto. */
@@ -14,35 +13,14 @@ export function itemNodes(context: GraphContext, selectedPath?: string): Diagram
 
     const module = context.modules.get(item.id);
     if (module) {
-      const exercises = module.exercises.length ? ` · ${module.exercises.length} ej.` : "";
-      const finish = finishOf(context, module);
       return {
         ...base,
         type: "module" as const,
         selected: item.id === selectedPath,
-        data: {
-          module,
-          state: moduleState(module, context.roadmap.current),
-          progress: moduleProgress(module),
-          meta:
-            formatMinutes(module.estimatedMinutes) +
-            exercises +
-            (finish ? ` · ≈ ${formatDayMonth(finish)}` : ""),
-        },
+        data: moduleData(context, module),
       };
     }
-
-    const { checkpoint, number } = context.checkpoints.get(item.id)!;
-    return {
-      ...base,
-      type: "checkpoint" as const,
-      data: {
-        challenge: checkpoint.challenge,
-        heading: `CHECKPOINT ${number}`,
-        date: checkpoint.date && `≈ ${formatDayMonth(checkpoint.date)}`,
-        unlocked: isUnlocked(checkpoint.challenge),
-      },
-    };
+    return { ...base, type: "checkpoint" as const, data: checkpointData(context, item.id) };
   });
 }
 

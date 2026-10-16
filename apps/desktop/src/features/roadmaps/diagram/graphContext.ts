@@ -1,24 +1,18 @@
 import {
   layoutRoadmap,
-  type IsoDate,
   type ModuleSummary,
   type RoadmapLayout,
   type RoadmapSummary,
   type TopicSummary,
 } from "@rumbo/core";
 import { checkpoints, type Checkpoint } from "../checkpoints";
-import { isPending } from "./moduleState";
 
 export interface GraphContext {
+  topicPath: string;
   roadmap: RoadmapSummary;
   layout: RoadmapLayout;
   modules: Map<string, ModuleSummary>;
   checkpoints: Map<string, { checkpoint: Checkpoint; number: number }>;
-}
-
-/** Cuándo terminas un módulo con tu horario; los ya hechos no tienen fecha. */
-export function finishOf(context: GraphContext, module: ModuleSummary): IsoDate | undefined {
-  return isPending(module) ? context.roadmap.plan.modules.get(module.path) : undefined;
 }
 
 export function createContext(topic: TopicSummary): GraphContext {
@@ -35,6 +29,7 @@ export function createContext(topic: TopicSummary): GraphContext {
   });
 
   return {
+    topicPath: topic.path,
     roadmap,
     layout,
     modules: new Map(roadmap.modules.map((module) => [module.path, module])),

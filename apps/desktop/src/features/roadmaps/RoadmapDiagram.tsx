@@ -8,6 +8,7 @@ import { DiagramCanvas } from "./diagram/DiagramCanvas";
 import { GLASS } from "./diagram/glass";
 import { ZoomControls } from "./diagram/ZoomControls";
 import { RoadmapFullscreen } from "./RoadmapFullscreen";
+import { ScheduleStrip } from "./ScheduleStrip";
 
 interface RoadmapDiagramProps {
   topic: TopicSummary;
@@ -23,6 +24,7 @@ export function RoadmapDiagram({ className, ...diagram }: RoadmapDiagramProps) {
 
   return (
     <>
+      <ScheduleStrip roadmap={diagram.topic.roadmap!} />
       <DiagramCanvas {...diagram} className={className}>
         <Panel position="top-right">
           <Button variant="outline" size="sm" onClick={() => setExpanded(true)}>
