@@ -1,4 +1,4 @@
-export interface NumberedLine {
+interface NumberedLine {
   line: number;
   text: string;
 }

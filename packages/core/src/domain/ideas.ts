@@ -4,7 +4,7 @@ import type { IsoDate } from "./dates";
 //   - Hacer una app de recetas [created:: 2026-10-16]
 // Ahora están en la base de datos; esto solo sirve para importar esa nota una vez.
 
-export interface NoteIdea {
+interface NoteIdea {
   text: string;
   created?: IsoDate;
 }

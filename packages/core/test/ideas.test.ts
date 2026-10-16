@@ -28,8 +28,11 @@ describe("importing ideas from the vault", () => {
     const database = memoryDatabase();
     const clock = { now: () => new Date("2026-10-16T09:00") };
 
-    const rumbo = await createRumbo({ fs: memoryFileSystem(files), database, clock });
-    await createRumbo({ fs: memoryFileSystem(files), database, clock });
+    // Dos aperturas a la vez, como hace React en desarrollo: se importa una sola vez.
+    const [rumbo] = await Promise.all([
+      createRumbo({ fs: memoryFileSystem(files), database, clock }),
+      createRumbo({ fs: memoryFileSystem(files), database, clock }),
+    ]);
 
     expect(await rumbo.ideas.list()).toEqual([
       { id: 2, text: "Old idea without date", created: "2026-10-16" },

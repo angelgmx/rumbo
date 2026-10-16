@@ -4,7 +4,7 @@ import type { AiMessage, AiProvider, HttpFetch } from "../ports";
 import { AiError } from "./aiError";
 import { endpoint, postJson } from "./postJson";
 
-export interface AnthropicOptions {
+interface AnthropicOptions {
   /** https://api.anthropic.com/v1 */
   baseUrl: string;
   model: string;

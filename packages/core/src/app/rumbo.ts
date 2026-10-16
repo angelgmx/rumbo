@@ -1,6 +1,7 @@
 import { ChangeFeed } from "../changeFeed";
 import { AppDatabase } from "../db/appDatabase";
 import { IdeaRepository } from "../db/ideaRepository";
+import { TaskRepository } from "../db/taskRepository";
 import { systemClock, type Clock, type Database, type FileSystem } from "../ports";
 import { AgendaService } from "./agendaService";
 import { CloseDayService } from "./closeDayService";
@@ -47,23 +48,33 @@ export interface RumboSources {
   clock?: Clock;
 }
 
-/** Abre el vault y la base de datos y monta todos los servicios de la app sobre ellos. */
-export async function createRumbo({
-  fs,
-  database,
-  clock = systemClock,
-}: RumboSources): Promise<Rumbo> {
+// Aperturas en marcha por base de datos: dos a la vez migrarían e importarían dos veces.
+const openings = new WeakMap<Database, Promise<unknown>>();
+
+/**
+ * Abre el vault y la base de datos y monta todos los servicios de la app sobre ellos.
+ * Si ya se está abriendo la misma base de datos, espera a que termine antes de empezar.
+ */
+export function createRumbo(sources: RumboSources): Promise<Rumbo> {
+  const previous = openings.get(sources.database) ?? Promise.resolve();
+  const opening = previous.catch(() => {}).then(() => open(sources));
+  openings.set(sources.database, opening);
+  return opening;
+}
+
+async function open({ fs, database, clock = systemClock }: RumboSources): Promise<Rumbo> {
   const changes = new ChangeFeed();
   const store = await VaultStore.open(fs, changes);
   const db = await AppDatabase.open(database, changes);
   const daily = new DailyService(store, clock);
   const agenda = new AgendaService(store, daily);
-  const tasks = new TaskService(store, daily, agenda);
+  const taskRepository = await TaskRepository.open(db);
+  const tasks = new TaskService(taskRepository, store, daily, agenda);
   const habits = new HabitService(store, daily, tasks);
   const learning = new LearningService(store, daily, tasks);
   const ideaRepository = new IdeaRepository(db);
   const ideas = new IdeaService(ideaRepository, daily, tasks);
-  await new VaultImport(db, store, daily, ideaRepository).run();
+  await new VaultImport(db, store, daily, ideaRepository, taskRepository).run();
   const routines = new RoutineService(store, daily, habits, tasks, learning);
 
   return {

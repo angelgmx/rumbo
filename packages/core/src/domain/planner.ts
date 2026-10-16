@@ -12,7 +12,7 @@ export interface StudySlot {
 }
 
 /** Lo que queda de un tema, en piezas que se pueden medir. */
-export interface PendingWork {
+interface PendingWork {
   id: string;
   concepts: number;
   exercises: ExerciseLevel[];
@@ -20,7 +20,7 @@ export interface PendingWork {
   estimatedHours?: number;
 }
 
-export interface PlannedModule {
+interface PlannedModule {
   id: string;
   minutes: number;
   /** Día en que se termina, si cabe en el horario dentro del límite de búsqueda. */
@@ -110,7 +110,7 @@ export function sessionStart(slots: StudySlot[], day: IsoDate): string | undefin
     .sort()[0];
 }
 
-export interface WeekSessions {
+interface WeekSessions {
   id: string;
   count: number;
 }

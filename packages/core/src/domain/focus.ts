@@ -3,7 +3,7 @@ import { keepsStreak, type Habit, type HabitValue, type Streak } from "./habits"
 // Lo que decide la pantalla Foco, sin tocar el vault: qué toca empezar y qué racha corre peligro.
 
 /** Desde cuántos días seguidos una racha merece un aviso. */
-export const RISK_STREAK_DAYS = 3;
+const RISK_STREAK_DAYS = 3;
 
 export interface RiskCandidate {
   habit: Habit;
@@ -29,7 +29,7 @@ export function streaksAtRisk<T extends RiskCandidate>(habits: T[], badDay: bool
     .sort((a, b) => b.streak.count - a.streak.count);
 }
 
-export interface RoutineStepLike {
+interface RoutineStepLike {
   routine: string;
   start: string;
   end: string;
@@ -42,7 +42,7 @@ export type StartChoice<S, T, H, P> =
   | { kind: "habit"; habit: H; reason: string }
   | { kind: "next-step"; step: P; reason: string };
 
-export interface StartCandidates<S, T, H, P> {
+interface StartCandidates<S, T, H, P> {
   /** "HH:MM" de ahora. */
   time: string;
   /** Los pasos de las rutinas de hoy, en orden de hora. */

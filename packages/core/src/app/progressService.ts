@@ -3,7 +3,7 @@ import { isDone, isScheduledOn } from "../domain/habits";
 import type { AgendaService } from "./agendaService";
 import type { HabitService } from "./habitService";
 
-export interface DayProgress {
+interface DayProgress {
   date: IsoDate;
   planned: number;
   done: number;

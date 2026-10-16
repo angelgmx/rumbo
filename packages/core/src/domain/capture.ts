@@ -8,7 +8,7 @@ import type { Priority } from "./tasks";
 //   "idea para Citalash"          → tarea sin fecha en el inbox
 // El título del panel de tarea usa otra lectura: sin hora, con prioridad («!alta»).
 
-export interface Capture {
+interface Capture {
   text: string;
   date?: IsoDate;
   start?: string;

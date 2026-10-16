@@ -45,6 +45,7 @@ export type SqlValue = string | number | null;
  * una en memoria. Los parámetros van con `?`.
  */
 export interface Database {
-  execute(sql: string, params?: SqlValue[]): Promise<void>;
+  /** Devuelve el id de la fila que haya insertado, si ha insertado una. */
+  execute(sql: string, params?: SqlValue[]): Promise<{ lastInsertId?: number }>;
   select<T>(sql: string, params?: SqlValue[]): Promise<T[]>;
 }

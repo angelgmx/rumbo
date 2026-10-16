@@ -26,8 +26,6 @@ export function newDailyNote(date: IsoDate, habits: Habit[], template?: string):
     ...(habitLines.length > 0 ? ["habits:", ...habitLines] : []),
     "---",
     "",
-    "## Foco de hoy",
-    "",
     "## Agenda",
     "",
     "## Notas del día",

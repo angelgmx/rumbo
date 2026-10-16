@@ -1,83 +1,72 @@
 import { parseCapture, parseTaskTitle } from "../domain/capture";
 import type { IsoDate } from "../domain/dates";
 import { linkTarget } from "../domain/links";
-import { sectionLines } from "../domain/sections";
 import { creditSession } from "../domain/session";
 import {
-  appendLines,
-  appendTask,
-  appendTaskDraft,
-  duplicateTask,
   isInView,
-  parseTasks,
-  removeTask,
-  setTaskDone,
-  takeDoneTasks,
   taskToDraft,
-  updateTask,
   type Task,
   type TaskChanges,
   type TaskDraft,
   type TaskView,
 } from "../domain/tasks";
+import type { TaskRepository } from "../db/taskRepository";
 import type { Note } from "../vault/vault";
 import type { AgendaService } from "./agendaService";
 import type { DailyService } from "./dailyService";
 import type { VaultStore } from "./vaultStore";
 
 /** Máximo de tareas en el foco del día: más de 3 deja de ser foco. */
-export const MAX_FOCUS = 3;
-const FOCUS_HEADING = "Foco de hoy";
+const MAX_FOCUS = 3;
 
 export type CaptureResult = { kind: "task"; date?: IsoDate } | { kind: "agenda"; date: IsoDate };
 
+/** Las tareas: verlas por vistas, crearlas, cambiarlas y borrarlas. Viven en la base de datos. */
 export class TaskService {
-  private writes: Promise<void> = Promise.resolve();
-
   constructor(
+    private readonly tasks: TaskRepository,
     private readonly store: VaultStore,
     private readonly daily: DailyService,
     private readonly agenda: AgendaService,
   ) {}
 
-  /**
-   * Todas las tareas: las del inbox, las dailies y las notas de proyecto.
-   * Salen del índice, que el watcher mantiene al día con lo que cambias en Obsidian.
-   */
+  /** Todas las que no están archivadas. */
   all(): Task[] {
-    const paths = [...new Set([this.inboxPath, ...this.notePaths()])];
-    return paths.flatMap((path) => {
-      const note = this.store.get(path);
-      return note ? parseTasks(path, note.source) : [];
-    });
+    return this.tasks.all();
+  }
+
+  get(id: number): Task | undefined {
+    return this.tasks.get(id);
   }
 
   list(view: TaskView): Task[] {
     const today = this.daily.today();
     return this.all()
-      .filter((task) => isInView(task, view, today, this.inboxPath))
+      .filter((task) => isInView(task, view, today))
       .sort((a, b) => (a.scheduled ?? a.due ?? "").localeCompare(b.scheduled ?? b.due ?? ""));
   }
 
   /** Las tareas de un hábito para un día: las que lo cumplen. */
   forHabit(habitKey: string, date: IsoDate): Task[] {
     return this.all().filter(
-      (task) => task.fields.habit === habitKey && (task.scheduled ?? task.due) === date,
+      (task) => task.habit === habitKey && (task.scheduled ?? task.due) === date,
     );
   }
 
-  /** La tarea tal como está ahora, aunque otra línea de su nota haya cambiado de sitio. */
-  locate(ref: Pick<Task, "path" | "line" | "text">): Task | undefined {
-    const same = this.all().filter(({ path, text }) => path === ref.path && text === ref.text);
-    return same.find(({ line }) => line === ref.line) ?? same[0];
+  /** El foco de hoy: como mucho 3 tareas, en el orden en que entraron. */
+  focus(): Task[] {
+    const today = this.daily.today();
+    return this.all()
+      .filter((task) => task.focusOn === today)
+      .sort((a, b) => a.id - b.id)
+      .slice(0, MAX_FOCUS);
   }
 
-  /** Las tareas de "## Foco de hoy" en la daily de hoy. */
-  focus(): Task[] {
-    const path = this.daily.pathFor(this.daily.today());
-    const source = this.store.get(path)?.source ?? "";
-    const focusLines = new Set(sectionLines(source, FOCUS_HEADING).map(({ line }) => line));
-    return parseTasks(path, source).filter((task) => focusLines.has(task.line) && task.text !== "");
+  /** Mete la tarea en el foco de hoy o la saca. Si ya hay 3, no entra. */
+  async setFocus(task: Task, inFocus: boolean): Promise<boolean> {
+    if (inFocus && this.focus().length >= MAX_FOCUS) return false;
+    await this.tasks.update(task.id, { focusOn: inFocus ? this.daily.today() : undefined });
+    return true;
   }
 
   /**
@@ -104,69 +93,53 @@ export class TaskService {
     return goal && String(goal.data.title ?? goal.name);
   }
 
-  async setDone(task: Task, done: boolean): Promise<void> {
-    const today = this.daily.today();
-    await this.edit(task.path, (source) => setTaskDone(source, task.line, done, today));
+  setDone(task: Task, done: boolean): Promise<void> {
+    return this.tasks.setDone(task.id, done ? this.daily.today() : undefined);
   }
 
-  async update(task: Task, changes: TaskChanges): Promise<void> {
-    await this.edit(task.path, (source) => updateTask(source, task.line, changes));
+  update(task: Task, changes: TaskChanges): Promise<void> {
+    return this.tasks.update(task.id, changes);
   }
 
-  /** Apunta los minutos de una sesión de trabajo en la tarea, buscándola donde esté ahora. */
-  async recordSession(ref: Pick<Task, "path" | "line" | "text">, minutes: number): Promise<void> {
-    const task = this.locate(ref);
+  /** Apunta los minutos de una sesión de trabajo en la tarea. */
+  async recordSession(id: number, minutes: number): Promise<void> {
+    const task = this.get(id);
     if (!task) return;
-    await this.update(task, { spent: creditSession(taskToDraft(task).spent, minutes) });
+    await this.tasks.update(id, { spent: creditSession(task.spent, minutes) });
   }
 
-  async remove(task: Task): Promise<void> {
-    await this.edit(task.path, (source) => removeTask(source, task.line));
+  remove(task: Task): Promise<void> {
+    return this.tasks.remove(task.id);
   }
 
-  /** Copia la tarea, con sus pasos y notas, debajo de ella y sin hacer. Devuelve la copia. */
-  async duplicate(task: Task): Promise<Task | undefined> {
-    let copied: { source: string; line: number } | undefined;
-    await this.edit(task.path, (source) => {
-      copied = duplicateTask(source, task.line);
-      return copied?.source ?? source;
-    });
-    return copied && parseTasks(task.path, copied.source).find(({ line }) => line === copied!.line);
+  /** Copia la tarea, con sus pasos y notas, sin hacer y fuera del foco. Devuelve la copia. */
+  duplicate(task: Task): Promise<Task | undefined> {
+    return this.tasks.insert({ ...taskToDraft(task), focusOn: undefined }, this.daily.today());
   }
 
   /** Añade la tarea al inbox y la devuelve tal como ha quedado. */
-  async addToInbox(text: string): Promise<Task | undefined> {
-    const source = appendTask(await this.readIfExists(this.inboxPath), text);
-    await this.store.write(this.inboxPath, source);
-    return parseTasks(this.inboxPath, source).at(-1);
+  addToInbox(text: string): Promise<Task | undefined> {
+    return this.tasks.insert({ text }, this.daily.today());
   }
 
   /**
-   * Mueve las tareas hechas del inbox a la nota de archivo, con sus pasos y notas.
-   * Las de las dailies y los proyectos se quedan donde están. Devuelve cuántas ha movido.
+   * Archiva las tareas hechas: dejan de salir en «Hechas». Las de un hábito se quedan,
+   * porque son su historial. Devuelve cuántas ha archivado.
    */
   async archiveDone(): Promise<number> {
-    let archived = 0;
-    await this.edit(this.inboxPath, async (source) => {
-      const { source: rest, taken } = takeDoneTasks(source);
-      if (taken.length === 0) return source;
-      archived = parseTasks("", taken.join("\n")).length;
-      const archivePath = this.store.config.folders.archive;
-      await this.store.write(archivePath, appendLines(await this.readIfExists(archivePath), taken));
-      return rest;
-    });
-    return archived;
+    const done = this.all().filter((task) => task.done && !task.habit);
+    await this.tasks.archive(done.map((task) => task.id));
+    return done.length;
   }
 
-  /** Crea una tarea hecha con el formulario. Va al inbox; desde ahí se procesa. */
-  async create(draft: TaskDraft): Promise<void> {
-    const source = await this.readIfExists(this.inboxPath);
-    await this.store.write(this.inboxPath, appendTaskDraft(source, draft));
+  /** Crea una tarea. Sin fecha, área ni proyecto queda en el inbox para procesarla. */
+  async create(draft: TaskDraft): Promise<Task | undefined> {
+    return this.tasks.insert(draft, this.daily.today());
   }
 
   /**
    * Guarda una captura rápida. Si lleva hora va a la agenda de ese día;
-   * si no, es una tarea en el inbox (con fecha si la tiene).
+   * si no, es una tarea (con fecha si la tiene).
    */
   async capture(input: string): Promise<CaptureResult> {
     const capture = parseCapture(input, this.daily.today());
@@ -190,18 +163,6 @@ export class TaskService {
     return { kind: "task", date: title.date };
   }
 
-  /**
-   * Cambia una nota leyéndola del disco justo antes de escribirla, de una en una:
-   * dos cambios seguidos (cada tecla de un título) no se pisan.
-   */
-  private edit(path: string, change: (source: string) => string | Promise<string>): Promise<void> {
-    const run = this.writes.then(async () =>
-      this.store.write(path, await change(await this.store.read(path))),
-    );
-    this.writes = run.catch(() => {});
-    return run;
-  }
-
   private named(name: string | undefined): Note | undefined {
     return name ? this.store.findByName(name) : undefined;
   }
@@ -209,20 +170,5 @@ export class TaskService {
   /** La nota a la que apunta un campo de enlace de otra nota. */
   private linked(note: Note | undefined, key: string): Note | undefined {
     return this.named(linkTarget(note?.data[key]));
-  }
-
-  private get inboxPath(): string {
-    return this.store.config.folders.inbox;
-  }
-
-  private notePaths(): string[] {
-    return this.store
-      .notesOfType("daily")
-      .concat(this.store.notesOfType("project"))
-      .map((note) => note.path);
-  }
-
-  private async readIfExists(path: string): Promise<string> {
-    return (await this.store.exists(path)) ? this.store.read(path) : "";
   }
 }

@@ -42,7 +42,7 @@ export interface LayoutLink {
 }
 
 /** Elementos por fila cuando una pista va sola en serpiente. */
-export const SNAKE_WIDTH = 4;
+const SNAKE_WIDTH = 4;
 
 export interface RoadmapLayout {
   columns: number;

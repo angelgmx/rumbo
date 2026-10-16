@@ -47,7 +47,7 @@ export interface HabitSummary {
 // Con prefijo para que "Gym" (hábito) no choque con "Gym" (área) en los wikilinks.
 const HABIT_FILE_PREFIX = "Hábito — ";
 
-export interface HabitList {
+interface HabitList {
   habits: HabitSummary[];
   /** Notas de hábito con el frontmatter mal escrito, para avisar al usuario. */
   invalid: string[];

@@ -46,8 +46,7 @@ export class InboxTriageService {
   }
 
   async accept({ task, proposal }: TriageSuggestion): Promise<void> {
-    // Aceptar otras propuestas antes ha podido mover la línea de esta tarea.
-    const current = this.tasks.locate(task);
+    const current = this.tasks.get(task.id);
     if (!current) return;
 
     switch (proposal.kind) {

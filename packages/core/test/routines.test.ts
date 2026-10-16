@@ -235,9 +235,9 @@ describe("RoutineService", () => {
     expect(created.map((task) => task.text)).toEqual([
       "Python basics · Variables: ejercicios 01–03",
     ]);
-    expect(files.get("Inbox/Inbox.md")).toContain(
-      "Python basics · Variables: ejercicios 01–03 ⏳ 2026-10-16\n    - [ ] 01 — ",
-    );
+    const saved = rumbo.tasks.all().find((task) => task.text === created[0]!.text);
+    expect(saved).toMatchObject({ scheduled: "2026-10-16" });
+    expect(saved!.steps[0]!.text).toMatch(/^01 — /);
     expect(await rumbo.routines.planBlock(summary!, 1)).toEqual([]);
   });
 

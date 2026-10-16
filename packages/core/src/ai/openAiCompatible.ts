@@ -5,7 +5,7 @@ import type { AiMessage, AiProvider, HttpFetch } from "../ports";
 import { AiError } from "./aiError";
 import { endpoint, postJson } from "./postJson";
 
-export interface OpenAiCompatibleOptions {
+interface OpenAiCompatibleOptions {
   /** Hasta la versión, sin barra final: http://localhost:11434/v1 */
   baseUrl: string;
   model: string;

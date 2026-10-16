@@ -85,7 +85,7 @@ export function isScheduledOn(schedule: HabitSchedule, date: IsoDate): boolean {
 }
 
 /** Los días malos no rompen la racha: se saltan, y si ese día lo hiciste, cuenta. */
-export type BadDays = ReadonlySet<IsoDate>;
+type BadDays = ReadonlySet<IsoDate>;
 
 const NO_BAD_DAYS: BadDays = new Set();
 

@@ -21,8 +21,6 @@ date: <% tp.date.now("YYYY-MM-DD") %>
 habits: {}
 ---
 
-## Foco de hoy
-
 ## Agenda
 
 ## Notas del día

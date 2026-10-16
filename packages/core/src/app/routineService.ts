@@ -62,14 +62,14 @@ export interface RoutineStep {
   habit: HabitSummary;
 }
 
-export interface RoutineList {
+interface RoutineList {
   routines: RoutineSummary[];
   /** Notas de rutina con el frontmatter mal escrito, para avisar al usuario. */
   invalid: string[];
 }
 
 /** Lo que se puede cambiar de una rutina sin tocar sus bloques. */
-export interface RoutineChanges {
+interface RoutineChanges {
   title?: string;
   start?: string;
   days?: HabitSchedule;

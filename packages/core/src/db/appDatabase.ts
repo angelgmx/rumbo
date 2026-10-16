@@ -23,9 +23,19 @@ export class AppDatabase {
     return this.db.select<T>(sql, params);
   }
 
-  async write(sql: string, params: SqlValue[] = []): Promise<void> {
-    await this.db.execute(sql, params);
+  /**
+   * Escribe y avisa a la UI. `applied` corre solo si la escritura ha ido bien, antes del aviso:
+   * así quien guarda una copia en memoria la pone al día justo a tiempo.
+   */
+  async write(
+    sql: string,
+    params: SqlValue[] = [],
+    applied?: (lastInsertId?: number) => void,
+  ): Promise<number | undefined> {
+    const { lastInsertId } = await this.db.execute(sql, params);
+    applied?.(lastInsertId);
     this.changes.notify();
+    return lastInsertId;
   }
 
   /** Un ajuste interno de la base de datos, como qué se ha importado ya del vault. */

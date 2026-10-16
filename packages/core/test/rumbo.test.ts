@@ -49,19 +49,26 @@ describe("habits", () => {
 });
 
 describe("tasks", () => {
-  it("shows the inbox and today's tasks", async () => {
-    expect((await rumbo.tasks.list("inbox")).map((task) => task.text)).toEqual([
-      "Buy a new notebook",
-    ]);
-    expect((await rumbo.tasks.list("today")).map((task) => task.text)).toEqual([
-      "Read the Python docs on lists",
+  it("imports the inbox and the dailies once: a daily task without date is from that day", () => {
+    expect(rumbo.tasks.list("inbox").map((task) => task.text)).toEqual(["Buy a new notebook"]);
+    const today = rumbo.tasks.list("today");
+    expect(today.map((task) => task.text)).toContain("Read the Python docs on lists");
+    expect(today.filter((task) => task.text === "Study Python variables")).toHaveLength(3);
+  });
+
+  it("keeps the focus of each daily on its day", () => {
+    expect(rumbo.tasks.focus().map((task) => [task.text, task.focusOn])).toEqual([
+      ["Study Python variables", "2026-10-15"],
     ]);
   });
 
-  it("reads the focus of today from the daily note", async () => {
-    expect((await rumbo.tasks.focus()).map((task) => task.text)).toEqual([
-      "Study Python variables",
-    ]);
+  it("puts a task in today's focus, three at most", async () => {
+    const [first, second, third] = rumbo.tasks.list("inbox").concat(rumbo.tasks.list("upcoming"));
+    const extra = await rumbo.tasks.create({ text: "Una más" });
+    expect(await rumbo.tasks.setFocus(first!, true)).toBe(true);
+    expect(await rumbo.tasks.setFocus(second ?? third!, true)).toBe(true);
+    expect(await rumbo.tasks.setFocus(extra!, true)).toBe(false);
+    expect(rumbo.tasks.focus()).toHaveLength(3);
   });
 
   it("sends a capture with a time to the agenda", async () => {
@@ -70,16 +77,19 @@ describe("tasks", () => {
     expect(blocks).toMatchObject([{ start: "18:00", end: "19:00", text: "gym" }]);
   });
 
-  it("sends a capture without time to the inbox", async () => {
+  it("sends a capture without time to the database, not to the inbox note", async () => {
+    const before = files.get("Inbox/Inbox.md");
     await rumbo.tasks.capture("llamar a Marta el lunes");
-    expect(files.get("Inbox/Inbox.md")).toContain("- [ ] llamar a Marta ⏳ 2026-10-19\n");
+    expect(rumbo.tasks.all().find((task) => task.text === "llamar a Marta")).toMatchObject({
+      scheduled: "2026-10-19",
+    });
+    expect(files.get("Inbox/Inbox.md")).toBe(before);
   });
 });
 
 describe("capture", () => {
   it("reads priority, duration and tags from a task", async () => {
     await rumbo.tasks.capture("repasar strings hoy 30m !alta #java");
-    expect(files.get("Inbox/Inbox.md")).toContain("- [ ] repasar strings");
     const [task] = rumbo.tasks.all().filter((t) => t.text === "repasar strings");
     expect(task).toMatchObject({ priority: "high", tags: ["java"], scheduled: "2026-10-15" });
   });
@@ -122,7 +132,7 @@ describe("ideas", () => {
     await rumbo.ideas.capture("Write a post");
     const [idea] = await rumbo.ideas.list();
     const task = await rumbo.ideas.toTask(idea!);
-    expect(task).toMatchObject({ text: "Write a post", path: "Inbox/Inbox.md", done: false });
+    expect(task).toMatchObject({ text: "Write a post", done: false });
     expect(await rumbo.ideas.list()).toEqual([]);
   });
 
@@ -136,80 +146,74 @@ describe("ideas", () => {
 
 describe("editing tasks", () => {
   it("keeps both changes when two edits arrive at once", async () => {
-    const [task] = await rumbo.tasks.list("inbox");
+    const [task] = rumbo.tasks.list("inbox");
     await Promise.all([
       rumbo.tasks.update(task!, { priority: "high" }),
-      rumbo.tasks.update(task!, { duration: 30 }),
+      rumbo.tasks.update(task!, { duration: 30, steps: [{ text: "Mirar precios", done: false }] }),
     ]);
-    expect(files.get("Inbox/Inbox.md")).toContain("[duration:: 30m] ⏫");
+    expect(rumbo.tasks.get(task!.id)).toMatchObject({
+      priority: "high",
+      duration: 30,
+      steps: [{ text: "Mirar precios", done: false }],
+    });
   });
 
-  it("duplicates a task and returns the copy", async () => {
-    const [task] = await rumbo.tasks.list("inbox");
-    const copy = await rumbo.tasks.duplicate(task!);
-    expect(copy).toMatchObject({ text: "Buy a new notebook", done: false });
-    expect(copy!.line).toBeGreaterThan(task!.line);
-    expect((await rumbo.tasks.list("inbox")).filter((t) => t.text === task!.text)).toHaveLength(2);
+  it("survives closing and opening the app", async () => {
+    const database = memoryDatabase();
+    const open = () => createRumbo({ fs: memoryFileSystem(files), database, clock });
+    const first = await open();
+    const [task] = first.tasks.list("inbox");
+    await first.tasks.update(task!, { notes: "Que sea A5", tags: ["casa"] });
+    await first.tasks.setDone(task!, true);
+
+    const again = (await open()).tasks.get(task!.id);
+    expect(again).toMatchObject({
+      notes: "Que sea A5",
+      tags: ["casa"],
+      done: true,
+      doneOn: "2026-10-15",
+    });
+    expect((await open()).tasks.all()).toHaveLength(first.tasks.all().length);
   });
 
-  it("removes a task from its note", async () => {
-    const [task] = await rumbo.tasks.list("inbox");
+  it("removes a field when it changes to nothing", async () => {
+    const [task] = rumbo.tasks.list("today");
+    await rumbo.tasks.update(task!, { area: undefined, scheduled: undefined });
+    expect(rumbo.tasks.get(task!.id)).not.toHaveProperty("area");
+    expect(rumbo.tasks.get(task!.id)?.scheduled).toBeUndefined();
+  });
+
+  it("duplicates a task, not done and out of the focus", async () => {
+    const [task] = rumbo.tasks.focus();
+    await rumbo.tasks.setDone(task!, true);
+    const copy = await rumbo.tasks.duplicate(rumbo.tasks.get(task!.id)!);
+    expect(copy).toMatchObject({ text: task!.text, done: false });
+    expect(copy!.focusOn).toBeUndefined();
+    expect(copy!.id).not.toBe(task!.id);
+  });
+
+  it("removes a task", async () => {
+    const [task] = rumbo.tasks.list("inbox");
     await rumbo.tasks.remove(task!);
-    expect(await rumbo.tasks.list("inbox")).toEqual([]);
+    expect(rumbo.tasks.list("inbox")).toEqual([]);
   });
 });
 
 describe("archiving done tasks", () => {
-  const inbox = "# Inbox\n- [ ] Buy a new notebook\n- [x] Old thing ✅ 2026-10-01\n";
-
-  beforeEach(() => files.set("Inbox/Inbox.md", inbox));
-
-  it("moves the done tasks of the inbox to the archive note, next to it", async () => {
-    rumbo = await createRumbo({
-      fs: memoryFileSystem(files),
-      database: memoryDatabase(),
-      clock: clock,
+  it("hides the done tasks, but keeps the ones of a habit as its history", async () => {
+    const done = await rumbo.tasks.create({ text: "Old thing" });
+    const habit = await rumbo.tasks.create({
+      text: "Leer",
+      habit: "reading",
+      scheduled: "2026-10-14",
     });
-    expect(await rumbo.tasks.archiveDone()).toBe(1);
-    expect(files.get("Inbox/Inbox.md")).toBe("# Inbox\n- [ ] Buy a new notebook\n");
-    expect(files.get("Inbox/Archivo de tareas.md")).toBe("- [x] Old thing ✅ 2026-10-01\n");
-  });
+    await rumbo.tasks.setDone(done!, true);
+    await rumbo.tasks.setDone(habit!, true);
 
-  it("appends to the archive instead of replacing it", async () => {
-    files.set("Inbox/Archivo de tareas.md", "- [x] Older ✅ 2026-09-01\n");
-    rumbo = await createRumbo({
-      fs: memoryFileSystem(files),
-      database: memoryDatabase(),
-      clock: clock,
-    });
-    await rumbo.tasks.archiveDone();
-    expect(files.get("Inbox/Archivo de tareas.md")).toBe(
-      "- [x] Older ✅ 2026-09-01\n- [x] Old thing ✅ 2026-10-01\n",
-    );
-  });
-
-  it("leaves the done tasks of daily notes where they are", async () => {
-    const daily = "Journal/2026/10/2026-10-15.md";
-    const before = files.get(daily)!;
-    files.set(daily, `${before}\n- [x] Daily thing ✅ 2026-10-15\n`);
-    rumbo = await createRumbo({
-      fs: memoryFileSystem(files),
-      database: memoryDatabase(),
-      clock: clock,
-    });
-    await rumbo.tasks.archiveDone();
-    expect(files.get(daily)).toContain("Daily thing");
-  });
-
-  it("does nothing when the inbox has no done tasks", async () => {
-    files.set("Inbox/Inbox.md", "- [ ] Only pending\n");
-    rumbo = await createRumbo({
-      fs: memoryFileSystem(files),
-      database: memoryDatabase(),
-      clock: clock,
-    });
+    expect(await rumbo.tasks.archiveDone()).toBeGreaterThanOrEqual(1);
+    expect(rumbo.tasks.get(done!.id)).toBeUndefined();
+    expect(rumbo.tasks.get(habit!.id)).toBeDefined();
     expect(await rumbo.tasks.archiveDone()).toBe(0);
-    expect(files.has("Inbox/Archivo de tareas.md")).toBe(false);
   });
 });
 

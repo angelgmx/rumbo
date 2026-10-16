@@ -6,7 +6,8 @@ export function memoryDatabase(): Database {
   const db = new DatabaseSync(":memory:");
   return {
     execute: async (sql, params = []) => {
-      db.prepare(sql).run(...params);
+      const { lastInsertRowid } = db.prepare(sql).run(...params);
+      return { lastInsertId: Number(lastInsertRowid) };
     },
     select: async <T>(sql: string, params: (string | number | null)[] = []) =>
       db.prepare(sql).all(...params) as T[],

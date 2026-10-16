@@ -9,7 +9,7 @@ import type { RoutineService } from "./routineService";
 import type { TaskService } from "./taskService";
 import type { VaultStore } from "./vaultStore";
 
-export interface DayClosing {
+interface DayClosing {
   energy?: Energy;
   wins: string[];
   /** Cuándo empiezas mañana y lo primero que harás, como un bloque de su agenda. */

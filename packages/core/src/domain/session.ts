@@ -32,7 +32,7 @@ export interface StudyPlace {
   note?: string;
 }
 
-export type StudyStep<M extends StudyModule = StudyModule> =
+type StudyStep<M extends StudyModule = StudyModule> =
   | { kind: "exercise"; module: M; exercise: M["exercises"][number] }
   | { kind: "note"; module: M; note: M["notes"][number] }
   | { kind: "module"; module: M };

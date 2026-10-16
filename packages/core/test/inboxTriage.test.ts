@@ -121,9 +121,10 @@ describe("InboxTriageService", () => {
     await rumbo.triage.accept(suggestion!);
 
     expect(rumbo.tasks.list("inbox")).toHaveLength(0);
-    expect(files.get("Inbox/Inbox.md")).toContain(
-      "- [ ] Buy a new notebook [area:: Python] ⏳ 2026-10-17",
-    );
+    expect(rumbo.tasks.all().find((task) => task.text === "Buy a new notebook")).toMatchObject({
+      area: "Python",
+      scheduled: "2026-10-17",
+    });
   });
 
   it("turns an accepted idea into an idea", async () => {
@@ -132,7 +133,7 @@ describe("InboxTriageService", () => {
     await rumbo.triage.accept(suggestion!);
 
     expect((await rumbo.ideas.list()).map((idea) => idea.text)).toEqual(["Buy a new notebook"]);
-    expect(files.get("Inbox/Inbox.md")).not.toContain("Buy a new notebook");
+    expect(rumbo.tasks.all().some((task) => task.text === "Buy a new notebook")).toBe(false);
   });
 
   it("creates an active goal note for an accepted goal", async () => {
@@ -145,7 +146,7 @@ describe("InboxTriageService", () => {
     expect(files.get("Goals/Write every day.md")).toBe(
       '---\ntype: goal\ntitle: Write every day\narea: "[[Python]]"\nstatus: active\n---\n\n# Write every day\n',
     );
-    expect(files.get("Inbox/Inbox.md")).not.toContain("Buy a new notebook");
+    expect(rumbo.tasks.all().some((task) => task.text === "Buy a new notebook")).toBe(false);
   });
 
   it("finds the task again when an earlier accept moved its line", async () => {

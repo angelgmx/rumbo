@@ -4,9 +4,9 @@ import { sectionLines } from "./sections";
 export const ENERGY_LEVELS = ["low", "medium", "high"] as const;
 export type Energy = (typeof ENERGY_LEVELS)[number];
 
-export const WINS_HEADING = "Lo que salió bien";
+const WINS_HEADING = "Lo que salió bien";
 
-export interface DayFacts {
+interface DayFacts {
   tasksDone: number;
   /** Hábitos cumplidos hoy, con su racha contando hoy. */
   habitsDone: { name: string; streak: number }[];

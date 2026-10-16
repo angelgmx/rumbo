@@ -11,7 +11,6 @@ const rawSchema = z.object({
       daily_format: z.string().default("YYYY-MM-DD"),
       inbox: z.string().default("Inbox.md"),
       ideas: z.string().optional(),
-      archive: z.string().optional(),
       habits: z.string().default("Habits"),
       goals: z.string().default("Goals"),
       projects: z.string().default("Projects"),
@@ -31,13 +30,12 @@ const rawSchema = z.object({
   aliases: z.record(z.string(), z.string()).default({}),
 });
 
-// Las ideas y el archivo de tareas, si no se dicen, viven junto a la nota del inbox.
+// La nota antigua de ideas, si no se dice, está junto a la del inbox (solo se lee para importarla).
 const configSchema = rawSchema.transform((config) => ({
   ...config,
   folders: {
     ...config.folders,
     ideas: config.folders.ideas ?? besideInbox(config.folders.inbox, "Ideas.md"),
-    archive: config.folders.archive ?? besideInbox(config.folders.inbox, "Archivo de tareas.md"),
   },
 }));
 
@@ -47,7 +45,6 @@ function besideInbox(inbox: string, name: string): string {
 }
 
 export type RumboConfig = z.infer<typeof configSchema>;
-export type PomodoroSettings = RumboConfig["pomodoro"];
 
 export async function loadConfig(fs: FileSystem): Promise<RumboConfig> {
   const raw = (await fs.exists(CONFIG_PATH)) ? parse(await fs.read(CONFIG_PATH)) : {};

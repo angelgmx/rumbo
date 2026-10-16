@@ -1,6 +1,6 @@
 import { parseDocument, stringify } from "yaml";
 
-export interface ParsedNote {
+interface ParsedNote {
   data: Record<string, unknown>;
   body: string;
 }

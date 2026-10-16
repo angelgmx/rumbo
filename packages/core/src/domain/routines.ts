@@ -22,7 +22,7 @@ import type { TaskDraft } from "./tasks";
 //     - { kind: module, ref: "[[Java desde cero]]", minutes: 45 }
 //     - { kind: break, minutes: 10 }
 
-export const ROUTINE_KINDS = ["morning", "afternoon", "evening", "study", "gym", "custom"] as const;
+const ROUTINE_KINDS = ["morning", "afternoon", "evening", "study", "gym", "custom"] as const;
 export const BLOCK_KINDS = ["habit", "module", "task", "break", "custom"] as const;
 export type BlockKind = (typeof BLOCK_KINDS)[number];
 
@@ -158,7 +158,7 @@ function overlapsInTime(a: Routine, b: Routine): boolean {
 }
 
 /** Un hábito de la rutina con lo apuntado en las dailies. */
-export interface RoutineHabit {
+interface RoutineHabit {
   habit: Habit;
   history: HabitHistory;
 }

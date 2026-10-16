@@ -71,13 +71,13 @@ function padTime(time: string): string {
 }
 
 /** Lo mínimo que necesita algo con hora para saber si está en curso. */
-export interface Timed {
+interface Timed {
   start: string;
   end?: string;
   done: boolean;
 }
 
-export interface NowAndNext<T extends Timed = AgendaBlock> {
+interface NowAndNext<T extends Timed = AgendaBlock> {
   now?: T;
   next?: T;
 }
