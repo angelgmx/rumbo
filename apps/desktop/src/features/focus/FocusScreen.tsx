@@ -12,8 +12,8 @@ import { timeOf, useNow } from "@/hooks/useNow";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { useSession } from "@/features/session/SessionProvider";
-import { choiceRequest, QUICK_MINUTES, type FocusChoice } from "./choice";
-import { dayEntries, routineOfHabits } from "./dayEntries";
+import { choiceRequest, focusNumber, QUICK_MINUTES, type FocusChoice } from "./choice";
+import { dayEntries, nextEntryTitle, routineOfHabits } from "./dayEntries";
 import { DayPlanCard } from "./DayPlanCard";
 import { FocusHeader } from "./FocusHeader";
 import { NowCard } from "./NowCard";
@@ -39,6 +39,7 @@ export function FocusScreen() {
     nextStep: day.nextStep,
   });
   const around = blocksAround(day.plan, time);
+  const entries = dayEntries(day.plan, day.groups);
 
   // Una tarea del foco con fecha de hoy saldría dos veces.
   const otherTasks = day.todayTasks.filter(
@@ -79,7 +80,7 @@ export function FocusScreen() {
     <>
       <ScreenHeader title="Foco" />
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6">
+        <div className="flex flex-col gap-6">
           <FocusHeader
             today={today}
             greeting={greeting(now)}
@@ -88,10 +89,10 @@ export function FocusScreen() {
             hasNow={choice !== undefined}
           />
 
-          <div className="grid grid-cols-[1fr_380px] items-start gap-6">
+          <div className="grid grid-cols-[1fr_460px] items-start gap-6">
             <div className="flex flex-col gap-6">
               <DayPlanCard
-                entries={dayEntries(day.plan, day.groups)}
+                entries={entries}
                 time={time}
                 current={around.now}
                 onToggleBlock={(item, done) => rumbo.agenda.setDone(today, item.block, done)}
@@ -108,6 +109,8 @@ export function FocusScreen() {
             <div className="flex flex-col gap-6">
               <NowCard
                 choice={choice}
+                focusNumber={focusNumber(choice, day.focus)}
+                next={nextEntryTitle(entries, time)}
                 badDay={{
                   active: day.badDay,
                   used: day.badDaysUsed,

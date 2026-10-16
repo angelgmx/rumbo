@@ -10,6 +10,10 @@ import { describeChoice, QUICK_MINUTES, type FocusChoice } from "./choice";
 
 interface NowCardProps {
   choice?: FocusChoice;
+  /** «Foco 01» si lo elegido es una tarea del foco del día. */
+  focusNumber?: string;
+  /** Lo que viene después en «Tu día». */
+  next?: string;
   badDay: { active: boolean; used: number; left: number };
   onStart: () => void;
   onQuickStart: () => void;
@@ -17,7 +21,15 @@ interface NowCardProps {
 }
 
 /** «Ahora»: lo que toca empezar, por qué, y un único botón para hacerlo. */
-export function NowCard({ choice, badDay, onStart, onQuickStart, onToggleBadDay }: NowCardProps) {
+export function NowCard({
+  choice,
+  focusNumber,
+  next,
+  badDay,
+  onStart,
+  onQuickStart,
+  onToggleBadDay,
+}: NowCardProps) {
   const view = choice && describeChoice(choice);
   const task = choice?.kind === "task" ? choice.task : undefined;
   const steps = task?.steps ?? [];
@@ -40,9 +52,11 @@ export function NowCard({ choice, badDay, onStart, onQuickStart, onToggleBadDay 
         <p className="font-mono text-[11px] font-medium tracking-widest text-primary-text uppercase">
           Ahora
         </p>
-        {choice?.kind === "routine-step" && (
-          <p className="font-mono text-xs text-muted-foreground">{choice.step.start}</p>
-        )}
+        <p className="font-mono text-xs text-muted-foreground">
+          {[focusNumber, choice?.kind === "routine-step" && choice.step.start]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
       </div>
 
       {view ? (
@@ -54,14 +68,7 @@ export function NowCard({ choice, badDay, onStart, onQuickStart, onToggleBadDay 
         <p className="text-muted-foreground">Nada pendiente por ahora. Buen trabajo.</p>
       )}
 
-      {steps.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <StepsBar done={stepsDone} total={steps.length} />
-          <p className="font-mono text-xs text-muted-foreground">
-            {stepsDone} de {steps.length} pasos
-          </p>
-        </div>
-      )}
+      {steps.length > 0 && <StepsProgress done={stepsDone} total={steps.length} />}
 
       {choice && (
         <>
@@ -94,10 +101,28 @@ export function NowCard({ choice, badDay, onStart, onQuickStart, onToggleBadDay 
           Día malo
           <span className="text-muted-foreground">· {badDay.used} este mes</span>
         </button>
+        {next && (
+          <span className="ml-auto min-w-0 truncate text-muted-foreground">Después: {next}</span>
+        )}
       </div>
     </Card>
   );
 }
 
+function StepsProgress({ done, total }: { done: number; total: number }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
+        Progreso
+      </p>
+      <p className="flex items-baseline gap-2">
+        <span className="text-4xl font-semibold tracking-tight">{done}</span>
+        <span className="text-muted-foreground">/ {total} pasos</span>
+      </p>
+      <StepsBar done={done} total={total} />
+    </div>
+  );
+}
+
 const link =
-  "flex items-center gap-2 transition-colors hover:text-primary-text disabled:pointer-events-none disabled:opacity-50";
+  "flex shrink-0 items-center gap-2 whitespace-nowrap transition-colors hover:text-primary-text disabled:pointer-events-none disabled:opacity-50";

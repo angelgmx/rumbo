@@ -1,11 +1,14 @@
 import type { Task } from "@rumbo/core";
 import { AnimatePresence, motion } from "motion/react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CaptureBox } from "@/features/capture/CaptureBox";
+import { AreaDot } from "@/features/tasks/AreaDot";
 import { StepsChip } from "@/features/tasks/StepsChip";
+import { areaOf } from "@/features/tasks/taskFilters";
 import { listItem } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { formatFocusNumber } from "./choice";
 
 interface UntimedCardProps {
   focus: Task[];
@@ -22,12 +25,11 @@ export function UntimedCard({ focus, tasks, onToggle, onOpen }: UntimedCardProps
         <CardTitle>
           Sin hora <span className="ml-1 text-muted-foreground">{focus.length + tasks.length}</span>
         </CardTitle>
-        <CardDescription>Tu foco del día y las tareas para hoy</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-1">
         <AnimatePresence initial={false}>
           {[
-            ...focus.map((task) => ({ task, label: "Foco" })),
+            ...focus.map((task, index) => ({ task, label: formatFocusNumber(index) })),
             ...tasks.map((task) => ({ task, label: undefined })),
           ].map(({ task, label }) => (
             <motion.div key={`${task.path}:${task.text}`} {...listItem} className="overflow-hidden">
@@ -54,6 +56,7 @@ function TaskLine({
   onToggle: UntimedCardProps["onToggle"];
   onOpen: UntimedCardProps["onOpen"];
 }) {
+  const area = areaOf(task);
   return (
     <div className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted">
       <Checkbox
@@ -61,7 +64,7 @@ function TaskLine({
         onCheckedChange={(checked) => onToggle(task, checked === true)}
         aria-label={task.text}
       />
-      {label && <span className="font-mono text-xs text-primary-text uppercase">{label}</span>}
+      {area && <AreaDot area={area} />}
       <button
         type="button"
         onClick={() => onOpen(task)}
@@ -71,6 +74,7 @@ function TaskLine({
         )}
       >
         {task.text}
+        {label && <span className="text-sm text-muted-foreground"> · {label}</span>}
       </button>
       <StepsChip steps={task.steps} />
     </div>

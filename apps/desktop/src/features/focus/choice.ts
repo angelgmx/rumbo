@@ -34,6 +34,19 @@ export function describeChoice(choice: FocusChoice): { title: string; subtitle: 
   }
 }
 
+/** «Foco 01»: el puesto de la tarea elegida en el foco del día, si está en él. */
+export function focusNumber(choice: FocusChoice | undefined, focus: Task[]): string | undefined {
+  if (choice?.kind !== "task") return undefined;
+  const index = focus.findIndex(
+    ({ path, line }) => path === choice.task.path && line === choice.task.line,
+  );
+  return index === -1 ? undefined : formatFocusNumber(index);
+}
+
+export function formatFocusNumber(index: number): string {
+  return `Foco ${String(index + 1).padStart(2, "0")}`;
+}
+
 /**
  * La sesión de lo elegido. Un bloque de rutina dura lo que queda de él; un hábito de tiempo,
  * su objetivo; una tarea, lo que dice su contador; y si no hay nada, el tiempo por defecto.

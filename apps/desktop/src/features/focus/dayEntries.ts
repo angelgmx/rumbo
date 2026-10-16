@@ -34,3 +34,15 @@ export function routineOfHabits(groups: RoutineGroup[]): Map<string, string> {
   }
   return names;
 }
+
+/** Lo siguiente de «Tu día» que aún no está hecho y empieza después de ahora. */
+export function nextEntryTitle(entries: DayEntry[], time: string): string | undefined {
+  const next = entries.find((entry) => entry.start > time && !isDone(entry));
+  if (!next) return undefined;
+  return next.kind === "routine" ? next.group.summary.title : next.item.text;
+}
+
+function isDone(entry: DayEntry): boolean {
+  if (entry.kind === "plan") return entry.item.done;
+  return entry.group.steps.length > 0 && entry.group.steps.every((step) => step.done);
+}
