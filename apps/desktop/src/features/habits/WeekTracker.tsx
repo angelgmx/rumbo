@@ -1,6 +1,8 @@
 import {
   addDays,
+  habitProgress,
   isScheduledOn,
+  type Habit,
   type HabitSummary,
   type HabitValue,
   type IsoDate,
@@ -11,7 +13,7 @@ import { ProgressRing } from "@/components/ProgressRing";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useArea } from "@/hooks/useArea";
-import { capitalize, formatShortDay } from "@/lib/format";
+import { capitalize, formatDayMonth, formatShortDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { HabitMenu } from "./HabitDialogs";
 import { HabitValueControl } from "./HabitValueControl";
@@ -42,9 +44,7 @@ export function WeekTracker({
           Haz clic en una casilla para marcarla · en los de cantidad, escribe cuánto
         </CardDescription>
         <CardAction className="flex items-center gap-2">
-          <span className="text-sm">
-            {formatShortDay(days[0]!)} – {formatShortDay(days[6]!)}
-          </span>
+          <span className="text-sm font-medium">{formatWeekRange(days[0]!, days[6]!)}</span>
           <Button
             variant="outline"
             size="icon-sm"
@@ -73,7 +73,7 @@ export function WeekTracker({
                 key={day}
                 className={cn(
                   "w-20 font-normal",
-                  day === today && "bg-primary-soft text-primary-text",
+                  day === today && "bg-primary-soft font-medium text-primary-text",
                 )}
               >
                 {capitalize(formatShortDay(day))}
@@ -82,7 +82,9 @@ export function WeekTracker({
             <th className="w-24 font-normal">Racha</th>
             <th className="w-20 font-normal">Mejor</th>
             <th className="w-24 font-normal">30 días</th>
-            <th className="w-12" />
+            <th className="w-12">
+              <span className="sr-only">Acciones</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -114,7 +116,7 @@ function TrackerRow({ summary, days, today, onChange }: TrackerRowProps) {
   const unit = streak.unit === "weeks" ? "sem" : "días";
 
   return (
-    <tr className="border-b last:border-0">
+    <tr className="group border-b last:border-0">
       <td className="px-6 py-3">
         <div className="flex items-center gap-3">
           <AreaIcon area={area} />
@@ -128,9 +130,9 @@ function TrackerRow({ summary, days, today, onChange }: TrackerRowProps) {
       </td>
       {days.map((day) => (
         <td key={day} className={cn("text-center", day === today && "bg-primary-soft")}>
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-1 py-1">
             {day > today ? (
-              <span className="text-faint">·</span>
+              <FutureDay />
             ) : isScheduledOn(habit.schedule, day) ? (
               <HabitValueControl
                 habit={habit}
@@ -145,6 +147,7 @@ function TrackerRow({ summary, days, today, onChange }: TrackerRowProps) {
             ) : (
               <span className="text-faint">—</span>
             )}
+            <PartialAmount habit={habit} value={history.get(day)} />
           </div>
         </td>
       ))}
@@ -154,18 +157,24 @@ function TrackerRow({ summary, days, today, onChange }: TrackerRowProps) {
       </td>
       <td className="text-center text-muted-foreground">{best.count}</td>
       <td>
-        <div className="flex items-center justify-center gap-2">
-          <ProgressRing
-            value={last30Days}
-            color={last30Days >= 0.8 ? "var(--success)" : "var(--warning)"}
-          />
-          <span className="font-mono text-xs text-muted-foreground">
-            {Math.round(last30Days * 100)} %
+        <div className="flex justify-center">
+          <span className="relative flex">
+            <ProgressRing
+              value={last30Days}
+              color={last30Days >= 0.8 ? "var(--success)" : "var(--warning)"}
+              size={34}
+            />
+            <span className="absolute inset-0 flex items-center justify-center font-mono text-[9px] text-muted-foreground">
+              {Math.round(last30Days * 100)}%
+            </span>
           </span>
         </div>
       </td>
       <td className="pr-3">
-        <HabitMenu summary={summary} />
+        {/* Editar o archivar es poco frecuente: el menú solo aparece al pasar por la fila. */}
+        <div className="opacity-0 transition-opacity duration-(--dur-fast) group-hover:opacity-100 focus-within:opacity-100">
+          <HabitMenu summary={summary} />
+        </div>
       </td>
     </tr>
   );
@@ -181,6 +190,23 @@ const DAY_LETTERS: Record<string, string> = {
   sun: "D",
 };
 
+/** "15/30" bajo la casilla cuando un hábito de cantidad va a medias. */
+function PartialAmount({ habit, value }: { habit: Habit; value: HabitValue | undefined }) {
+  const progress = habitProgress(habit, value);
+  if (typeof value !== "number" || progress === 0 || progress >= 1) return null;
+  return (
+    <span className="font-mono text-[10px] text-muted-foreground">
+      {value}/{habit.target}
+    </span>
+  );
+}
+
+/** Una casilla vacía para los días que aún no han llegado. */
+function FutureDay() {
+  return <span aria-hidden className="size-7 rounded-md border border-dashed opacity-50" />;
+}
+
+/** "diario · 30 min", "L M J V", "3 por semana · reto 4/30" */
 function describeSchedule({ habit, challenge }: HabitSummary): string {
   const days =
     habit.schedule === "daily"
@@ -188,7 +214,15 @@ function describeSchedule({ habit, challenge }: HabitSummary): string {
       : Array.isArray(habit.schedule)
         ? habit.schedule.map((day) => DAY_LETTERS[day]).join(" ")
         : `${habit.schedule.times_per_week} por semana`;
-  const time = habit.start && habit.end ? ` · ${habit.start}–${habit.end}` : "";
-  const reto = challenge ? ` · reto ${challenge.day}/${challenge.total}` : "";
-  return days + time + reto;
+  const parts = [days];
+  if (habit.target && habit.unit) parts.push(`${habit.target} ${habit.unit}`);
+  if (challenge) parts.push(`reto ${challenge.day}/${challenge.total}`);
+  return parts.join(" · ");
+}
+
+/** "12 – 18 oct", o "29 sep – 5 oct" si la semana cambia de mes. */
+function formatWeekRange(first: IsoDate, last: IsoDate): string {
+  const end = formatDayMonth(last);
+  const sameMonth = first.slice(5, 7) === last.slice(5, 7);
+  return `${sameMonth ? Number(first.slice(8)) : formatDayMonth(first)} – ${end}`;
 }
