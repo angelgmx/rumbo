@@ -8,6 +8,18 @@ export { createRumbo, type Rumbo } from "./app/rumbo";
 export { createNewVault } from "./app/newVault";
 export type { TriageSuggestion } from "./app/inboxTriageService";
 export type { DayClosing } from "./app/closeDayService";
+export type {
+  PlannedNote,
+  RoadmapPlace,
+  RoadmapPlan,
+  TopicOption,
+} from "./app/roadmapCreationService";
+export {
+  draftProblems,
+  emptyModule,
+  type ModuleDraft,
+  type RoadmapDraft,
+} from "./domain/roadmapDraft";
 export { ENERGY_LEVELS, type Energy } from "./domain/closeDay";
 export type { TriageKind, TriageProposal } from "./domain/inboxTriage";
 export type { SavedView } from "./app/savedViewService";
