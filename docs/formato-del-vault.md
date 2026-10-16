@@ -26,7 +26,6 @@ folders:
   ideas: 00 - Inbox/Ideas.md # solo para importar las ideas antiguas una vez
   goals: Objetivos
   projects: Proyectos # por defecto, Projects
-  routines: 07 - Rutinas
   templates: 05 - Plantillas # aquí se busca la plantilla "Daily.md"
 
 pomodoro: # minutos de trabajo y descanso, y bloques por defecto
@@ -370,38 +369,22 @@ repaso:
 
 **Siguiente paso.** El tema que toca es el primero en `aprendiendo` (o, si no hay, el primero `sin-empezar`), y el ejercicio que toca es el primero sin hacer de ese tema. «Añadir a hoy» crea una tarea de hoy con `[habit:: <habit de la ruta>]`, así cuenta para cumplir el hábito.
 
-### Rutina — `type: routine`
+### Rutinas
 
-Un hueco del día con bloques en orden: une hábitos, temas de una ruta y tareas. Vive en la carpeta `routines` de la config.
+Un hueco del día con bloques en orden: une hábitos, temas de una ruta y tareas. Viven en la base de datos de la app (tabla `rutinas`, con sus bloques dentro; ver [Modelo de datos](modelo-de-datos.md)).
 
-```yaml
----
-type: routine
-title: Rutina de estudio Java
-area: "[[Desarrollo]]"
-kind: study # morning, afternoon, evening, study, gym o custom
-days: [mon, tue, wed, fri] # daily, lista de días o { times_per_week: 3 }
-start: "18:00"
-active: true
-blocks:
-  - { kind: custom, title: Repaso del tema anterior, minutes: 15 }
-  - { kind: module, ref: "[[Java desde cero]]", minutes: 45 }
-  - { kind: break, minutes: 10 }
-  - { kind: habit, ref: ingles, minutes: 15 }
----
-```
+| Bloque   | Apunta a                                     | Al terminarlo                                              |
+| -------- | -------------------------------------------- | ---------------------------------------------------------- |
+| Hábito   | La clave del hábito                          | Se apunta en el hábito (hecho, la cantidad o suma minutos) |
+| Tema     | Un tema, o su ruta (y toca el tema en curso) | Si estaba sin empezar, pasa a aprendiendo                  |
+| Tarea    | —                                            | Nada: las tareas se marcan una a una                       |
+| Descanso | —                                            | —                                                          |
+| Libre    | —                                            | —                                                          |
 
-| Bloque   | `ref`                                                 | Al terminarlo                                              |
-| -------- | ----------------------------------------------------- | ---------------------------------------------------------- |
-| `habit`  | La clave del hábito (o el wikilink a su nota antigua) | Se apunta en el hábito (hecho, la cantidad o suma minutos) |
-| `module` | Un tema, o su ruta (y toca el tema en curso)          | Si estaba sin empezar, pasa a aprendiendo                  |
-| `task`   | Una nota con la tarea                                 | Nada: las tareas se marcan una a una                       |
-| `break`  | —                                                     | —                                                          |
-| `custom` | —                                                     | —                                                          |
-
-- **La hora de cada bloque no se guarda:** empieza cuando acaba el anterior, a partir de `start`. Al reordenar, se recalcula.
-- **Bloque de un tema → tareas de hoy.** Genera el recurso pendiente que toca ver (con su duración estimada) y los siguientes ejercicios sin hacer, como mucho 3 (cada uno, un paso de la tarea). Si no queda nada, «repasar conceptos y criterio de dominado». Llevan `[habit:: …]` si la ruta tiene hábito, así cuentan para cumplirlo. Las que ya existen hoy no se repiten.
+- **La hora de cada bloque no se guarda:** empieza cuando acaba el anterior, a partir de la hora de inicio. Al reordenar, se recalcula.
+- **Bloque de un tema → tareas de hoy.** Genera el recurso pendiente que toca ver (con su duración estimada) y los siguientes ejercicios sin hacer, como mucho 3 (cada uno, un paso de la tarea). Si no queda nada, «repasar conceptos y criterio de dominado». Llevan el hábito de la ruta si lo tiene, así cuentan para cumplirlo. Las que ya existen hoy no se repiten.
 - Plantillas para empezar: mañana, estudio, gym, noche y fin de semana.
+- **Lo que ya tenías:** las notas `type: routine` se importan una vez; los bloques de hábito pasan del enlace a la nota del hábito a su clave. Las notas no se tocan; las mal escritas no se importan.
 
 ### Tipos previstos
 

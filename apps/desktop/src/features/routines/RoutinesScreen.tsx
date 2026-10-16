@@ -1,8 +1,7 @@
-import { isRoutineOn, linkTarget, type RoutineSummary } from "@rumbo/core";
+import { isRoutineOn, type RoutineSummary } from "@rumbo/core";
 import { PlusIcon, RepeatIcon } from "lucide-react";
 import { useState } from "react";
 import { useRumbo } from "@/app/RumboContext";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,7 +46,7 @@ export function RoutinesScreen() {
   if (!list) return header;
 
   const today = rumbo.daily.today();
-  const { routines, invalid } = list;
+  const routines = list;
   const areas = [...new Set(routines.map(areaOf).filter((name) => name !== undefined))];
   const visible = area === ALL_AREAS ? routines : routines.filter((r) => areaOf(r) === area);
   const todays = routines.filter((summary) => isRoutineOn(summary.routine, today));
@@ -80,13 +79,6 @@ export function RoutinesScreen() {
             )}
           </div>
 
-          {invalid.length > 0 && (
-            <Alert variant="destructive">
-              <AlertTitle>Hay rutinas que no se pueden leer</AlertTitle>
-              <AlertDescription>Revisa el frontmatter de: {invalid.join(", ")}</AlertDescription>
-            </Alert>
-          )}
-
           {routines.length === 0 ? (
             <Empty className="border">
               <EmptyHeader>
@@ -105,7 +97,7 @@ export function RoutinesScreen() {
               <TodayCard date={today} today={todays} other={others} />
               <div className="grid grid-cols-2 gap-4">
                 {visible.map((summary) => (
-                  <RoutineCard key={summary.path} summary={summary} />
+                  <RoutineCard key={summary.id} summary={summary} />
                 ))}
               </div>
             </>
@@ -119,5 +111,5 @@ export function RoutinesScreen() {
 }
 
 function areaOf(summary: RoutineSummary): string | undefined {
-  return linkTarget(summary.routine.area);
+  return summary.routine.area;
 }

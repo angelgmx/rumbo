@@ -49,7 +49,7 @@ export class CloseDayService {
     const tomorrow = addDays(this.daily.today(), 1);
     const starts = this.routines
       .list()
-      .routines.filter(({ routine }) => isRoutineOn(routine, tomorrow))
+      .filter(({ routine }) => isRoutineOn(routine, tomorrow))
       .map(({ routine }) => routine.start.padStart(5, "0"));
     return [...new Set(starts)].sort();
   }

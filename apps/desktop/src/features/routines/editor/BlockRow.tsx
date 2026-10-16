@@ -48,8 +48,8 @@ export function BlockRow({ summary, block, routineColor, current }: BlockRowProp
   const last = summary.blocks.length - 1;
 
   const update = (changes: { minutes?: number; title?: string }) =>
-    rumbo.routines.updateBlock(summary.path, block.index, changes);
-  const move = (to: number) => rumbo.routines.moveBlock(summary.path, block.index, to);
+    rumbo.routines.updateBlock(summary.id, block.index, changes);
+  const move = (to: number) => rumbo.routines.moveBlock(summary.id, block.index, to);
 
   return (
     <li
@@ -156,7 +156,7 @@ export function BlockRow({ summary, block, routineColor, current }: BlockRowProp
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => rumbo.routines.removeBlock(summary.path, block.index)}
+                onClick={() => rumbo.routines.removeBlock(summary.id, block.index)}
               >
                 <Trash2Icon />
                 Quitar de la rutina

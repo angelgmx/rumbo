@@ -63,7 +63,7 @@ function TodayShare({ routines }: { routines: RoutineSummary[] }) {
   return (
     <div className="mt-3 flex h-1.5 gap-1">
       {routines.map((summary) => (
-        <ShareSegment key={summary.path} summary={summary} />
+        <ShareSegment key={summary.id} summary={summary} />
       ))}
     </div>
   );

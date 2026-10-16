@@ -76,4 +76,24 @@ export const MIGRATIONS: string[][] = [
     "ALTER TABLE habitos ADD COLUMN icono TEXT",
     "ALTER TABLE habitos ADD COLUMN color TEXT",
   ],
+  [
+    // Los bloques van dentro de la rutina, en JSON y en orden: siempre se guardan con ella,
+    // así moverlos o cambiarlos es una sola escritura. Cada bloque:
+    //   {"tipo": "habito", "habito": "ingles", "minutos": 15}
+    //   {"tipo": "tema", "tema": "[[Java desde cero]]", "minutos": 45}
+    //   {"tipo": "descanso", "minutos": 10}
+    //   {"tipo": "libre" | "tarea", "titulo": "Repaso", "minutos": 15}
+    `CREATE TABLE rutinas (
+      id INTEGER PRIMARY KEY,
+      nombre TEXT NOT NULL CHECK (length(trim(nombre)) > 0),
+      tipo TEXT NOT NULL DEFAULT 'libre'
+        CHECK (tipo IN ('manana', 'tarde', 'noche', 'estudio', 'gym', 'libre')),
+      dias TEXT NOT NULL DEFAULT '"diaria"' CHECK (json_valid(dias)),
+      hora_inicio TEXT NOT NULL,
+      area TEXT,
+      activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
+      bloques TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(bloques)),
+      creada TEXT NOT NULL
+    )`,
+  ],
 ];

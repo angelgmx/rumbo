@@ -33,7 +33,7 @@ export function RoutineMenu({
 
   async function remove() {
     try {
-      await rumbo.routines.remove(summary.path);
+      await rumbo.routines.remove(summary.id);
       toast.success(`«${summary.title}» eliminada`);
       navigate("/rutinas");
     } catch {
@@ -60,7 +60,7 @@ export function RoutineMenu({
           {showEdit && (
             <>
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => navigate(routineHref(summary.path))}>
+                <DropdownMenuItem onClick={() => navigate(routineHref(summary.id))}>
                   <PencilIcon />
                   Editar
                 </DropdownMenuItem>

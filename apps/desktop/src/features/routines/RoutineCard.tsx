@@ -29,7 +29,7 @@ export function RoutineCard({ summary }: { summary: RoutineSummary }) {
           <AreaIcon area={look} className="size-10 rounded-xl [&_svg]:size-[18px]" />
           <div className="min-w-0 flex-1">
             <Link
-              href={routineHref(summary.path)}
+              href={routineHref(summary.id)}
               className="font-medium after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none"
             >
               {summary.title}
@@ -42,7 +42,7 @@ export function RoutineCard({ summary }: { summary: RoutineSummary }) {
             </span>
             <Switch
               checked={routine.active}
-              onCheckedChange={(active) => rumbo.routines.setActive(summary.path, active)}
+              onCheckedChange={(active) => rumbo.routines.setActive(summary.id, active)}
             />
           </label>
           <RoutineMenu summary={summary} className="relative z-10 -mr-2" />

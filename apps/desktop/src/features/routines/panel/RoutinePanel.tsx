@@ -50,10 +50,10 @@ function RoutinePanelContent({ from, onClose }: { from: Start; onClose: () => vo
 
   async function create() {
     if (!canCreate) return;
-    const path = await rumbo.routines.create(input);
+    const id = await rumbo.routines.create(input);
     toast.success(`«${input.title}» creada`);
     onClose();
-    navigate(routineHref(path));
+    if (id !== undefined) navigate(routineHref(id));
   }
 
   // Ctrl Enter crea desde cualquier campo.

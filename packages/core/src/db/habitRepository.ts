@@ -1,7 +1,8 @@
-import type { IsoDate, Weekday } from "../domain/dates";
-import type { Habit, HabitHistory, HabitKind, HabitSchedule, HabitValue } from "../domain/habits";
+import type { IsoDate } from "../domain/dates";
+import type { Habit, HabitHistory, HabitKind, HabitValue } from "../domain/habits";
 import type { SqlValue } from "../ports";
 import type { AppDatabase } from "./appDatabase";
+import { invert, scheduleFromRow, scheduleToRow } from "./rows";
 
 /** Una fila de `habitos`, tal como sale de SQLite. */
 interface HabitRow {
@@ -37,17 +38,6 @@ const KIND_TO_ROW: Record<HabitKind, string> = {
   tasks: "tareas",
 };
 const KIND_FROM_ROW = invert(KIND_TO_ROW);
-
-const WEEKDAY_TO_ROW: Record<Weekday, string> = {
-  mon: "lun",
-  tue: "mar",
-  wed: "mie",
-  thu: "jue",
-  fri: "vie",
-  sat: "sab",
-  sun: "dom",
-};
-const WEEKDAY_FROM_ROW = invert(WEEKDAY_TO_ROW);
 
 interface Stored {
   id: number;
@@ -199,22 +189,4 @@ function fromRow(row: HabitRow): Habit {
   return Object.fromEntries(
     Object.entries(habit).filter(([, value]) => value !== undefined),
   ) as unknown as Habit;
-}
-
-type ScheduleRow = "diaria" | string[] | { veces_por_semana: number };
-
-function scheduleToRow(schedule: HabitSchedule): ScheduleRow {
-  if (schedule === "daily") return "diaria";
-  if (Array.isArray(schedule)) return schedule.map((day) => WEEKDAY_TO_ROW[day]);
-  return { veces_por_semana: schedule.times_per_week };
-}
-
-function scheduleFromRow(row: ScheduleRow): HabitSchedule {
-  if (row === "diaria") return "daily";
-  if (Array.isArray(row)) return row.flatMap((day) => WEEKDAY_FROM_ROW[day] ?? []);
-  return { times_per_week: row.veces_por_semana };
-}
-
-function invert<K extends string>(map: Record<K, string>): Record<string, K> {
-  return Object.fromEntries(Object.entries(map).map(([key, value]) => [value, key]));
 }

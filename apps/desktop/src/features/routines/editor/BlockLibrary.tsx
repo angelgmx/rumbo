@@ -69,7 +69,7 @@ export function BlockLibrary({ summary, tab, onTabChange }: BlockLibraryProps) {
           <LibraryRow
             key={item.id}
             item={item}
-            onAdd={() => rumbo.routines.addBlock(summary.path, item.block)}
+            onAdd={() => rumbo.routines.addBlock(summary.id, item.block)}
           />
         ))}
         {visible.length === 0 && (

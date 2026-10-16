@@ -19,7 +19,7 @@ export function RoutineSettings({ summary }: { summary: RoutineSummary }) {
       <Cell label="Días">
         <WeekdayChips
           schedule={routine.days}
-          onChange={(days) => rumbo.routines.update(summary.path, { days })}
+          onChange={(days) => rumbo.routines.update(summary.id, { days })}
         />
       </Cell>
       <Cell label="Empieza">
@@ -30,8 +30,7 @@ export function RoutineSettings({ summary }: { summary: RoutineSummary }) {
             aria-label="Hora de inicio"
             value={routine.start.padStart(5, "0")}
             onChange={(event) =>
-              event.target.value &&
-              rumbo.routines.update(summary.path, { start: event.target.value })
+              event.target.value && rumbo.routines.update(summary.id, { start: event.target.value })
             }
             className="bg-transparent font-mono text-sm outline-none [&::-webkit-calendar-picker-indicator]:hidden"
           />

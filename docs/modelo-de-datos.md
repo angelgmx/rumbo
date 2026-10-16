@@ -32,8 +32,7 @@ erDiagram
   proyectos ||--o{ tareas : contiene
   habitos ||--o{ registros_habito : "se apunta en"
   habitos ||--o{ tareas : "se cumple con"
-  rutinas ||--o{ bloques_rutina : "se compone de"
-  bloques_rutina }o--o| habitos : marca
+  rutinas }o--o{ habitos : "sus bloques marcan"
   tareas ||--o{ sesiones : "mide el tiempo de"
   dias ||--o{ bloques_agenda : tiene
 ```
@@ -53,8 +52,7 @@ Estado: ✅ ya en la base de datos · ⏳ todavía en el vault, pasa en su migra
 | `registros_habito`   | Lo que hiciste de un hábito cada día (solo los días con algo; en los de sí o no, 1) | `habito_id`, `dia`, `valor`                                                                                                                                                                                                                                                                       | ✅     |
 | `dias`               | El cierre de cada día                                                               | `dia`, `energia` (baja · media · alta), `dia_malo`, `lo_que_salio_bien`                                                                                                                                                                                                                           | ⏳     |
 | `bloques_agenda`     | Bloques con hora de un día                                                          | `id`, `dia`, `inicio`, `fin`, `texto`, `hecho`                                                                                                                                                                                                                                                    | ⏳     |
-| `rutinas`            | Lo que haces cada día a una hora                                                    | `id`, `nombre`, `dias`, `hora_inicio`, `area_nota`, `activa`                                                                                                                                                                                                                                      | ⏳     |
-| `bloques_rutina`     | Los pasos de una rutina, en orden                                                   | `id`, `rutina_id`, `orden`, `tipo` (habito · modulo · tarea · descanso · libre), `minutos`, `titulo`, `habito_id`, `modulo_nota`, `tarea_id`                                                                                                                                                      | ⏳     |
+| `rutinas`            | Lo que haces cada día a una hora, con sus bloques en orden dentro (JSON)            | `id`, `nombre`, `tipo` (manana · tarde · noche · estudio · gym · libre), `dias` (JSON), `hora_inicio`, `area`, `activa`, `bloques` (JSON: `tipo` habito · tema · tarea · descanso · libre, `minutos`, `titulo`, `habito`, `tema`), `creada`                                                       | ✅     |
 | `objetivos`          | Un resultado que quieres en una fecha                                               | `id`, `titulo`, `area_nota`, `por_que`, `metrica`, `desde`, `hasta`, `unidad`, `actual`, `horizonte`, `fecha_limite`, `estado`, `obstaculo`, `creado`                                                                                                                                             | ⏳     |
 | `planes_si_entonces` | Qué harás cuando aparezca el obstáculo                                              | `id`, `objetivo_id`, `si`, `entonces`, `orden`                                                                                                                                                                                                                                                    | ⏳     |
 | `objetivo_rutas`     | Qué rutas del vault empujan un objetivo                                             | `objetivo_id`, `ruta_nota`                                                                                                                                                                                                                                                                        | ⏳     |
@@ -69,7 +67,6 @@ Estado: ✅ ya en la base de datos · ⏳ todavía en el vault, pasa en su migra
 Cada entidad se migra entera y lista para enlazarse con las que faltan:
 
 - **Objetivos:** `habitos.objetivo` y el objetivo de las tareas pasan a `objetivo_id` cuando los objetivos entren en la base de datos.
-- **Rutinas:** sus bloques de hábito pasan de la clave (`ref`) a `habito_id`.
 - **Proyectos:** `tareas.proyecto` pasa a `proyecto_id`.
 
 ## Cómo entra lo que ya tenías
@@ -81,6 +78,7 @@ Al abrir, Rumbo copia a la base de datos lo que antes vivía en notas, **una sol
 | Ideas   | La nota de ideas (`folders.ideas`), una viñeta por idea                                                        | ✅     |
 | Tareas  | Las casillas del inbox, de las dailies (las de «Foco de hoy», en el foco de su día) y de las notas de proyecto | ✅     |
 | Hábitos | Las notas `type: habit` y el campo `habits:` de cada daily (lo que no se hizo no se copia)                     | ✅     |
+| Rutinas | Las notas `type: routine`, con los bloques de hábito pasados a su clave                                        | ✅     |
 
 ## En el código
 

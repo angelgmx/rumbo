@@ -52,11 +52,7 @@ export function DayTimeline({ today, other }: DayTimelineProps) {
 
       <div className="relative h-7">
         {today.map((summary) => (
-          <RoutineLabel
-            key={summary.path}
-            summary={summary}
-            left={position(summary.routine.start)}
-          />
+          <RoutineLabel key={summary.id} summary={summary} left={position(summary.routine.start)} />
         ))}
       </div>
 
@@ -71,7 +67,7 @@ export function DayTimeline({ today, other }: DayTimelineProps) {
         ))}
         {today.map((summary) => (
           <RoutineBar
-            key={summary.path}
+            key={summary.id}
             summary={summary}
             left={position(summary.routine.start)}
             width={position(summary.end) - position(summary.routine.start)}
@@ -91,7 +87,7 @@ export function DayTimeline({ today, other }: DayTimelineProps) {
         <div className="relative mt-2 h-7">
           {other.map((summary) => (
             <GhostRoutine
-              key={summary.path}
+              key={summary.id}
               summary={summary}
               left={position(summary.routine.start)}
             />
@@ -149,7 +145,7 @@ function RoutineBar({
   const look = useRoutineLook(summary.routine);
   return (
     <Link
-      href={routineHref(summary.path)}
+      href={routineHref(summary.id)}
       aria-label={`${summary.title}, de ${summary.routine.start} a ${summary.end}`}
       className="absolute top-2 bottom-2 rounded-lg border p-1.5 transition-transform duration-(--dur-fast) hover:-translate-y-px"
       style={{
@@ -181,7 +177,7 @@ function GhostRoutine({ summary, left }: { summary: RoutineSummary; left: number
   const look = useRoutineLook(summary.routine);
   return (
     <Link
-      href={routineHref(summary.path)}
+      href={routineHref(summary.id)}
       className="absolute flex h-7 items-center gap-1.5 rounded-md border border-dashed px-2 text-xs whitespace-nowrap text-muted-foreground hover:text-foreground"
       style={{ left: `${left}%` }}
     >

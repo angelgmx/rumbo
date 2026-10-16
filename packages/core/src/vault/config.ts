@@ -13,7 +13,6 @@ const rawSchema = z.object({
       ideas: z.string().optional(),
       goals: z.string().default("Goals"),
       projects: z.string().default("Projects"),
-      routines: z.string().default("Routines"),
       templates: z.string().optional(),
     })
     .prefault({}),

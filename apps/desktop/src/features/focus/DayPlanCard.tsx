@@ -61,7 +61,7 @@ export function DayPlanCard({
           entries.map((entry) =>
             entry.kind === "routine" ? (
               <RoutineRow
-                key={entry.group.summary.path}
+                key={entry.group.summary.id}
                 group={entry.group}
                 time={time}
                 onCompleteStep={onCompleteStep}

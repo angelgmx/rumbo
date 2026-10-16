@@ -7,7 +7,7 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { isRoutineOn, linkTarget, type RoutineSummary } from "@rumbo/core";
+import { isRoutineOn, type RoutineSummary } from "@rumbo/core";
 import { ChevronLeftIcon, PlayIcon } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "wouter";
@@ -31,12 +31,8 @@ import { RoutineSettings } from "./RoutineSettings";
 
 /** Editor de una rutina: sus días y su hora, los bloques en orden y la biblioteca para añadir más. */
 export function RoutineEditorScreen() {
-  const { routine: encoded = "" } = useParams<{ routine: string }>();
-  const path = decodeURIComponent(encoded);
-  const summary = useVaultQuery(
-    (rumbo) => rumbo.routines.list().routines.find((item) => item.path === path),
-    [path],
-  ).data;
+  const id = Number(useParams<{ routine: string }>().routine);
+  const summary = useVaultQuery((rumbo) => rumbo.routines.get(id), [id]).data;
 
   if (!summary) {
     return (
@@ -75,12 +71,12 @@ function Editor({ summary }: { summary: RoutineSummary }) {
     const target = indexOf(String(over.id)) ?? summary.blocks.length;
     const item = active.data.current?.item as LibraryItem | undefined;
     if (item) {
-      rumbo.routines.addBlock(summary.path, item.block, target);
+      rumbo.routines.addBlock(summary.id, item.block, target);
       return;
     }
     const from = indexOf(String(active.id));
     if (from !== undefined && over.id !== BLOCK_LIST_ID && from !== target) {
-      rumbo.routines.moveBlock(summary.path, from, target);
+      rumbo.routines.moveBlock(summary.id, from, target);
     }
   }
 
@@ -113,18 +109,18 @@ function Editor({ summary }: { summary: RoutineSummary }) {
               <InlineTitle
                 label="Nombre de la rutina"
                 value={summary.title}
-                onSave={(title) => rumbo.routines.update(summary.path, { title })}
+                onSave={(title) => rumbo.routines.update(summary.id, { title })}
                 className="-mx-1 px-1 text-3xl font-semibold tracking-tight"
               />
               <p className="mt-0.5 text-sm text-muted-foreground">
-                {[linkTarget(summary.routine.area), purpose].filter(Boolean).join(" · ")}
+                {[summary.routine.area, purpose].filter(Boolean).join(" · ")}
               </p>
             </div>
             <label className="mt-2 flex items-center gap-2.5 text-sm">
               {summary.routine.active ? "Activa" : "Pausada"}
               <Switch
                 checked={summary.routine.active}
-                onCheckedChange={(active) => rumbo.routines.setActive(summary.path, active)}
+                onCheckedChange={(active) => rumbo.routines.setActive(summary.id, active)}
               />
             </label>
             <RoutineMenu summary={summary} showEdit={false} className="mt-1.5" />

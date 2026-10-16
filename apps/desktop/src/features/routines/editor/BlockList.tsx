@@ -96,9 +96,9 @@ function AddBlockBar({
   const rumbo = useRumbo();
 
   function add(kind: BlockKind) {
-    if (kind === "break") return rumbo.routines.addBlock(summary.path, { kind, minutes: 10 });
+    if (kind === "break") return rumbo.routines.addBlock(summary.id, { kind, minutes: 10 });
     if (kind === "custom") {
-      return rumbo.routines.addBlock(summary.path, { kind, title: "Bloque libre", minutes: 15 });
+      return rumbo.routines.addBlock(summary.id, { kind, title: "Bloque libre", minutes: 15 });
     }
     onPickFromLibrary(PICKED[kind]);
   }

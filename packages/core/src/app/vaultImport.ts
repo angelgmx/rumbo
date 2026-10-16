@@ -1,9 +1,12 @@
 import type { AppDatabase } from "../db/appDatabase";
 import type { HabitRepository } from "../db/habitRepository";
 import type { IdeaRepository } from "../db/ideaRepository";
+import type { RoutineRepository } from "../db/routineRepository";
 import type { TaskRepository } from "../db/taskRepository";
 import { parseIdeas } from "../domain/ideas";
 import { habitHistories, parseNoteHabit } from "../domain/noteHabits";
+import { parseNoteRoutine } from "../domain/noteRoutines";
+import { linkTarget } from "../domain/links";
 import { noteTaskToDraft, parseTasks, type NoteTask } from "../domain/noteTasks";
 import { sectionLines } from "../domain/sections";
 import type { Note } from "../vault/vault";
@@ -17,6 +20,7 @@ interface Repositories {
   ideas: IdeaRepository;
   tasks: TaskRepository;
   habits: HabitRepository;
+  routines: RoutineRepository;
 }
 
 /**
@@ -35,6 +39,8 @@ export class VaultImport {
     await this.once("importado.ideas", () => this.importIdeas());
     await this.once("importado.tareas", () => this.importTasks());
     await this.once("importado.habitos", () => this.importHabits());
+    // Después de los hábitos: los bloques de hábito pasan del enlace a la nota a su clave.
+    await this.once("importado.rutinas", () => this.importRoutines());
   }
 
   private async importIdeas(): Promise<void> {
@@ -57,6 +63,18 @@ export class VaultImport {
       for (const [day, value] of histories.get(habit.key) ?? []) {
         await this.repositories.habits.record(habit.key, day, value);
       }
+    }
+  }
+
+  /** Cada nota de rutina, con sus bloques. Las mal escritas se quedan en el vault sin importar. */
+  private async importRoutines(): Promise<void> {
+    const habitKey = (link: string) => {
+      const key = this.store.findByName(linkTarget(link) ?? "")?.data.key;
+      return typeof key === "string" ? key : undefined;
+    };
+    for (const note of this.store.notesOfType("routine")) {
+      const routine = parseNoteRoutine(note, habitKey);
+      if (routine) await this.repositories.routines.insert(routine, this.daily.today());
     }
   }
 
