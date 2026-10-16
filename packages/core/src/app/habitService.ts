@@ -19,6 +19,7 @@ import {
   type HabitValue,
   type Streak,
 } from "../domain/habits";
+import { streaksAtRisk } from "../domain/focus";
 import { setFrontmatter } from "../vault/frontmatter";
 import { habitHistoryFromTasks, type Task } from "../domain/tasks";
 import type { DailyService } from "./dailyService";
@@ -63,6 +64,7 @@ export class HabitService {
   list(): HabitList {
     const today = this.daily.today();
     const histories = habitHistories(this.store.notesOfType("daily"));
+    const badDays = this.daily.badDays();
     const result: HabitList = { habits: [], invalid: [] };
 
     for (const note of this.store.notesOfType("habit")) {
@@ -84,8 +86,8 @@ export class HabitService {
         path: note.path,
         today: history.get(today),
         doneToday: isDone(habit, history.get(today)),
-        streak: currentStreak(habit, history, today),
-        best: bestStreak(habit, history, today),
+        streak: currentStreak(habit, history, today, badDays),
+        best: bestStreak(habit, history, today, badDays),
         last30Days: completionRate(habit, history, addDays(today, -29), today),
         stats: habitStats(habit, history),
         challenge: challengeProgress(habit, today),
@@ -103,6 +105,12 @@ export class HabitService {
     return this.list().habits.filter(
       ({ habit, challenge }) => isScheduledOn(habit.schedule, date) && !challenge?.finished,
     );
+  }
+
+  /** Hábitos de hoy con una racha que se perdería si hoy no se hacen, la más larga primero. */
+  atRisk(): HabitSummary[] {
+    const today = this.daily.today();
+    return streaksAtRisk(this.dueOn(today), this.daily.badDays().has(today));
   }
 
   /** Guarda el valor de un hábito en la daily de ese día (hoy si no se dice). */

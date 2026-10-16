@@ -3,6 +3,7 @@ import type { IsoDate } from "../domain/dates";
 import { habitSchema, type Habit, type HabitSchedule } from "../domain/habits";
 import { linkTarget } from "../domain/links";
 import {
+  blockTitle,
   insertBlock,
   isRoutineOn,
   moduleBlockTasks,
@@ -49,6 +50,17 @@ export interface RoutineSummary {
   next?: IsoDate;
   /** Otras rutinas con las que se pisa en hora. */
   clashes: RoutineClash[];
+}
+
+export interface RoutineStep {
+  /** Posición del bloque en la rutina. */
+  index: number;
+  title: string;
+  minutes: number;
+  start: string;
+  end: string;
+  done: boolean;
+  habit: HabitSummary;
 }
 
 export interface RoutineList {
@@ -121,18 +133,40 @@ export class RoutineService {
   }
 
   private routineHabits(routine: Routine, habits: HabitSummary[]): HabitSummary[] {
-    const keys = new Set<string>();
-    for (const block of routine.blocks) {
-      if (block.kind === "habit") {
-        const key = this.store.findByName(linkTarget(block.ref) ?? "")?.data.key;
-        if (typeof key === "string") keys.add(key);
-      }
-      if (block.kind === "module") {
-        const roadmapHabit = this.moduleFor(block)?.roadmap.habit;
-        if (roadmapHabit) keys.add(roadmapHabit);
-      }
-    }
+    const keys = new Set(routine.blocks.map((block) => this.habitKeyOf(block)));
     return habits.filter((summary) => keys.has(summary.habit.key));
+  }
+
+  /** El hábito que se cumple con un bloque: el suyo, o el de la ruta del tema. */
+  private habitKeyOf(block: RoutineBlock): string | undefined {
+    if (block.kind === "habit") {
+      const key = this.store.findByName(linkTarget(block.ref) ?? "")?.data.key;
+      return typeof key === "string" ? key : undefined;
+    }
+    return block.kind === "module" ? this.moduleFor(block)?.roadmap.habit : undefined;
+  }
+
+  /**
+   * Los pasos de la rutina que se pueden comprobar: los bloques ligados a un hábito, hechos o
+   * pendientes según ese hábito. Los libres y los descansos no dejan rastro y no salen.
+   */
+  steps(summary: RoutineSummary): RoutineStep[] {
+    return summary.blocks.flatMap((block) => {
+      const key = this.habitKeyOf(block);
+      const habit = summary.habits.find((candidate) => candidate.habit.key === key);
+      if (!habit) return [];
+      return [
+        {
+          index: block.index,
+          title: blockTitle(block),
+          minutes: block.minutes,
+          start: block.start,
+          end: block.end,
+          done: habit.doneToday,
+          habit,
+        },
+      ];
+    });
   }
 
   /** Las rutinas activas que tocan hoy, por hora de inicio. */

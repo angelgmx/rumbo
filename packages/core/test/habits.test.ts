@@ -7,6 +7,7 @@ import {
   habitProgress,
   habitSchema,
   habitStats,
+  minimumOf,
   weekProgress,
   type HabitHistory,
 } from "../src/domain/habits";
@@ -155,5 +156,50 @@ describe("weekProgress", () => {
       done: 1,
       due: 3,
     });
+  });
+});
+
+describe("bad days", () => {
+  it("skip a missed day instead of breaking the streak", () => {
+    const done = history({ "2026-10-12": true, "2026-10-14": true, "2026-10-15": true });
+    expect(currentStreak(daily, done, "2026-10-15").count).toBe(2);
+    expect(currentStreak(daily, done, "2026-10-15", new Set(["2026-10-13"])).count).toBe(3);
+  });
+
+  it("still count a bad day when the habit was done anyway", () => {
+    const done = history({ "2026-10-13": true, "2026-10-14": true, "2026-10-15": true });
+    expect(currentStreak(daily, done, "2026-10-15", new Set(["2026-10-14"])).count).toBe(3);
+  });
+
+  it("keep the best streak running through them", () => {
+    const done = history({ "2026-10-01": true, "2026-10-02": true, "2026-10-04": true });
+    const bad = new Set(["2026-10-03"]);
+    expect(bestStreak(daily, done, "2026-10-04").count).toBe(2);
+    expect(bestStreak(daily, done, "2026-10-04", bad).count).toBe(3);
+  });
+
+  it("lower the target of a week by the bad days left undone", () => {
+    const done = history({ "2026-10-05": true, "2026-10-06": true, "2026-10-07": true });
+    // Hecho 3 de 3 pedidos, y los dos días malos no cuentan para llegar a 3.
+    const bad = new Set(["2026-10-08", "2026-10-09"]);
+    expect(currentStreak(gym, done, "2026-10-12", bad).count).toBe(1);
+  });
+});
+
+describe("minimum version", () => {
+  it("is half the target unless the habit sets its own", () => {
+    expect(minimumOf(pages)).toBe(10);
+    expect(minimumOf({ ...pages, minimum: 5 })).toBe(5);
+    expect(minimumOf(daily)).toBeUndefined();
+  });
+
+  it("keeps the streak without reaching the target", () => {
+    const done = history({ "2026-10-13": 25, "2026-10-14": 25, "2026-10-15": 10 });
+    expect(currentStreak(pages, done, "2026-10-15").count).toBe(3);
+  });
+
+  it("does not keep it below the minimum", () => {
+    const done = history({ "2026-10-13": 25, "2026-10-14": 9 });
+    expect(currentStreak(pages, done, "2026-10-15").count).toBe(0);
   });
 });

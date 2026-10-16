@@ -585,3 +585,31 @@ describe("vault refresh", () => {
     expect(rumbo.store.version).toBe(before + 1);
   });
 });
+
+describe("bad days", () => {
+  it("are saved in the daily and counted in the month", async () => {
+    await rumbo.daily.setBadDay("2026-10-15", true);
+    const daily = parseNote(files.get("Journal/2026/10/2026-10-15.md")!);
+    expect(daily.data.bad_day).toBe(true);
+    expect(rumbo.daily.badDaysThisMonth()).toBe(1);
+
+    await rumbo.daily.setBadDay("2026-10-15", false);
+    expect(parseNote(files.get("Journal/2026/10/2026-10-15.md")!).data.bad_day).toBeUndefined();
+    expect(rumbo.daily.badDaysThisMonth()).toBe(0);
+  });
+
+  it("do not go past two a month", async () => {
+    await rumbo.daily.setBadDay("2026-10-13", true);
+    await rumbo.daily.setBadDay("2026-10-14", true);
+    await expect(rumbo.daily.setBadDay("2026-10-15", true)).rejects.toThrow("No bad days left");
+  });
+
+  it("keep the streak of a habit alive", async () => {
+    const reading = () => rumbo.habits.list().habits.find((h) => h.habit.key === "reading")!;
+    await rumbo.habits.setValue("reading", 0, "2026-10-14");
+    expect(reading().streak.count).toBe(0);
+
+    await rumbo.daily.setBadDay("2026-10-14", true);
+    expect(reading().streak.count).toBe(1);
+  });
+});
