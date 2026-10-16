@@ -7,6 +7,7 @@ import { useRumbo } from "@/app/RumboContext";
 import { InlineTitle } from "@/components/InlineTitle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
@@ -23,9 +24,10 @@ import { PageTitle } from "./PageTitle";
 import { RoadmapMenu } from "./RoadmapMenu";
 import { RoadmapDiagram } from "./RoadmapDiagram";
 import { RoadmapLegend } from "./RoadmapLegend";
+import { RoadmapSyllabus } from "./syllabus/RoadmapSyllabus";
 import { WeeksList } from "./TopicRoadmap";
 
-type View = "diagram" | "weeks";
+type View = "diagram" | "syllabus" | "weeks";
 
 /** Una ruta abierta: pistas en paralelo, el módulo que eliges y si llegas a tu fecha. */
 export function RoadmapScreen() {
@@ -53,6 +55,7 @@ function Roadmap({ topic }: { topic: TopicSummary }) {
   const rumbo = useRumbo();
   const roadmap = topic.roadmap!;
   const [view, setView] = useState<View>("diagram");
+  const [showMastered, setShowMastered] = useState(true);
   const [selectedPath, setSelectedPath] = useState(roadmap.current?.path);
   const [reading, setReading] = useState<string>();
   const selected: ModuleSummary | undefined =
@@ -115,7 +118,14 @@ function Roadmap({ topic }: { topic: TopicSummary }) {
             <div className="flex flex-col gap-4">
               <Card className="gap-0 py-0">
                 <div className="flex items-center justify-between gap-4 border-b px-4 py-3">
-                  <RoadmapLegend />
+                  {view === "diagram" && <RoadmapLegend />}
+                  {view === "syllabus" && (
+                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Switch checked={showMastered} onCheckedChange={setShowMastered} />
+                      Mostrar dominados
+                    </label>
+                  )}
+                  {view === "weeks" && <span />}
                   <ToggleGroup
                     variant="outline"
                     size="sm"
@@ -123,10 +133,19 @@ function Roadmap({ topic }: { topic: TopicSummary }) {
                     onValueChange={(values) => values[0] && setView(values[0] as View)}
                   >
                     <ToggleGroupItem value="diagram">Diagrama</ToggleGroupItem>
+                    <ToggleGroupItem value="syllabus">Temario</ToggleGroupItem>
                     <ToggleGroupItem value="weeks">Por semanas</ToggleGroupItem>
                   </ToggleGroup>
                 </div>
-                {view === "diagram" ? (
+                {view === "syllabus" && (
+                  <RoadmapSyllabus
+                    roadmap={roadmap}
+                    showMastered={showMastered}
+                    selected={selected?.path}
+                    onSelect={(module) => setSelectedPath(module.path)}
+                  />
+                )}
+                {view === "diagram" && (
                   <RoadmapDiagram
                     topic={topic}
                     selected={selected?.path}
@@ -134,7 +153,8 @@ function Roadmap({ topic }: { topic: TopicSummary }) {
                     onSelectModule={(module) => setSelectedPath(module.path)}
                     onOpenChallenge={setReading}
                   />
-                ) : (
+                )}
+                {view === "weeks" && (
                   <div className="p-4">
                     <WeeksList topic={topic} />
                   </div>

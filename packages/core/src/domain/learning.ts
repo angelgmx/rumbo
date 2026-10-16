@@ -1,10 +1,11 @@
 import { CHECKBOX } from "./checkbox";
+import { resourcesInText, type Resource } from "./resources";
 import type { IsoDate } from "./dates";
 import { sectionLines } from "./sections";
 
 // Un tema (módulo) de una ruta es una nota "type: module" con:
 //   > [!check] Criterio de dominado …
-//   ## Conceptos a dominar   ← casillas
+//   ## Conceptos a dominar   ← casillas; debajo de cada una, sangrado, su explicación y enlaces
 //   ## Registro de práctica  ← tabla con una fila por sesión
 // Sus ejercicios viven en otra nota (ver exercises.ts).
 
@@ -44,6 +45,10 @@ export interface Concept {
   done: boolean;
   /** Línea en la nota, para marcarlo en su sitio. */
   line: number;
+  /** Lo que explica el texto sangrado bajo la casilla, sin los enlaces sueltos. */
+  details: string;
+  /** Los enlaces de debajo de la casilla: cursos, vídeos, artículos… */
+  resources: Resource[];
 }
 
 export interface PracticeEntry {
@@ -65,10 +70,7 @@ const CONCEPT_HEADINGS = ["Conceptos", "Concepts"];
 const LOG_HEADINGS = ["Registro de práctica", "Practice log"];
 
 export function parseModule(source: string): ModuleContent {
-  const concepts = sectionLines(source, CONCEPT_HEADINGS).flatMap(({ line, text }) => {
-    const match = CHECKBOX.exec(text);
-    return match ? [{ text: match[4]!.trim(), done: match[2] !== " ", line }] : [];
-  });
+  const concepts = parseConcepts(sectionLines(source, CONCEPT_HEADINGS));
 
   const rows = logRows(source);
   const lastRow = rows.at(-1);
@@ -78,6 +80,31 @@ export function parseModule(source: string): ModuleContent {
     sessions: rows.length,
     ...(lastRow && { lastSession: readLogRow(lastRow.text) }),
   };
+}
+
+/** Cada casilla es un concepto; las líneas sangradas que la siguen son su explicación. */
+function parseConcepts(lines: { line: number; text: string }[]): Concept[] {
+  const concepts: { concept: Omit<Concept, "details" | "resources">; below: string[] }[] = [];
+  for (const { line, text } of lines) {
+    const match = CHECKBOX.exec(text);
+    if (match) {
+      concepts.push({
+        concept: { text: match[4]!.trim(), done: match[2] !== " ", line },
+        below: [],
+      });
+    } else if (/^\s+\S/.test(text)) {
+      concepts.at(-1)?.below.push(text.trim().replace(/^[-*]\s+/, ""));
+    }
+  }
+  return concepts.map(({ concept, below }) => ({
+    ...concept,
+    details: below.filter((text) => !isOnlyLink(text)).join(" "),
+    resources: resourcesInText(below.join("\n")),
+  }));
+}
+
+function isOnlyLink(text: string): boolean {
+  return /^(\[[^\]]*\]\([^)]*\)|https?:\/\/\S+)$/.test(text);
 }
 
 function readLogRow(row: string): PracticeEntry {

@@ -1,4 +1,4 @@
-import type { ExerciseLevel, ModuleStatus, Resource } from "@rumbo/core";
+import type { ExerciseLevel, ModuleStatus, Resource, ResourceKind } from "@rumbo/core";
 
 export const STATUS_LABEL: Record<ModuleStatus, string> = {
   "not-started": "Sin empezar",
@@ -44,4 +44,14 @@ export const RESOURCE_STATUS_STYLE: Record<Resource["status"], string> = {
   doing: "text-primary-text",
   done: "text-success",
   skip: "text-faint",
+};
+
+export const RESOURCE_KIND_LABEL: Record<ResourceKind, string> = {
+  course: "Curso",
+  video: "Vídeo",
+  docs: "Docs",
+  repo: "Repo",
+  article: "Artículo",
+  book: "Libro",
+  certification: "Certificado",
 };

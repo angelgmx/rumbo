@@ -263,6 +263,7 @@ roadmap: "[[Java desde cero]]"
 order: 4
 track: fundamentos # opcional: su pista; si no dice ninguna, va a la primera
 title: Bucles # o "tema" con alias
+purpose: "Repetir sin copiar código." # opcional: para qué sirve, en una frase (entre comillas si lleva dos puntos)
 status: aprendiendo # sin-empezar | aprendiendo | dominado | saltado (o en inglés)
 ```
 
@@ -275,6 +276,8 @@ El cuerpo del tema:
 ## Conceptos a dominar
 
 - [ ] for clásico: cuándo necesito el índice
+      Recorre por posición; úsalo cuando necesites saber en qué vuelta vas.
+  - [Bucles en dev.java](https://dev.java/learn/language-basics/controlling-flow/)
 
 ## Registro de práctica
 
@@ -284,6 +287,7 @@ El cuerpo del tema:
 
 - El estado se escribe en la clave y el idioma que ya use la nota (`estado: dominado` o `status: mastered`).
 - Desde la app se marcan conceptos (la casilla de la nota) y se añaden filas al registro de práctica.
+- Bajo cada concepto, con sangría, va su **explicación** y sus **enlaces** (cursos, vídeos, artículos). La vista **Temario** de la ruta los enseña al desplegar el concepto; el tipo de recurso se adivina por la dirección.
 
 **Ejercicios** — una nota por tema, por niveles:
 

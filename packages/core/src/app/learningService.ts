@@ -42,6 +42,8 @@ export interface NoteRef {
 
 export interface ModuleSummary extends NoteRef {
   title: string;
+  /** Para qué sirve, en una frase: «Entender un papel que no existía hace cinco años». */
+  purpose?: string;
   order: number;
   status: ModuleStatus;
   roadmap?: string;
@@ -462,6 +464,7 @@ export class LearningService {
       path: note.path,
       name: note.name,
       title,
+      purpose: typeof note.data.purpose === "string" ? note.data.purpose : undefined,
       order: Number(note.data.order ?? 0),
       status: readStatus(note.data.status),
       roadmap: linkTarget(note.data.roadmap),

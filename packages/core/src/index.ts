@@ -41,7 +41,7 @@ export {
   type Exercise,
   type ExerciseLevel,
 } from "./domain/exercises";
-export type { ModuleStatus } from "./domain/learning";
+export type { Concept, ModuleStatus } from "./domain/learning";
 export { linkTarget } from "./domain/links";
 export {
   layoutRoadmap,
