@@ -6,12 +6,9 @@ import { StepSection } from "./StepSection";
 
 /** Paso 5: cómo llegarás. Se conecta lo que ya existe: proyectos, hábitos, rutas y notas. */
 export function StepDrivers({
-  goalId,
   drivers,
   onChange,
 }: {
-  /** El objetivo que se edita; sin él, uno nuevo. */
-  goalId: number | undefined;
   drivers: GoalDriverRefs;
   onChange: (changes: Partial<GoalDriverRefs>) => void;
 }) {
@@ -19,7 +16,7 @@ export function StepDrivers({
   // Un proyecto o un hábito empuja un solo objetivo: si ya tiene otro, se avisa.
   const titles = new Map(goals.list().map(({ id, goal }) => [id, goal.title]));
   const elsewhere = (owner: number | undefined) =>
-    owner === undefined || owner === goalId ? undefined : titles.get(owner);
+    owner === undefined ? undefined : titles.get(owner);
 
   return (
     <StepSection

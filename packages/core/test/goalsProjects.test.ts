@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createRumbo, type Rumbo } from "../src";
 import {
+  goalPace,
   goalProgress,
   groupByPeriod,
   keyResultProgress,
@@ -8,7 +9,7 @@ import {
   periodHorizon,
   type Goal,
 } from "../src/domain/goals";
-import { projectProgress, type Project } from "../src/domain/projects";
+import { nearestMilestone, projectProgress, type Project } from "../src/domain/projects";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
 import { memoryDatabase } from "./memoryDatabase";
 
@@ -49,6 +50,38 @@ describe("goalProgress", () => {
     expect(
       goalProgress({ ...goal, status: "done" }, { projects: [], roadmaps: [], habits: [] }),
     ).toBe(1);
+  });
+});
+
+describe("goalPace", () => {
+  const today = "2026-10-15";
+  const running: Goal = { ...goal, start: "2026-09-15", deadline: "2026-12-14" };
+
+  it("compares what you average with what the deadline asks, with a 10 % margin", () => {
+    const required = (7 * (1 - 1 / 3)) / 60;
+    expect(goalPace(running, 0.5, today)?.state).toBe("ahead");
+    expect(goalPace(running, 0.2, today)?.state).toBe("behind");
+    const even = goalPace(running, 1 / 3, today)!;
+    expect(even.state).toBe("on-track");
+    expect(even.requiredPerWeek).toBeCloseTo(required);
+    expect(even.actualPerWeek).toBeCloseTo(7 / 90);
+  });
+
+  it("only knows what is needed during the first week", () => {
+    expect(goalPace({ ...running, start: "2026-10-12" }, 0.1, today)).toEqual({
+      requiredPerWeek: (0.9 / 60) * 7,
+    });
+  });
+
+  it("is behind once the deadline has passed", () => {
+    expect(goalPace({ ...running, deadline: "2026-10-01" }, 0.9, today)?.state).toBe("behind");
+  });
+
+  it("does not apply without a deadline, progress, or while not active or unfinished", () => {
+    expect(goalPace({ ...running, deadline: undefined }, 0.5, today)).toBeUndefined();
+    expect(goalPace(running, undefined, today)).toBeUndefined();
+    expect(goalPace(running, 1, today)).toBeUndefined();
+    expect(goalPace({ ...running, status: "paused" }, 0.5, today)).toBeUndefined();
   });
 });
 
@@ -173,28 +206,68 @@ describe("goals", () => {
     ]);
     expect(summary.goal.plans).toEqual([{ if: "lo dejo", then: "reservo 3 clases el domingo" }]);
     expect(summary.daysLeft).toBe(364);
+    expect(summary.pace?.requiredPerWeek).toBeGreaterThan(0);
+    expect(summary.milestone).toBeUndefined();
     expect(summary.progress).toBeGreaterThan(0);
     expect(rumbo.tasks.goalOf({ projectId })).toBe("Inglés fluido en entrevista");
   });
 
-  it("tracks each key result and disconnects what is no longer chosen", async () => {
-    const id = await rumbo.goals.create(
-      {
-        ...goal,
-        keyResults: [
-          { title: "Sesiones", from: 6, target: 80, unit: "sesiones" },
-          { title: "Vocabulario", from: 0, target: 100 },
-        ],
-      },
-      { projects: [], habits: ["reading"], roadmaps: [], notes: ["Python"] },
-    );
-    await rumbo.goals.setCurrent(id!, 0, 80);
+  it("tracks, adds and removes key results one by one", async () => {
+    const id = await rumbo.goals.create({
+      ...goal,
+      keyResults: [
+        { title: "Sesiones", from: 6, target: 80, unit: "sesiones" },
+        { title: "Vocabulario", from: 0, target: 100 },
+      ],
+    });
+    await rumbo.goals.changeKeyResult(id!, 0, { current: 80 });
     expect(rumbo.goals.get(id!)!.goal.keyResults[0]!.current).toBe(80);
     expect(rumbo.goals.get(id!)!.progress).toBe(0.5);
 
-    await rumbo.goals.setDrivers(id!, { projects: [], habits: [], roadmaps: [], notes: [] });
-    expect(rumbo.goals.get(id!)!.habits).toEqual([]);
-    expect(rumbo.goals.get(id!)!.notes).toEqual([]);
+    await rumbo.goals.addKeyResult(id!, { title: "Clases", from: 0, target: 20 });
+    await rumbo.goals.changeKeyResult(id!, 2, { target: 40, unit: "clases" });
+    expect(rumbo.goals.get(id!)!.goal.keyResults[2]).toEqual({
+      title: "Clases",
+      from: 0,
+      target: 40,
+      unit: "clases",
+    });
+
+    await rumbo.goals.removeKeyResult(id!, 1);
+    expect(rumbo.goals.get(id!)!.goal.keyResults.map((keyResult) => keyResult.title)).toEqual([
+      "Sesiones",
+      "Clases",
+    ]);
+  });
+
+  it("connects and disconnects each kind of driver one by one", async () => {
+    const id = (await rumbo.goals.create(goal))!;
+    const other = (await rumbo.goals.create({ ...goal, title: "Otro" }))!;
+    const projectId = (await rumbo.projects.create(project))!;
+    const task = (await rumbo.tasks.create({ text: "Llamar" }))!;
+    const links = [
+      { kind: "project", id: projectId },
+      { kind: "habit", key: "reading" },
+      { kind: "roadmap", name: "Python basics" },
+      { kind: "note", name: "Python" },
+      { kind: "task", id: task.id },
+    ] as const;
+
+    for (const link of links) await rumbo.goals.connect(id, link);
+    const connected = rumbo.goals.get(id)!;
+    expect(connected.projects).toHaveLength(1);
+    expect(connected.habits.map(({ habit }) => habit.key)).toEqual(["reading"]);
+    expect(connected.roadmaps.map(({ name }) => name)).toEqual(["Python basics"]);
+    expect(connected.notes.map(({ name }) => name)).toEqual(["Python"]);
+    expect(connected.tasks.map(({ text }) => text)).toEqual(["Llamar"]);
+
+    await rumbo.goals.connect(other, links[1]);
+    expect(rumbo.goals.get(id)!.habits).toEqual([]);
+    expect(rumbo.goals.get(other)!.habits).toHaveLength(1);
+
+    for (const link of links) await rumbo.goals.disconnect(id, link);
+    const empty = rumbo.goals.get(id)!;
+    expect([empty.projects, empty.roadmaps, empty.notes, empty.tasks]).toEqual([[], [], [], []]);
   });
 
   it("changes only what it is given", async () => {
@@ -228,6 +301,22 @@ describe("goals", () => {
     await rumbo.goals.remove(id!);
     expect(rumbo.goals.get(id!)).toBeUndefined();
     expect(rumbo.habits.get("reading")).toBeDefined();
+  });
+});
+
+describe("nearestMilestone", () => {
+  it("is the earliest dated milestone still to do, with its project", () => {
+    const planned = (title: string, ...dates: [string | undefined, boolean][]) => ({
+      ...project,
+      title,
+      milestones: dates.map(([date, done], index) => ({ title: `${title} ${index}`, date, done })),
+    });
+    const found = nearestMilestone([
+      planned("Web", ["2026-12-01", false], ["2026-10-01", true]),
+      planned("App", [undefined, false], ["2026-11-10", false]),
+    ]);
+    expect(found).toEqual({ project: "App", title: "App 1", date: "2026-11-10" });
+    expect(nearestMilestone([planned("Web", ["2026-10-01", true])])).toBeUndefined();
   });
 });
 

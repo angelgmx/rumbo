@@ -3,10 +3,14 @@ import type { IsoDate } from "../domain/dates";
 import {
   daysLeft,
   goalProgress,
+  goalPace,
   type Goal,
   type GoalInput,
+  type GoalPace,
   type GoalStatus,
+  type KeyResult,
 } from "../domain/goals";
+import { nearestMilestone, type UpcomingMilestone } from "../domain/projects";
 import type { Task } from "../domain/tasks";
 import type { Note } from "../vault/vault";
 import type { DailyService } from "./dailyService";
@@ -22,6 +26,10 @@ export interface GoalSummary {
   /** De 0 a 1; sin resultados clave ni nada que lo empuje, `undefined` («sin plan»). */
   progress?: number;
   daysLeft?: number;
+  /** Ritmo real frente al necesario; solo en un objetivo en marcha, con fecha límite y sin terminar. */
+  pace?: GoalPace;
+  /** El hito sin hacer con fecha más cercano de sus proyectos. */
+  milestone?: UpcomingMilestone;
   projects: ProjectSummary[];
   /** Sus tareas pendientes, propias y de sus proyectos, las que tienen fecha primero. */
   tasks: Task[];
@@ -31,7 +39,15 @@ export interface GoalSummary {
   notes: Note[];
 }
 
-/** Lo que conecta con un objetivo: proyectos por id, hábitos por clave, rutas y notas por su nota. */
+/** Una cosa que se conecta a un objetivo: un proyecto o una tarea por id, un hábito por clave, una ruta o una nota por nombre. */
+export type GoalLink =
+  | { kind: "project"; id: number }
+  | { kind: "task"; id: number }
+  | { kind: "habit"; key: string }
+  | { kind: "roadmap"; name: string }
+  | { kind: "note"; name: string };
+
+/** Lo que se conecta al crear un objetivo: proyectos por id, hábitos por clave, rutas y notas por su nota. */
 export interface GoalDriverRefs {
   projects: number[];
   habits: string[];
@@ -39,7 +55,7 @@ export interface GoalDriverRefs {
   notes: string[];
 }
 
-/** Objetivos: con lo que los empuja y su progreso; crearlos, editarlos y conectarlos. */
+/** Objetivos: con lo que los empuja y su progreso; crearlos, editarlos y conectarlos uno a uno. */
 export class GoalService {
   constructor(
     private readonly store: VaultStore,
@@ -73,7 +89,13 @@ export class GoalService {
       { ...input, start: input.start ?? today, status: "active" },
       today,
     );
-    if (id !== undefined && drivers) await this.setDrivers(id, drivers);
+    if (id === undefined || !drivers) return id;
+
+    for (const project of drivers.projects)
+      await this.connect(id, { kind: "project", id: project });
+    for (const key of drivers.habits) await this.connect(id, { kind: "habit", key });
+    for (const name of drivers.roadmaps) await this.connect(id, { kind: "roadmap", name });
+    for (const name of drivers.notes) await this.connect(id, { kind: "note", name });
     return id;
   }
 
@@ -86,13 +108,27 @@ export class GoalService {
     return this.change(id, (goal) => ({ ...goal, status }));
   }
 
-  /** Apunta dónde va un resultado clave. */
-  setCurrent(id: number, index: number, current: number): Promise<void> {
+  addKeyResult(id: number, keyResult: KeyResult): Promise<void> {
+    return this.change(id, (goal) => ({
+      ...goal,
+      keyResults: [...goal.keyResults, keyResult],
+    }));
+  }
+
+  /** Cambia un resultado clave; para apuntar dónde vas, `current`. */
+  changeKeyResult(id: number, index: number, changes: Partial<KeyResult>): Promise<void> {
     return this.change(id, (goal) => ({
       ...goal,
       keyResults: goal.keyResults.map((keyResult, i) =>
-        i === index ? { ...keyResult, current } : keyResult,
+        i === index ? { ...keyResult, ...changes } : keyResult,
       ),
+    }));
+  }
+
+  removeKeyResult(id: number, index: number): Promise<void> {
+    return this.change(id, (goal) => ({
+      ...goal,
+      keyResults: goal.keyResults.filter((_, i) => i !== index),
     }));
   }
 
@@ -102,31 +138,15 @@ export class GoalService {
   }
 
   /**
-   * Conecta el objetivo con lo elegido y desconecta lo que ya no está elegido. Cada proyecto
-   * y cada hábito tiene un solo objetivo: elegirlo aquí lo quita del que tuviera.
+   * Conecta algo con el objetivo. Un proyecto, un hábito o una tarea empuja un solo objetivo:
+   * conectarlo aquí lo quita del que tuviera.
    */
-  async setDrivers(id: number, drivers: GoalDriverRefs): Promise<void> {
-    const current = this.goals.get(id);
-    if (!current) return;
+  async connect(id: number, link: GoalLink): Promise<void> {
+    await this.setLink(id, link, id);
+  }
 
-    for (const { id: projectId, project } of this.projects.list()) {
-      const wanted = drivers.projects.includes(projectId);
-      if (wanted !== (project.goalId === id)) {
-        await this.projects.setGoal(projectId, wanted ? id : undefined);
-      }
-    }
-    for (const { habit } of this.habits.list()) {
-      const wanted = drivers.habits.includes(habit.key);
-      if (wanted !== (habit.goalId === id)) {
-        await this.habits.setGoal(habit.key, wanted ? id : undefined);
-      }
-    }
-    const wanted = [...drivers.roadmaps, ...drivers.notes];
-    for (const note of [...current.roadmaps, ...current.notes]) {
-      if (!wanted.includes(note)) await this.goals.unlink(id, note);
-    }
-    for (const roadmap of drivers.roadmaps) await this.goals.link(id, roadmap, "roadmap");
-    for (const note of drivers.notes) await this.goals.link(id, note, "note");
+  async disconnect(id: number, link: GoalLink): Promise<void> {
+    await this.setLink(id, link, undefined);
   }
 
   private async change(id: number, apply: (goal: Goal) => Goal): Promise<void> {
@@ -134,25 +154,50 @@ export class GoalService {
     if (stored) await this.goals.save(id, apply(stored.goal));
   }
 
+  private async setLink(id: number, link: GoalLink, goalId: number | undefined): Promise<void> {
+    switch (link.kind) {
+      case "project":
+        return this.projects.setGoal(link.id, goalId);
+      case "habit":
+        return this.habits.setGoal(link.key, goalId);
+      case "task": {
+        const task = this.tasks.get(link.id);
+        return task && this.tasks.update(task, { goalId });
+      }
+      case "roadmap":
+      case "note":
+        return goalId === undefined
+          ? this.goals.unlink(id, link.name)
+          : this.goals.link(id, link.name, link.kind);
+    }
+  }
+
   private summarize(
     { id, goal, roadmaps: roadmapNames, notes }: StoredGoal,
-    all: { projects: ProjectSummary[]; habits: HabitSummary[]; roadmaps: RoadmapSummary[] },
+    all: {
+      projects: ProjectSummary[];
+      habits: HabitSummary[];
+      roadmaps: RoadmapSummary[];
+    },
   ): GoalSummary {
     const projects = all.projects.filter(({ project }) => project.goalId === id);
     const habits = all.habits.filter(({ habit }) => habit.goalId === id);
     const roadmaps = all.roadmaps.filter((roadmap) => roadmapNames.includes(roadmap.name));
     const today: IsoDate = this.daily.today();
+    const progress = goalProgress(goal, {
+      projects: projects.map((project) => project.progress),
+      roadmaps: roadmaps.map((roadmap) =>
+        roadmap.modules.length === 0 ? 0 : roadmap.mastered / roadmap.modules.length,
+      ),
+      habits: habits.map((habit) => habit.last30Days),
+    });
     return {
       id,
       goal,
-      progress: goalProgress(goal, {
-        projects: projects.map((project) => project.progress),
-        roadmaps: roadmaps.map((roadmap) =>
-          roadmap.modules.length === 0 ? 0 : roadmap.mastered / roadmap.modules.length,
-        ),
-        habits: habits.map((habit) => habit.last30Days),
-      }),
+      progress,
       daysLeft: daysLeft(goal, today),
+      pace: goalPace(goal, progress, today),
+      milestone: nearestMilestone(projects.map((summary) => summary.project)),
       projects,
       tasks: [
         ...this.tasks.forGoal(id).filter((task) => !task.done),
