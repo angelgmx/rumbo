@@ -38,7 +38,13 @@ export function TasksScreen() {
   const showIdeas = viewSlug === IDEAS_VIEW.slug;
   const current = findView(viewSlug);
   const heading = showIdeas ? IDEAS_VIEW : current;
-  const [filter, setFilter] = useState<TaskFilter>({});
+  // El filtro es de la vista en la que lo pones: al cambiar de vista, la lista y su número cuadran.
+  const [filtered, setFiltered] = useState<{ view: string; filter: TaskFilter }>({
+    view: viewSlug,
+    filter: {},
+  });
+  const filter = filtered.view === viewSlug ? filtered.filter : {};
+  const setFilter = (next: TaskFilter) => setFiltered({ view: viewSlug, filter: next });
   const taskPanel = useTaskPanel();
 
   const [, navigate] = useLocation();
@@ -62,8 +68,12 @@ export function TasksScreen() {
 
   function openSavedView(saved: SavedView) {
     const info = TASK_VIEWS.find((candidate) => candidate.view === saved.view);
-    if (info) navigate(`/tareas/${info.slug}`);
-    setFilter({ area: saved.area, project: saved.project, tag: saved.tag });
+    if (!info) return;
+    navigate(`/tareas/${info.slug}`);
+    setFiltered({
+      view: info.slug,
+      filter: { area: saved.area, project: saved.project, tag: saved.tag },
+    });
   }
 
   const listProps = {
