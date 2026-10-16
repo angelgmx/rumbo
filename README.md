@@ -18,7 +18,7 @@
 ---
 
 <p align="center">
-  <img src="docs/design/01-hoy/01-hoy.png" alt="Pantalla Hoy" width="100%">
+  <img src="docs/design/01-foco/01-foco.png" alt="Pantalla Foco" width="100%">
 </p>
 
 ## Por qué existe
@@ -34,10 +34,10 @@ Tenía objetivos claros y notas por todas partes, pero ningún sitio que me dije
 
 | Pestaña                          | Para qué                                                          | Estado   |
 | -------------------------------- | ----------------------------------------------------------------- | -------- |
-| **Hoy**                          | Tu día por horas, lo que toca ahora y tus hábitos                 | Hecho    |
+| **Foco**                         | Tu día por horas, lo que toca ahora y tus hábitos                 | Hecho    |
 | **Tareas**                       | Inbox, Hoy, Próximas, vistas guardadas y captura rápida           | Hecho    |
 | **Hábitos**                      | Rachas, tracker semanal y el año en un mapa de calor              | Hecho    |
-| **Aprender**                     | Rutas, temas, ejercicios, retos, recursos y repaso espaciado      | Hecho    |
+| **Roadmaps**                     | Rutas, módulos, ejercicios, retos, recursos y repaso espaciado    | Hecho    |
 | **Rutinas**                      | Bloques que unen hábitos, temas y tareas a una hora               | En curso |
 | **Calendario**                   | Tu semana con rutinas, hábitos y bloques                          | Roadmap  |
 | **Notas**                        | Leer y editar tus notas, búsqueda con `Ctrl K`                    | Roadmap  |
@@ -49,15 +49,15 @@ Lo que falta, fase a fase, en el [roadmap](docs/roadmap.md).
 
 <table>
   <tr>
-    <td><img src="docs/design/05-aprender/02-tema-resumen.png" alt="Aprender: tema Java"></td>
+    <td><img src="docs/design/08-roadmaps/02-roadmap.png" alt="Roadmap de Java"></td>
     <td><img src="docs/design/04-rutinas/02-editor-rutina.png" alt="Editor de rutina"></td>
   </tr>
   <tr>
-    <td align="center"><sub>Aprender · tema con su ruta, ejercicios y repaso</sub></td>
+    <td align="center"><sub>Roadmaps · pistas en paralelo, checkpoints y ritmo</sub></td>
     <td align="center"><sub>Rutinas · cada bloque marca un hábito o avanza un tema</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/design/06-habitos/01-habitos.png" alt="Hábitos"></td>
+    <td><img src="docs/design/05-habitos/01-habitos.png" alt="Hábitos"></td>
     <td><img src="docs/design/02-tareas/01-inbox.png" alt="Tareas"></td>
   </tr>
   <tr>
