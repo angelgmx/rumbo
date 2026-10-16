@@ -6,7 +6,6 @@ import {
   fillGaps,
   freeSlots,
   hasProposal,
-  isLooseTask,
   ORGANIZE_HORIZON_DAYS,
   organizeChanges,
   organizeMessages,
@@ -14,12 +13,17 @@ import {
   taskInterval,
   type Interval,
   type OrganizeContext,
+  type OrganizeLinks,
   type OrganizeProposal,
 } from "../domain/taskOrganizing";
+import { isIncomplete } from "../domain/taskGaps";
 import { taskToDraft, type Task, type TaskChanges } from "../domain/tasks";
 import type { AiProvider } from "../ports";
 import type { DayPlanService } from "./dayPlanService";
 import type { DailyService } from "./dailyService";
+import type { GoalService } from "./goalService";
+import type { LearningService } from "./learningService";
+import type { ProjectService } from "./projectService";
 import type { RoutineService } from "./routineService";
 import type { TaskService } from "./taskService";
 import type { VaultStore } from "./vaultStore";
@@ -43,25 +47,40 @@ export class TaskOrganizerService {
     private readonly tasks: TaskService,
     private readonly dayPlan: DayPlanService,
     private readonly routines: RoutineService,
+    private readonly links: {
+      projects: ProjectService;
+      learning: LearningService;
+      goals: GoalService;
+    },
     private readonly history: TaskOrganizationRepository,
   ) {}
 
-  /** Las tareas sueltas que se pueden organizar: no las descartadas ni las deshechas. */
-  async pending(): Promise<Task[]> {
+  /** De las tareas dadas, las que tienen algo por rellenar y el usuario no ha rechazado. */
+  async pending(tasks: Task[]): Promise<Task[]> {
     const refused = await this.history.refusedTaskIds();
-    return this.tasks.all().filter((task) => isLooseTask(task) && !refused.has(task.id));
+    return tasks.filter((task) => isIncomplete(task) && !refused.has(task.id));
   }
 
   /** Una propuesta por tarea que aún se puede organizar. No escribe nada en las tareas. */
   async propose(ai: AiProvider, tasks: Task[]): Promise<OrganizeSuggestion[]> {
-    const refused = await this.history.refusedTaskIds();
-    const loose = tasks.filter((task) => isLooseTask(task) && !refused.has(task.id));
-    if (loose.length === 0) return [];
+    return this.suggest(ai, await this.pending(tasks));
+  }
 
-    let context = await this.context();
+  /**
+   * Lo mismo para una tarea que el usuario pide completar: aunque la hubiera descartado antes.
+   * Pide solo lo que le falta y no la apunta como descartada si no se aplica.
+   */
+  async complete(ai: AiProvider, task: Task): Promise<OrganizeSuggestion | undefined> {
+    return (await this.suggest(ai, isIncomplete(task) ? [task] : []))[0];
+  }
+
+  private async suggest(ai: AiProvider, tasks: Task[]): Promise<OrganizeSuggestion[]> {
+    if (tasks.length === 0) return [];
+
+    let context = { ...(await this.context()), links: this.linkOptions() };
     const suggestions: OrganizeSuggestion[] = [];
-    for (let start = 0; start < loose.length; start += BATCH_SIZE) {
-      const batch = loose.slice(start, start + BATCH_SIZE);
+    for (let start = 0; start < tasks.length; start += BATCH_SIZE) {
+      const batch = tasks.slice(start, start + BATCH_SIZE);
       const answer = parseOrganization(
         await ai.complete(organizeMessages(batch, context), { json: true }),
         batch,
@@ -103,6 +122,21 @@ export class TaskOrganizerService {
     if (!organization?.before || organization.status !== "aplicada" || !task) return;
     await this.tasks.update(task, organization.before);
     await this.history.markReverted(id);
+  }
+
+  private linkOptions(): OrganizeLinks {
+    const { projects, learning, goals } = this.links;
+    return {
+      projects: projects
+        .list()
+        .map(({ id, project }) => ({ value: String(id), label: project.title })),
+      modules: learning
+        .roadmaps()
+        .flatMap(({ modules }) =>
+          modules.map(({ name, title }) => ({ value: name, label: title })),
+        ),
+      goals: goals.list().map(({ id, goal }) => ({ value: String(id), label: goal.title })),
+    };
   }
 
   private moment(): string {

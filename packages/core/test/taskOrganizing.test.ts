@@ -3,7 +3,6 @@ import { createRumbo, type AiMessage, type AiProvider, type Rumbo } from "../src
 import {
   fillGaps,
   freeSlots,
-  isLooseTask,
   organizeChanges,
   organizeMessages,
   parseOrganization,
@@ -11,6 +10,7 @@ import {
   type OrganizeContext,
   type OrganizeProposal,
 } from "../src/domain/taskOrganizing";
+import { isIncomplete, openGaps } from "../src/domain/taskGaps";
 import type { Task } from "../src/domain/tasks";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
 import { memoryDatabase } from "./memoryDatabase";
@@ -36,14 +36,24 @@ const slots: FreeSlot[] = [
 ];
 const context: OrganizeContext = { areas: ["Python", "Negocio"], slots, deadlines: [] };
 
-describe("isLooseTask", () => {
-  it("is a pending task without date or steps", () => {
-    expect(isLooseTask(task())).toBe(true);
-    expect(isLooseTask(task({ area: "Python" }))).toBe(true);
-    expect(isLooseTask(task({ scheduled: "2026-10-17" }))).toBe(false);
-    expect(isLooseTask(task({ due: "2026-10-20" }))).toBe(false);
-    expect(isLooseTask(task({ steps: [{ text: "Uno", done: false }] }))).toBe(false);
-    expect(isLooseTask(task({ done: true }))).toBe(false);
+describe("isIncomplete", () => {
+  const complete = task({
+    steps: [{ text: "Uno", done: false }],
+    priority: "low",
+    area: "Python",
+    projectId: 4,
+    duration: 20,
+    scheduled: "2026-10-17",
+    time: "10:00",
+  });
+
+  it("is a pending task with something left to fill", () => {
+    expect(isIncomplete(complete)).toBe(false);
+    expect(isIncomplete({ ...complete, time: undefined })).toBe(true);
+    expect(isIncomplete({ ...complete, projectId: undefined, module: "Variables" })).toBe(false);
+    expect(isIncomplete({ ...complete, projectId: undefined })).toBe(true);
+    expect(isIncomplete({ ...complete, steps: [] })).toBe(true);
+    expect(isIncomplete({ ...complete, time: undefined, done: true })).toBe(false);
   });
 });
 
@@ -95,10 +105,23 @@ describe("organizeMessages", () => {
     expect(user!.content).toBe("0. Preparar la declaración\n1. Llamar al banco");
   });
 
-  it("says there are no slots when none is left", () => {
+  it("only asks for what is missing and marks the day a task already has", () => {
+    const [system, user] = organizeMessages(
+      [task({ priority: "low", scheduled: "2026-10-17", notes: "Con el gestor" })],
+      context,
+    );
+
+    expect(system!.content).not.toContain("- priority");
+    expect(system!.content).toContain("- steps");
+    expect(user!.content).toBe(
+      "0. Preparar la declaración (día fijo: 2026-10-17)\n   Notas: Con el gestor",
+    );
+  });
+
+  it("does not ask for an hour when no slot is left", () => {
     const [system] = organizeMessages([task()], { ...context, slots: [] });
 
-    expect(system!.content).toContain("Huecos libres:\n- ninguno");
+    expect(system!.content).not.toContain("Huecos libres");
   });
 });
 
@@ -228,6 +251,30 @@ describe("fillGaps and organizeChanges", () => {
     });
   });
 
+  it("keeps a goal, a date or steps the task already has or inherits", () => {
+    const proposal: OrganizeProposal = {
+      steps: ["a", "b"],
+      projectId: 3,
+      goalId: 2,
+      date: "2026-10-25",
+      time: "10:00",
+    };
+
+    expect(fillGaps(task({ steps: [{ text: "x", done: false }] }), proposal)).toMatchObject({
+      steps: undefined,
+      goalId: undefined,
+      projectId: 3,
+    });
+    expect(fillGaps(task({ due: "2026-10-20" }), proposal)).toMatchObject({
+      date: undefined,
+      time: undefined,
+      goalId: undefined,
+    });
+    expect(
+      fillGaps(task({ scheduled: "2026-10-18" }), { date: "2026-10-19", time: "09:00" }),
+    ).toMatchObject({ date: undefined, time: "09:00" });
+  });
+
   it("turns a proposal into the changes of the task", () => {
     expect(
       organizeChanges({
@@ -281,7 +328,8 @@ describe("TaskOrganizerService", () => {
   };
 
   async function pendingIds(): Promise<number[]> {
-    return (await rumbo.organizer.pending()).map((pending) => pending.id);
+    const all = await rumbo.tasks.all();
+    return (await rumbo.organizer.pending(all)).map((pending) => pending.id);
   }
 
   async function loose(text = "Comprar un cuaderno"): Promise<Task> {
@@ -290,9 +338,13 @@ describe("TaskOrganizerService", () => {
 
   it("proposes for loose tasks without touching them", async () => {
     const created = await loose();
-    const dated = (await rumbo.tasks.create({ text: "Con fecha", scheduled: "2026-10-17" }))!;
+    const done = (await rumbo.tasks.create({ text: "Hecha" }))!;
+    await rumbo.tasks.setDone(done, true);
 
-    const suggestions = await rumbo.organizer.propose(fakeAi([answer]), [created, dated]);
+    const suggestions = await rumbo.organizer.propose(fakeAi([answer]), [
+      created,
+      rumbo.tasks.get(done.id)!,
+    ]);
 
     expect(asked).toHaveLength(1);
     expect(asked[0]![1]!.content).toBe("0. Comprar un cuaderno");
@@ -415,5 +467,129 @@ describe("TaskOrganizerService", () => {
     expect(suggestion!.proposal.priority).toBeUndefined();
     await rumbo.organizer.accept(suggestion!);
     expect(rumbo.tasks.get(created.id)!.priority).toBe("low");
+  });
+});
+
+describe("completing a task", () => {
+  const links = {
+    projects: [{ value: "4", label: "Declaración" }],
+    modules: [{ value: "Variables", label: "Variables y tipos" }],
+    goals: [{ value: "7", label: "Ordenar mis papeles" }],
+  };
+  const withLinks: OrganizeContext = { ...context, links };
+
+  it("only asks for what the task is missing", () => {
+    const full = task({
+      steps: [{ text: "Uno", done: false }],
+      priority: "low",
+      area: "Python",
+      projectId: 4,
+      duration: 20,
+      scheduled: "2026-10-17",
+      time: "10:00",
+    });
+
+    expect(openGaps(full, withLinks)).toEqual([]);
+    expect(openGaps(task({ priority: "low", module: "Variables" }), withLinks)).toEqual([
+      "steps",
+      "area",
+      "duration",
+      "slot",
+    ]);
+    expect(openGaps(task({ scheduled: "2026-10-30" }), withLinks)).not.toContain("slot");
+  });
+
+  it("offers the links that exist in the prompt", () => {
+    const system = organizeMessages([task()], withLinks)[0]!.content;
+
+    expect(system).toContain(
+      "- project: uno de estos proyectos, tal cual, solo si encaja claramente: Declaración",
+    );
+  });
+
+  it("reads links by name and ignores the ones that do not exist", () => {
+    const only = task();
+    const read = (item: object) =>
+      parseOrganization(JSON.stringify({ items: [item] }), [only], withLinks)!.proposals.get(0);
+
+    expect(
+      read({
+        index: 0,
+        project: "declaración",
+        module: "Variables y tipos",
+        goal: "Ordenar mis papeles",
+      }),
+    ).toMatchObject({ projectId: 4, module: "Variables", goalId: 7 });
+    expect(read({ index: 0, project: "Inventado", module: "Otro" })).toMatchObject({
+      projectId: undefined,
+      module: undefined,
+    });
+  });
+
+  it("only proposes the time when the task already has a day", () => {
+    const dated = task({ scheduled: "2026-10-18" });
+    const read = (item: object) =>
+      parseOrganization(JSON.stringify({ items: [item] }), [dated], context)!.proposals.get(0)!;
+
+    const proposal = read({ index: 0, date: "2026-10-17", time: "16:30", duration: 30 });
+
+    expect(proposal.date).toBeUndefined();
+    expect(proposal.time).toBe("16:30");
+    expect(organizeChanges(fillGaps(dated, proposal))).toEqual({ duration: 30, time: "16:30" });
+    expect(read({ index: 0, time: "10:00" }).time).toBeUndefined();
+    expect(fillGaps({ ...dated, time: "09:00" }, proposal).time).toBeUndefined();
+  });
+});
+
+describe("TaskOrganizerService.complete", () => {
+  let rumbo: Rumbo;
+
+  beforeEach(async () => {
+    rumbo = await createRumbo({
+      fs: memoryFileSystem(await loadDemoVault()),
+      database: memoryDatabase(),
+      clock: { now: () => new Date(2026, 9, 16, 9, 0) },
+    });
+  });
+
+  it("fills only the empty fields of any task, keeps its day and can be undone", async () => {
+    const created = (await rumbo.tasks.create({
+      text: "Preparar la declaración",
+      priority: "low",
+      scheduled: "2026-10-17",
+      steps: [{ text: "Reunir facturas", done: false }],
+    }))!;
+    const ai: AiProvider = {
+      complete: async () =>
+        JSON.stringify({
+          items: [
+            {
+              index: 0,
+              steps: ["Otro", "Más"],
+              priority: "high",
+              duration: 45,
+              date: "2026-10-20",
+              time: "10:00",
+            },
+          ],
+        }),
+    };
+
+    const suggestion = await rumbo.organizer.complete(ai, created);
+    const id = await rumbo.organizer.accept(suggestion!);
+
+    expect(rumbo.tasks.get(created.id)).toMatchObject({
+      priority: "low",
+      steps: [{ text: "Reunir facturas", done: false }],
+      duration: 45,
+      scheduled: "2026-10-17",
+      time: "10:00",
+    });
+
+    await rumbo.organizer.undo(id!);
+
+    expect(rumbo.tasks.get(created.id)!.duration).toBeUndefined();
+    expect(rumbo.tasks.get(created.id)!.time).toBeUndefined();
+    expect(rumbo.tasks.get(created.id)!.scheduled).toBe("2026-10-17");
   });
 });

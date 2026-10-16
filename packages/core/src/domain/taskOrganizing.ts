@@ -1,4 +1,4 @@
-// Organizar tareas sueltas con IA: qué es una tarea suelta, qué huecos libres hay en la agenda,
+// Organizar tareas con IA: qué huecos libres hay en la agenda,
 // qué se le pregunta al modelo y cómo se lee lo que responde. La IA solo propone una fecha y
 // una hora dentro de los huecos que calcula core: lo que se salga de ellos se descarta.
 import { z } from "zod";
@@ -6,6 +6,7 @@ import { addMinutesToTime, minutesBetween } from "./agenda";
 import { jsonIn, knownArea } from "./aiAnswer";
 import { spanishWeekday, type IsoDate } from "./dates";
 import type { AiMessage } from "../ports";
+import { openGaps } from "./taskGaps";
 import type { Priority, Task, TaskChanges } from "./tasks";
 
 export interface Interval {
@@ -22,16 +23,33 @@ export interface Deadline {
   text: string;
 }
 
+/** Algo que ya existe y a lo que se puede vincular una tarea: `value` es lo que se guarda. */
+export interface LinkOption {
+  value: string;
+  label: string;
+}
+
+export interface OrganizeLinks {
+  projects: LinkOption[];
+  modules: LinkOption[];
+  goals: LinkOption[];
+}
+
 export interface OrganizeContext {
   areas: string[];
   slots: FreeSlot[];
   deadlines: Deadline[];
+  /** Solo al completar una tarea: a qué puede vincularla la IA. */
+  links?: OrganizeLinks;
 }
 
 export interface OrganizeProposal {
   steps?: string[];
   priority?: Priority;
   area?: string;
+  projectId?: number;
+  module?: string;
+  goalId?: number;
   duration?: number;
   date?: IsoDate;
   time?: string;
@@ -53,11 +71,6 @@ const MAX_STEPS = 5;
 const MIN_DURATION = 5;
 const MAX_DURATION = 240;
 const PRIORITIES = ["high", "medium", "low"] as const;
-
-/** Suelta: sin fecha ni pasos y sin hacer. Lo que el usuario ya organizó no se toca. */
-export function isLooseTask(task: Task): boolean {
-  return !task.done && !task.scheduled && !task.due && task.steps.length === 0;
-}
 
 /** Cuándo acaba algo de la agenda; si no lo dice, se da por un rato corto. */
 export function blockEnd(start: string, end: string | undefined): string {
@@ -102,24 +115,57 @@ function gaps(from: number, to: number, busy: Interval[]): [number, number][] {
   return result;
 }
 
+const RULES = {
+  steps: "- steps: de 2 a 5 pasos concretos, cada uno una acción corta.",
+  priority: "- priority: high, medium o low.",
+  duration: "- duration: minutos que llevará, de 5 a 240.",
+  slot: "- date (AAAA-MM-DD) y time (HH:MM): elige un hueco libre de la lista y una hora donde la tarea quepa entera. Si ninguno encaja, no los pongas. Si la tarea trae un día fijo, no lo cambies: propón solo time dentro de ese día.",
+};
+
+const MAX_NOTES_CHARS = 600;
+
+/**
+ * Se pregunta solo por lo que le falta a alguna tarea de la tanda; lo que una ya tenga se
+ * descarta después (ver fillGaps), así que el modelo no necesita saberlo.
+ */
 export function organizeMessages(tasks: Task[], context: OrganizeContext): AiMessage[] {
+  const open = new Set(tasks.flatMap((task) => openGaps(task, context)));
+  const { projects = [], modules = [], goals = [] } = context.links ?? {};
   const system = [
-    "Organizas tareas sueltas de una app de productividad personal. Para cada una propones:",
-    "- steps: de 2 a 5 pasos concretos, cada uno una acción corta.",
-    "- priority: high, medium o low.",
-    `- area: ${context.areas.join(", ") || "ninguna"}. Usa una solo si encaja.`,
-    "- duration: minutos que llevará, de 5 a 240.",
-    "- date (AAAA-MM-DD) y time (HH:MM): elige un hueco libre de la lista y una hora donde la tarea quepa entera. Si ninguno encaja, no los pongas.",
-    "Huecos libres:",
-    ...slotLines(context.slots),
+    "Completas tareas de una app de productividad personal con lo que les falta. Para cada una propones:",
+    ...(open.has("steps") ? [RULES.steps] : []),
+    ...(open.has("priority") ? [RULES.priority] : []),
+    ...(open.has("area") ? [`- area: ${context.areas.join(", ")}. Usa una solo si encaja.`] : []),
+    ...(open.has("link")
+      ? [
+          linkRule("project", "proyectos", projects),
+          linkRule("module", "módulos", modules),
+          linkRule("goal", "objetivos", goals),
+        ].filter((rule) => rule !== undefined)
+      : []),
+    ...(open.has("duration") ? [RULES.duration] : []),
+    ...(open.has("slot") ? [RULES.slot, "Huecos libres:", ...slotLines(context.slots)] : []),
     ...deadlineLines(context.deadlines),
-    'Responde solo con JSON: {"items":[{"index":0,"steps":["…"],"priority":"high","area":"…","duration":30,"date":"…","time":"…"}]}',
+    'Responde solo con JSON: {"items":[{"index":0,"steps":["…"],"priority":"high","area":"…","project":"…","module":"…","goal":"…","duration":30,"date":"…","time":"…"}]}. Deja fuera los campos que no te pido.',
   ].join("\n");
-  const user = tasks.map((task, index) => `${index}. ${task.text}`).join("\n");
+  const user = tasks.map((task, index) => describeTask(task, index)).join("\n");
   return [
     { role: "system", content: system },
     { role: "user", content: user },
   ];
+}
+
+function describeTask(task: Task, index: number): string {
+  const notes = task.notes.trim().slice(0, MAX_NOTES_CHARS);
+  return [
+    `${index}. ${task.text}${task.scheduled && !task.time ? ` (día fijo: ${task.scheduled})` : ""}`,
+    ...(notes ? [`   Notas: ${notes}`] : []),
+  ].join("\n");
+}
+
+function linkRule(field: string, plural: string, options: LinkOption[]): string | undefined {
+  if (options.length === 0) return undefined;
+  return `- ${field}: uno de estos ${plural}, tal cual, solo si encaja claramente: ${options.map((option) => option.label).join("; ")}.`;
 }
 
 function slotLines(slots: FreeSlot[]): string[] {
@@ -152,6 +198,9 @@ const itemSchema = z.object({
   duration: z.number().nullish().catch(undefined),
   date: z.string().nullish().catch(undefined),
   time: z.string().nullish().catch(undefined),
+  project: z.string().nullish().catch(undefined),
+  module: z.string().nullish().catch(undefined),
+  goal: z.string().nullish().catch(undefined),
 });
 
 type Item = z.infer<typeof itemSchema>;
@@ -177,9 +226,10 @@ export function parseOrganization(
     const task = tasks[item.data.index];
     if (!task || proposals.has(item.data.index)) continue;
 
-    const proposal = readProposal(item.data, task, context.areas, slots);
-    if (proposal.date && proposal.time) {
-      slots = occupy(slots, proposal.date, proposal.time, minutesFor(proposal, task));
+    const proposal = readProposal(item.data, task, context, slots);
+    const day = proposal.date ?? task.scheduled;
+    if (day && proposal.time) {
+      slots = occupy(slots, day, proposal.time, minutesFor(proposal, task));
     }
     proposals.set(item.data.index, proposal);
   }
@@ -189,7 +239,7 @@ export function parseOrganization(
 function readProposal(
   item: Item,
   task: Task,
-  areas: string[],
+  context: OrganizeContext,
   slots: FreeSlot[],
 ): OrganizeProposal {
   const duration = validDuration(item.duration);
@@ -197,11 +247,24 @@ function readProposal(
   return {
     steps: validSteps(item.steps),
     priority: item.priority ?? undefined,
-    area: knownArea(item.area, areas),
+    area: knownArea(item.area, context.areas),
+    projectId: numberOf(knownLink(item.project, context.links?.projects)),
+    module: knownLink(item.module, context.links?.modules),
+    goalId: numberOf(knownLink(item.goal, context.links?.goals)),
     duration,
-    ...validSlot(item.date, item.time, minutes, slots),
+    ...validSlot(task.scheduled ?? item.date, item.time, minutes, slots, task.scheduled),
   };
 }
+
+function knownLink(
+  label: string | null | undefined,
+  options: LinkOption[] = [],
+): string | undefined {
+  const wanted = label?.trim().toLowerCase();
+  return options.find((option) => option.label.toLowerCase() === wanted)?.value;
+}
+
+const numberOf = (value: string | undefined) => (value === undefined ? undefined : Number(value));
 
 function validSteps(steps: string[] | null | undefined): string[] | undefined {
   const clean = [...new Set((steps ?? []).map((step) => step.trim()).filter(Boolean))];
@@ -219,11 +282,13 @@ function validSlot(
   rawTime: string | null | undefined,
   minutes: number,
   slots: FreeSlot[],
+  fixedDay: IsoDate | undefined,
 ): { date?: IsoDate; time?: string } {
   const match = /^(\d{1,2}):(\d{2})$/.exec(rawTime ?? "");
   if (!date || !match) return {};
   const time = `${match[1]!.padStart(2, "0")}:${match[2]}`;
-  return slots.some((slot) => fits(slot, date, time, minutes)) ? { date, time } : {};
+  if (!slots.some((slot) => fits(slot, date, time, minutes))) return {};
+  return fixedDay ? { time } : { date, time };
 }
 
 function fits(slot: FreeSlot, date: IsoDate, time: string, minutes: number): boolean {
@@ -247,13 +312,24 @@ function minutesFor(proposal: Pick<OrganizeProposal, "duration">, task: Task): n
   return proposal.duration ?? task.duration ?? DEFAULT_MINUTES;
 }
 
-/** Deja solo lo que aporta: lo que el usuario ya puso en la tarea no se propone otra vez. */
+/**
+ * Deja solo lo que aporta: lo que el usuario ya puso en la tarea no se propone otra vez. El
+ * objetivo se deja a lo que la tarea ya hereda de su proyecto o su módulo, la fecha, a lo que
+ * cabe antes de su fecha límite y, si la tarea ya tiene día, solo se propone su hora.
+ */
 export function fillGaps(task: Task, proposal: OrganizeProposal): OrganizeProposal {
+  const linked = Boolean(task.projectId || task.module || proposal.projectId || proposal.module);
+  const late = Boolean(task.due && proposal.date && proposal.date > task.due);
   return {
-    ...proposal,
+    steps: task.steps.length > 0 ? undefined : proposal.steps,
     priority: task.priority ? undefined : proposal.priority,
     area: task.area ? undefined : proposal.area,
+    projectId: task.projectId ? undefined : proposal.projectId,
+    module: task.module ? undefined : proposal.module,
+    goalId: task.goalId || linked ? undefined : proposal.goalId,
     duration: task.duration ? undefined : proposal.duration,
+    date: task.scheduled || late ? undefined : proposal.date,
+    time: task.time || late ? undefined : proposal.time,
   };
 }
 
@@ -263,13 +339,17 @@ export function hasProposal(proposal: OrganizeProposal): boolean {
 
 /** Lo que cambia en la tarea al aceptar la propuesta. */
 export function organizeChanges(proposal: OrganizeProposal): TaskChanges {
-  const { steps, priority, area, duration, date, time } = proposal;
+  const { steps, priority, area, projectId, module, goalId, duration, date, time } = proposal;
   return {
     ...(steps && { steps: steps.map((text) => ({ text, done: false })) }),
     ...(priority && { priority }),
     ...(area && { area }),
+    ...(projectId && { projectId }),
+    ...(module && { module }),
+    ...(goalId && { goalId }),
     ...(duration && { duration }),
-    ...(date && { scheduled: date, time }),
+    ...(date && { scheduled: date }),
+    ...(time && { time }),
   };
 }
 
