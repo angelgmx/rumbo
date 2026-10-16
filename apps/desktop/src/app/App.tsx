@@ -10,6 +10,7 @@ import { HabitsScreen } from "@/features/habits/HabitsScreen";
 import { RoadmapsScreen } from "@/features/roadmaps/RoadmapsScreen";
 import { RoutineEditorScreen } from "@/features/routines/editor/RoutineEditorScreen";
 import { RoutinesScreen } from "@/features/routines/RoutinesScreen";
+import { SettingsScreen } from "@/features/settings/SettingsScreen";
 import { ModuleScreen } from "@/features/roadmaps/ModuleScreen";
 import { RoadmapScreen } from "@/features/roadmaps/RoadmapScreen";
 import { TopicScreen } from "@/features/roadmaps/TopicScreen";
@@ -49,6 +50,7 @@ export function App() {
                       />
                       <Route path="/areas/:topic" component={TopicScreen} />
                       <Route path="/habitos" component={HabitsScreen} />
+                      <Route path="/ajustes/ia" component={SettingsScreen} />
                     </Switch>
                   </AppShell>
                 </SidebarProvider>

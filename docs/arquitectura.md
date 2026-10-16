@@ -14,6 +14,7 @@
 │   app/     casos de uso (servicios)           │
 │   vault/   leer, indexar y escribir notas     │
 │   domain/  reglas puras (rachas, tareas…)     │
+│   ai/      adaptadores de IA                  │
 │   ports.ts interfaces hacia fuera             │
 └──────────────────────┬────────────────────────┘
                        │ lee y escribe
@@ -39,7 +40,8 @@ Cada capa solo usa las de debajo. Nunca al revés.
 | Dominio      | `src/domain`   | Reglas puras: entra un dato, sale otro. Sin disco, sin reloj, sin efectos. Aquí está la lógica que más hay que testear. | nada             |
 | Vault        | `src/vault`    | Leer el frontmatter, cambiarlo sin romper el resto del fichero, cargar la config e indexar el vault.                    | dominio, puertos |
 | Casos de uso | `src/app`      | Lo que hace el usuario: marcar un hábito, capturar una tarea, añadir un bloque a la agenda. Juntan dominio y vault.     | todo lo anterior |
-| Puertos      | `src/ports.ts` | Interfaces `FileSystem` y `Clock`. La app les pasa la implementación real.                                              | —                |
+| Puertos      | `src/ports.ts` | Interfaces `FileSystem`, `Clock` y `AiProvider`. La app les pasa la implementación real.                                | —                |
+| IA           | `src/ai`       | Adaptadores del puerto `AiProvider`. Reciben `fetch` desde fuera.                                                       | puertos          |
 
 ### Por qué así
 
@@ -95,6 +97,15 @@ Cada capa solo usa las de debajo. Nunca al revés.
 | `routineService.ts`   | Rutinas: listar, las de hoy, activar, crear desde plantilla, reordenar bloques, crear las tareas de un bloque y terminar un bloque.                                                                 |
 | `rumbo.ts`            | `createRumbo(fs, clock)`: abre el vault y monta todos los servicios.                                                                                                                                |
 
+### `ai/`
+
+| Fichero               | Responsabilidad                                                                                      |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `openAiCompatible.ts` | `AiProvider` para cualquier API compatible con OpenAI: Ollama, LM Studio, Groq, Gemini, OpenRouter…  |
+| `aiError.ts`          | `AiError` con el motivo del fallo (no responde, clave mala, no encuentra el modelo, límite o error). |
+
+La app guarda proveedor, URL y modelo en sus ajustes y la clave en el llavero del sistema. Ver [ADR-0012](adr/0012-ia-con-un-puerto-y-proveedores-compatibles.md).
+
 ## Flujo de un cambio
 
 Ejemplo: marcar «Lectura: 25 páginas» en Foco.
@@ -117,5 +128,7 @@ Si cambias la nota en Obsidian, el watcher de la app llama a `VaultStore.refresh
 | Foco del día                   | Casillas bajo `## Foco de hoy` en la daily                |
 | Agenda                         | Bloques con hora bajo `## Agenda` en la daily             |
 | Configuración                  | `.rumbo/config.yml` dentro del vault                      |
+| Ajustes de la IA               | `settings.json` de la app (fuera del vault)               |
+| Clave de la IA                 | Llavero del sistema                                       |
 
 Detalle completo en [Formato del vault](formato-del-vault.md).

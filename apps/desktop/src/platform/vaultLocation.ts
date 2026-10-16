@@ -1,18 +1,14 @@
 import { open } from "@tauri-apps/plugin-dialog";
-import { load } from "@tauri-apps/plugin-store";
+import { readSetting, writeSetting } from "./appSettings";
 
-const SETTINGS_FILE = "settings.json";
 const VAULT_KEY = "vaultPath";
 
-export async function savedVaultPath(): Promise<string | undefined> {
-  const settings = await load(SETTINGS_FILE);
-  return settings.get<string>(VAULT_KEY);
+export function savedVaultPath(): Promise<string | undefined> {
+  return readSetting<string>(VAULT_KEY);
 }
 
-export async function saveVaultPath(path: string): Promise<void> {
-  const settings = await load(SETTINGS_FILE);
-  await settings.set(VAULT_KEY, path);
-  await settings.save();
+export function saveVaultPath(path: string): Promise<void> {
+  return writeSetting(VAULT_KEY, path);
 }
 
 /**
