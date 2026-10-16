@@ -9,18 +9,17 @@ type InboxListProps = ComponentProps<typeof TaskList> & {
 };
 
 /** La lista del Inbox con la propuesta de la IA al final de cada fila, si la hay. */
-export function InboxList({ triage, today, ...props }: InboxListProps) {
+export function InboxList({ triage, today, aside: other, ...props }: InboxListProps) {
   function aside(task: Task) {
     const suggestion = triage.forTask(task);
+    if (!suggestion) return other?.(task);
     return (
-      suggestion && (
-        <SuggestionChip
-          suggestion={suggestion}
-          today={today}
-          onAccept={() => triage.accept(suggestion)}
-          onDismiss={() => triage.dismiss(suggestion)}
-        />
-      )
+      <SuggestionChip
+        suggestion={suggestion}
+        today={today}
+        onAccept={() => triage.accept(suggestion)}
+        onDismiss={() => triage.dismiss(suggestion)}
+      />
     );
   }
 
@@ -31,7 +30,7 @@ export function InboxList({ triage, today, ...props }: InboxListProps) {
           La IA sugiere qué es cada cosa · acepta con un clic
         </p>
       )}
-      <TaskList today={today} aside={aside} {...props} />
+      <TaskList today={today} {...props} aside={aside} />
     </div>
   );
 }

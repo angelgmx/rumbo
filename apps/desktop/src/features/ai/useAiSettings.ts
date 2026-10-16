@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
 import { loadAiKey, saveAiKey } from "@/platform/aiKey";
 import { readSetting, writeSetting } from "@/platform/appSettings";
-import { DEFAULT_AI_SETTINGS, type AiSettings } from "./aiSettings";
-
-const SETTINGS_KEY = "ai";
+import { AI_SETTINGS_KEY, DEFAULT_AI_SETTINGS, type AiSettings } from "./aiSettings";
 
 /** Los ajustes de la IA de esta instalación. Cada cambio se guarda al momento. */
 export function useAiSettings() {
   const [settings, setSettings] = useState<AiSettings>();
 
   useEffect(() => {
-    readSetting<AiSettings>(SETTINGS_KEY).then((saved) =>
+    readSetting<AiSettings>(AI_SETTINGS_KEY).then((saved) =>
       setSettings({ ...DEFAULT_AI_SETTINGS, ...saved }),
     );
   }, []);
@@ -19,7 +17,7 @@ export function useAiSettings() {
     if (!settings) return;
     const next = { ...settings, ...changes };
     setSettings(next);
-    await writeSetting(SETTINGS_KEY, next);
+    await writeSetting(AI_SETTINGS_KEY, next);
   }
 
   return { settings, update };

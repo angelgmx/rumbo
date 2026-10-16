@@ -12,6 +12,10 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { CaptureBox } from "@/features/capture/CaptureBox";
+import { AcceptAllButton } from "@/features/task-organizer/AcceptAllButton";
+import { OrganizeAside } from "@/features/task-organizer/OrganizeAside";
+import { OrganizeButton } from "@/features/task-organizer/OrganizeButton";
+import { useTaskOrganizer } from "@/features/task-organizer/TaskOrganizerProvider";
 import { TaskPanelDock } from "@/features/task-panel/TaskPanelDock";
 import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
@@ -51,6 +55,7 @@ export function TasksScreen() {
   const setFilter = (next: TaskFilter) => setFiltered({ view: viewSlug, filter: next });
   const taskPanel = useTaskPanel();
   const triage = useInboxTriage();
+  const organizer = useTaskOrganizer();
 
   const [, navigate] = useLocation();
   const all = useVaultQuery((r) => r.tasks.all()).data ?? [];
@@ -81,11 +86,18 @@ export function TasksScreen() {
     });
   }
 
+  const suggestions = tasks.flatMap((task) => organizer.suggestionFor(task) ?? []);
+
+  function organizeAside(task: Task) {
+    return <OrganizeAside task={task} />;
+  }
+
   const listProps = {
     today,
     showCaptured: current.view === "inbox",
     onToggle: (task: Task, done: boolean) => rumbo.tasks.setDone(task, done),
     onOpen: taskPanel.edit,
+    aside: organizeAside,
   };
 
   return (
@@ -102,6 +114,8 @@ export function TasksScreen() {
         actions={
           showIdeas ? undefined : current.view === "inbox" ? (
             <>
+              <AcceptAllButton suggestions={suggestions} />
+              <OrganizeButton />
               <TriageButton
                 ready={triage.ready}
                 thinking={triage.thinking}
@@ -111,6 +125,7 @@ export function TasksScreen() {
             </>
           ) : (
             <>
+              <AcceptAllButton suggestions={suggestions} />
               {current.view === "done" && (
                 <ArchiveDoneButton count={all.filter((task) => task.done && !task.habit).length} />
               )}
@@ -236,9 +251,9 @@ function EmptyList({ view }: { view: TaskView }) {
   );
 }
 
-/** Primero lo que tiene fecha (la más cercana arriba); lo que no tiene, al final. */
+/** Primero lo que tiene fecha y hora (la más cercana arriba); lo que no tiene, al final. */
 function byDate(a: Task, b: Task): number {
-  const dateA = a.scheduled ?? a.due ?? "9999";
-  const dateB = b.scheduled ?? b.due ?? "9999";
+  const dateA = `${a.scheduled ?? a.due ?? "9999"} ${a.time ?? ""}`;
+  const dateB = `${b.scheduled ?? b.due ?? "9999"} ${b.time ?? ""}`;
   return dateA.localeCompare(dateB);
 }

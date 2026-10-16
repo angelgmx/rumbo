@@ -4,6 +4,7 @@ import { AI_PROVIDERS, type AiProviderKind } from "@/features/ai/aiSettings";
 import { useAiKey, useAiSettings } from "@/features/ai/useAiSettings";
 import { ApiKeyField } from "./ApiKeyField";
 import { ConnectionTest } from "./ConnectionTest";
+import { OrganizeModePicker } from "./OrganizeModePicker";
 import { ProviderPicker } from "./ProviderPicker";
 
 /** Ajustes › Inteligencia artificial: quién responde y cómo llegar a él. */
@@ -58,6 +59,16 @@ export function AiSettingsPage() {
           settings={settings}
           apiKey={apiKey.key}
         />
+      </Section>
+
+      <Section title="Organizar tareas nuevas">
+        <OrganizeModePicker
+          value={settings.organizeTasks}
+          onChange={(organizeTasks) => update({ organizeTasks })}
+        />
+        <p className="text-sm text-muted-foreground">
+          Se aplica a las tareas sin fecha ni pasos. Lo que ya organizaste tú no se toca.
+        </p>
       </Section>
     </div>
   );

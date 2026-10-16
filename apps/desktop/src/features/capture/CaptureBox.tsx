@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { useRumbo } from "@/app/RumboContext";
+import { useTaskOrganizer } from "@/features/task-organizer/TaskOrganizerProvider";
 import { cn } from "@/lib/utils";
 import { IDEAS_DESTINATION, taskDestination, type Destination } from "./captureDestination";
 import { CaptureKindToggle, type CaptureKind } from "./CaptureKindToggle";
@@ -29,6 +30,7 @@ export function CaptureBox({
   compact?: boolean;
 }) {
   const rumbo = useRumbo();
+  const organizer = useTaskOrganizer();
   const [, navigate] = useLocation();
   const [kind, setKind] = useState(defaultKind);
   const [text, setText] = useState("");
@@ -38,7 +40,9 @@ export function CaptureBox({
       await rumbo.ideas.capture(text);
       return IDEAS_DESTINATION;
     }
-    return taskDestination(await rumbo.tasks.capture(text), rumbo.daily.today());
+    const result = await rumbo.tasks.capture(text);
+    if (result.kind === "task" && result.task) void organizer.organizeNew(result.task);
+    return taskDestination(result, rumbo.daily.today());
   }
 
   async function submit(event: FormEvent) {
