@@ -1,65 +1,78 @@
-import { blocksAround, minutesBetween, type DayPlanItem, type Task } from "@rumbo/core";
+import {
+  blocksAround,
+  chooseStart,
+  MAX_BAD_DAYS_PER_MONTH,
+  minutesBetween,
+  type HabitSummary,
+  type RoutineStep,
+  type Task,
+} from "@rumbo/core";
 import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
-import { Progress } from "@/components/ui/progress";
-import { useVaultQuery } from "@/hooks/useVaultQuery";
-import { useCountdown } from "@/hooks/useCountdown";
 import { timeOf, useNow } from "@/hooks/useNow";
 import { ScreenHeader } from "@/layout/ScreenHeader";
-import { capitalize, formatDay } from "@/lib/format";
 import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
-import { hasCounter } from "@/features/counters/countedTask";
-import { NextStepCard } from "@/features/roadmaps/NextStepCard";
-import { ReviewTodayCard } from "@/features/roadmaps/ReviewDialog";
+import { choiceMinutes, QUICK_MINUTES, type FocusChoice } from "./choice";
+import { dayEntries, routineOfHabits } from "./dayEntries";
 import { DayPlanCard } from "./DayPlanCard";
+import { FocusHeader } from "./FocusHeader";
 import { NowCard } from "./NowCard";
-import { NowTaskCard } from "./NowTaskCard";
+import { StreakRiskCard } from "./StreakRiskCard";
 import { TodayHabitsCard } from "./TodayHabitsCard";
 import { UntimedCard } from "./UntimedCard";
-import { WeekCard } from "./WeekCard";
-
-const DEFAULT_FOCUS_MINUTES = 50;
+import { useFocusDay, type RoutineGroup } from "./useFocusDay";
+import { useFocusTimer } from "./useFocusTimer";
 
 export function FocusScreen() {
   const rumbo = useRumbo();
   const taskPanel = useTaskPanel();
   const today = rumbo.daily.today();
   const now = useNow();
-  const timer = useCountdown(DEFAULT_FOCUS_MINUTES, () =>
-    toast.success("Bloque de foco terminado. Descansa un poco."),
-  );
+  const time = timeOf(now);
+  const timer = useFocusTimer(() => toast.success("Tiempo terminado. Descansa un poco."));
+  const day = useFocusDay(today);
 
-  const plan = useVaultQuery((r) => r.dayPlan.plan(today), [today]).data ?? [];
-  const focus = useVaultQuery((r) => r.tasks.focus(), [today]).data ?? [];
-  const todayTasks = useVaultQuery((r) => r.tasks.list("today"), [today]).data ?? [];
-  const week = useVaultQuery((r) => r.progress.week(today), [today]).data ?? [];
-  const habits = useVaultQuery((r) => r.habits.dueOn(today), [today]).data ?? [];
-  // El tema que estás estudiando ahora (el primero con un módulo pendiente en su ruta).
-  const learning = useVaultQuery((r) =>
-    r.learning.topics().find((topic) => topic.roadmap?.current),
-  ).data;
+  const choice: FocusChoice | undefined = chooseStart({
+    time,
+    steps: day.steps,
+    focus: day.focus,
+    atRisk: day.atRisk,
+    nextStep: day.nextStep,
+  });
+  const around = blocksAround(day.plan, time);
 
-  const around = blocksAround(plan, timeOf(now));
-  // Sin un bloque de agenda en curso, «Ahora» es la primera tarea del foco que se mide.
-  const countedFocus = around.now ? undefined : focus.filter(hasCounter).find((task) => !task.done);
   // Una tarea del foco con fecha de hoy saldría dos veces.
-  const otherTasks = todayTasks.filter(
+  const otherTasks = day.todayTasks.filter(
     (task) =>
       // Las de un hábito ya salen dentro de su hábito.
-      !task.fields.habit && !focus.some((f) => f.path === task.path && f.line === task.line),
+      !task.fields.habit && !day.focus.some((f) => f.path === task.path && f.line === task.line),
   );
-  // Los hábitos se cuentan aparte (todos, tengan hora o no), así que del plan solo entra la agenda.
-  const blocks = plan.filter((item) => item.kind === "agenda");
-  const items = [...blocks, ...focus, ...otherTasks];
+  const blocks = day.plan.filter((item) => item.kind === "agenda");
+  const items = [...blocks, ...day.focus, ...otherTasks];
   const doneCount =
-    items.filter((item) => item.done).length + habits.filter((h) => h.doneToday).length;
-  const total = items.length + habits.length;
+    items.filter((item) => item.done).length + day.habits.filter((h) => h.doneToday).length;
+  const total = items.length + day.habits.length;
 
-  function startFocus(block = around.now) {
-    const minutes = block ? minutesLeft(block, timeOf(now)) : 0;
-    timer.start(minutes > 0 ? minutes : DEFAULT_FOCUS_MINUTES);
+  async function start() {
+    if (!choice) return;
+    if (choice.kind === "next-step" && choice.step.topic.roadmap) {
+      await rumbo.learning.planToday(choice.step.topic.roadmap);
+    }
+    const left =
+      choice.kind === "routine-step"
+        ? minutesBetween(time > choice.step.start ? time : choice.step.start, choice.step.end)
+        : 0;
+    timer.start(choiceMinutes(choice, left));
   }
 
+  async function toggleBadDay() {
+    await rumbo.daily.setBadDay(today, !day.badDay);
+  }
+
+  const saveStreak = (summary: HabitSummary, amount: number) =>
+    rumbo.habits.setValue(summary.habit.key, Math.max(amount, Number(summary.today) || 0));
+  const completeStep = (group: RoutineGroup, step: RoutineStep) =>
+    rumbo.routines.completeBlock(group.summary, step.index);
   const toggleTask = (task: Task, done: boolean) => rumbo.tasks.setDone(task, done);
 
   return (
@@ -67,39 +80,26 @@ export function FocusScreen() {
       <ScreenHeader title="Foco" />
       <main className="flex-1 overflow-y-auto p-6">
         <div className="mx-auto flex max-w-6xl flex-col gap-6">
-          <div className="flex items-end justify-between gap-6">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight">
-                {capitalize(formatDay(today))}
-              </h1>
-              <p className="mt-1 text-muted-foreground">
-                {greeting(now)} Te quedan {total - doneCount} cosas para hoy.
-              </p>
-            </div>
-            <div className="flex w-64 flex-col gap-2">
-              <div className="flex justify-between text-sm">
-                <span>
-                  {doneCount} de {total} hecho
-                </span>
-                <span className="font-mono text-muted-foreground">
-                  {total ? Math.round((doneCount / total) * 100) : 0} %
-                </span>
-              </div>
-              <Progress value={total ? (doneCount / total) * 100 : 0} />
-            </div>
-          </div>
+          <FocusHeader
+            today={today}
+            greeting={greeting(now)}
+            done={doneCount}
+            total={total}
+            hasNow={choice !== undefined}
+          />
 
           <div className="grid grid-cols-[1fr_380px] items-start gap-6">
             <div className="flex flex-col gap-6">
               <DayPlanCard
-                items={plan}
+                entries={dayEntries(day.plan, day.groups)}
+                time={time}
                 current={around.now}
                 onToggleBlock={(item, done) => rumbo.agenda.setDone(today, item.block, done)}
                 onHabitChange={(key, value) => rumbo.habits.setValue(key, value)}
-                onStart={startFocus}
+                onCompleteStep={completeStep}
               />
               <UntimedCard
-                focus={focus}
+                focus={day.focus}
                 tasks={otherTasks}
                 onToggle={toggleTask}
                 onOpen={taskPanel.edit}
@@ -107,30 +107,30 @@ export function FocusScreen() {
               />
             </div>
             <div className="flex flex-col gap-6">
-              {countedFocus ? (
-                <NowTaskCard task={countedFocus} />
-              ) : (
-                <NowCard blocks={around} timer={timer} onStart={() => startFocus()} />
-              )}
-              {learning && <NextStepCard topic={learning} />}
-              <ReviewTodayCard />
+              <NowCard
+                choice={choice}
+                timer={timer}
+                badDay={{
+                  active: day.badDay,
+                  used: day.badDaysUsed,
+                  left: MAX_BAD_DAYS_PER_MONTH - day.badDaysUsed,
+                }}
+                onStart={start}
+                onQuickStart={() => timer.start(QUICK_MINUTES)}
+                onToggleBadDay={toggleBadDay}
+              />
+              {day.atRisk.length > 0 && <StreakRiskCard habits={day.atRisk} onSave={saveStreak} />}
               <TodayHabitsCard
-                habits={habits}
+                habits={day.habits}
+                routines={routineOfHabits(day.groups)}
                 onChange={(key, value) => rumbo.habits.setValue(key, value)}
               />
-              <WeekCard week={week} today={today} />
             </div>
           </div>
         </div>
       </main>
     </>
   );
-}
-
-/** Lo que le queda a un bloque desde ahora (o entero, si aún no ha empezado). */
-function minutesLeft(block: DayPlanItem, time: string): number {
-  if (!block.end) return 0;
-  return minutesBetween(time > block.start ? time : block.start, block.end);
 }
 
 function greeting(now: Date): string {

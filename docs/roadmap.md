@@ -92,7 +92,8 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] Tareas igual al diseño: captura en la barra lateral, áreas y proyectos con su número, filtros por área, proyecto y etiqueta, columnas en cada fila, Próximas agrupadas por día y Procesar inbox con «¿Qué es?»
 - [x] «Ahora» en Foco enseña el contador de la primera tarea del foco cuando no hay un bloque de agenda en curso
 - [ ] Registro de sesiones y estimado vs real (necesitan guardar el tiempo de cada sesión)
-- [ ] Foco v2: Empezar, solo 5 minutos, día malo, cerrar el día y modo enfoque
+- [x] Foco v2: botón único «Empezar» (rutina en curso, foco, racha en riesgo, siguiente paso), «Solo 5 minutos», día malo (2 al mes), racha en riesgo con versión mínima y rutinas como grupo en «Tu día»
+- [ ] Foco v2: cerrar el día y modo enfoque
 
 **Nombres de la especificación (16 oct):**
 

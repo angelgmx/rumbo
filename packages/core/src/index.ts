@@ -45,7 +45,14 @@ export type { VaultStore } from "./app/vaultStore";
 export type { HabitList, HabitSummary } from "./app/habitService";
 export { MAX_FOCUS, type CaptureResult } from "./app/taskService";
 export type { DayProgress } from "./app/progressService";
-export type { RoutineChanges, RoutineList, RoutineSummary } from "./app/routineService";
+export type {
+  RoutineChanges,
+  RoutineList,
+  RoutineStep,
+  RoutineSummary,
+} from "./app/routineService";
+export { MAX_BAD_DAYS_PER_MONTH } from "./domain/badDays";
+export { chooseStart, type StartChoice } from "./domain/focus";
 export type { PomodoroSettings } from "./vault/config";
 
 export {
@@ -74,6 +81,7 @@ export {
   habitStats,
   isDone,
   isScheduledOn,
+  minimumOf,
   type Challenge,
   type Habit,
   type HabitInput,

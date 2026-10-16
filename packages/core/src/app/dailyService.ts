@@ -1,7 +1,9 @@
 import type { Clock } from "../ports";
+import { badDaysInMonth, badDaysOf, canMarkBadDay } from "../domain/badDays";
 import { dailyPath, newDailyNote } from "../domain/daily";
 import { toIsoDate, type IsoDate } from "../domain/dates";
 import { habitSchema, type Habit } from "../domain/habits";
+import { setFrontmatter } from "../vault/frontmatter";
 import type { VaultStore } from "./vaultStore";
 
 export class DailyService {
@@ -20,6 +22,26 @@ export class DailyService {
 
   pathFor(date: IsoDate): string {
     return dailyPath(this.store.config, date);
+  }
+
+  /** Los días marcados como malos: ese día los hábitos no rompen la racha. */
+  badDays(): Set<IsoDate> {
+    return badDaysOf(this.store.notesOfType("daily"));
+  }
+
+  /** Cuántos días malos llevas en el mes de hoy. */
+  badDaysThisMonth(): number {
+    return badDaysInMonth(this.badDays(), this.today());
+  }
+
+  /** Marca o desmarca un día malo. Marcar de más en un mes no se deja. */
+  async setBadDay(date: IsoDate, bad: boolean): Promise<void> {
+    if (bad && !canMarkBadDay(this.badDays(), date)) {
+      throw new Error("No bad days left this month");
+    }
+    const path = await this.ensure(date);
+    const source = await this.store.read(path);
+    await this.store.write(path, setFrontmatter(source, ["bad_day"], bad ? true : undefined));
   }
 
   /** Lee la daily de un día. Si no existe, devuelve una vacía sin crearla. */
