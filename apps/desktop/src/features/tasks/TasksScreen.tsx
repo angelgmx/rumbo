@@ -1,6 +1,6 @@
 import { isInView, type SavedView, type Task, type TaskView } from "@rumbo/core";
-import { ChevronRightIcon, ListChecksIcon, PlusIcon } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { ChevronRightIcon, ListChecksIcon } from "lucide-react";
+import { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { useRumbo } from "@/app/RumboContext";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Kbd } from "@/components/ui/kbd";
+import { CaptureBox } from "@/features/capture/CaptureBox";
 import { TaskPanelDock } from "@/features/task-panel/TaskPanelDock";
 import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
@@ -22,30 +22,41 @@ import { AreaDot } from "./AreaDot";
 import { DoneList } from "./DoneList";
 import { FilterChip } from "./FilterChip";
 import { groupByDay } from "./groupByDay";
+import { IdeasPane } from "./IdeasPane";
 import { ProcessInboxDialog } from "./ProcessInboxDialog";
 import { SaveViewButton } from "./SaveViewButton";
 import { areaOf, countBy, matchesFilter, projectOf, type TaskFilter } from "./taskFilters";
 import { GroupedTaskList, TaskList } from "./TaskList";
 import { TasksSidebar } from "./TasksSidebar";
-import { findView, TASK_VIEWS, type TaskViewInfo } from "./taskViews";
+import { findView, IDEAS_VIEW, TASK_VIEWS, type TaskViewInfo } from "./taskViews";
 
 export function TasksScreen() {
   const rumbo = useRumbo();
   const today = rumbo.daily.today();
   const inboxPath = rumbo.store.config.folders.inbox;
-  const current = findView(useParams<{ view: string }>().view);
+  const viewSlug = useParams<{ view: string }>().view;
+  const showIdeas = viewSlug === IDEAS_VIEW.slug;
+  const current = findView(viewSlug);
+  const heading = showIdeas ? IDEAS_VIEW : current;
   const [filter, setFilter] = useState<TaskFilter>({});
   const taskPanel = useTaskPanel();
 
   const [, navigate] = useLocation();
   const all = useVaultQuery((r) => r.tasks.all()).data ?? [];
+  const ideas = useVaultQuery((r) => r.ideas.list()).data ?? [];
   const savedViews = useVaultQuery((r) => r.views.list()).data ?? [];
 
   const inView = (task: Task, view: TaskView) => isInView(task, view, today, inboxPath);
   const pending = all.filter((task) => !task.done);
-  const counts = Object.fromEntries(
-    TASK_VIEWS.map(({ view }) => [view, all.filter((task) => inView(task, view)).length]),
-  );
+  const counts: Record<string, number> = {
+    ...Object.fromEntries(
+      TASK_VIEWS.filter(({ view }) => view !== "done").map(({ slug, view }) => [
+        slug,
+        all.filter((task) => inView(task, view)).length,
+      ]),
+    ),
+    [IDEAS_VIEW.slug]: ideas.length,
+  };
   const inCurrentView = all.filter((task) => inView(task, current.view));
   const tasks = inCurrentView.filter((task) => matchesFilter(task, filter)).sort(byDate);
 
@@ -65,16 +76,16 @@ export function TasksScreen() {
   return (
     <>
       <ScreenHeader
-        newTask={current.view !== "inbox"}
+        newTask={showIdeas || current.view !== "inbox"}
         title={
           <span className="flex items-center gap-1.5 text-muted-foreground">
             Tareas
             <ChevronRightIcon className="size-3.5" />
-            <span className="text-foreground">{current.label}</span>
+            <span className="text-foreground">{heading.label}</span>
           </span>
         }
         actions={
-          current.view === "inbox" ? (
+          showIdeas ? undefined : current.view === "inbox" ? (
             <ProcessInboxDialog />
           ) : (
             <>
@@ -90,7 +101,7 @@ export function TasksScreen() {
       />
       <div className="flex min-h-0 flex-1">
         <TasksSidebar
-          current={current}
+          current={showIdeas ? IDEAS_VIEW.slug : current.slug}
           counts={counts}
           areas={countBy(pending, areaOf)}
           projects={countBy(pending, projectOf)}
@@ -104,9 +115,9 @@ export function TasksScreen() {
           <div className="mx-auto flex max-w-5xl flex-col gap-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-semibold tracking-tight">{current.label}</h1>
+                <h1 className="text-3xl font-semibold tracking-tight">{heading.label}</h1>
                 <p className="mt-1 text-muted-foreground">
-                  {subtitle(current, tasks.length, today)}
+                  {showIdeas ? IDEAS_VIEW.description : subtitle(current, tasks.length, today)}
                 </p>
               </div>
               {current.view === "inbox" && counts.inbox! > 0 && (
@@ -117,49 +128,53 @@ export function TasksScreen() {
               )}
             </div>
 
-            {current.view === "inbox" && (
-              <InboxInput onCapture={(text) => rumbo.tasks.capture(text).then(() => undefined)} />
-            )}
-
-            <div className="flex flex-wrap items-center gap-2">
-              <FilterChip
-                label="Área"
-                value={filter.area}
-                onChange={(area) => setFilter({ ...filter, area })}
-                options={countBy(inCurrentView, areaOf).map(([value, count]) => ({
-                  value,
-                  count,
-                  icon: <AreaDot area={value} />,
-                }))}
-              />
-              <FilterChip
-                label="Proyecto"
-                value={filter.project}
-                onChange={(project) => setFilter({ ...filter, project })}
-                options={countBy(inCurrentView, projectOf).map(([value, count]) => ({
-                  value,
-                  count,
-                }))}
-              />
-              <FilterChip
-                label="Etiqueta"
-                value={filter.tag}
-                onChange={(tag) => setFilter({ ...filter, tag })}
-                options={countBy(inCurrentView, (task) => task.tags).map(([value, count]) => ({
-                  value,
-                  count,
-                }))}
-              />
-            </div>
-
-            {tasks.length === 0 ? (
-              <EmptyList view={current.view} />
-            ) : current.view === "upcoming" ? (
-              <GroupedTaskList groups={groupByDay(tasks, today)} {...listProps} />
-            ) : current.view === "done" ? (
-              <DoneList tasks={tasks} {...listProps} />
+            {showIdeas ? (
+              <IdeasPane />
             ) : (
-              <TaskList tasks={tasks} {...listProps} />
+              <>
+                {current.view === "inbox" && <CaptureBox />}
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <FilterChip
+                    label="Área"
+                    value={filter.area}
+                    onChange={(area) => setFilter({ ...filter, area })}
+                    options={countBy(inCurrentView, areaOf).map(([value, count]) => ({
+                      value,
+                      count,
+                      icon: <AreaDot area={value} />,
+                    }))}
+                  />
+                  <FilterChip
+                    label="Proyecto"
+                    value={filter.project}
+                    onChange={(project) => setFilter({ ...filter, project })}
+                    options={countBy(inCurrentView, projectOf).map(([value, count]) => ({
+                      value,
+                      count,
+                    }))}
+                  />
+                  <FilterChip
+                    label="Etiqueta"
+                    value={filter.tag}
+                    onChange={(tag) => setFilter({ ...filter, tag })}
+                    options={countBy(inCurrentView, (task) => task.tags).map(([value, count]) => ({
+                      value,
+                      count,
+                    }))}
+                  />
+                </div>
+
+                {tasks.length === 0 ? (
+                  <EmptyList view={current.view} />
+                ) : current.view === "upcoming" ? (
+                  <GroupedTaskList groups={groupByDay(tasks, today)} {...listProps} />
+                ) : current.view === "done" ? (
+                  <DoneList tasks={tasks} {...listProps} />
+                ) : (
+                  <TaskList tasks={tasks} {...listProps} />
+                )}
+              </>
             )}
           </div>
         </main>
@@ -174,34 +189,6 @@ function subtitle(current: TaskViewInfo, count: number, today: string): string {
   if (current.view === "today") return `${formatDay(today)} · ${tasks}`;
   if (current.view === "upcoming") return `${tasks} con fecha más adelante`;
   return current.description;
-}
-
-function InboxInput({ onCapture }: { onCapture: (text: string) => Promise<void> }) {
-  const [text, setText] = useState("");
-
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (!text.trim()) return;
-    await onCapture(text);
-    setText("");
-  }
-
-  return (
-    <form
-      onSubmit={submit}
-      className="flex h-14 items-center gap-3 rounded-xl border bg-card px-4 shadow-card focus-within:border-ring"
-    >
-      <PlusIcon className="size-4 text-primary" />
-      <input
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-        placeholder="Añade algo… «llamar al gestor mañana 10:00 #negocio»"
-        aria-label="Añadir al inbox"
-        className="h-full flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
-      />
-      <Kbd>Enter</Kbd>
-    </form>
-  );
 }
 
 function EmptyList({ view }: { view: TaskView }) {

@@ -1,9 +1,8 @@
 import type { Task } from "@rumbo/core";
 import { AnimatePresence, motion } from "motion/react";
-import { useState, type FormEvent } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import { CaptureBox } from "@/features/capture/CaptureBox";
 import { StepsChip } from "@/features/tasks/StepsChip";
 import { listItem } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -13,20 +12,10 @@ interface UntimedCardProps {
   tasks: Task[];
   onToggle: (task: Task, done: boolean) => void;
   onOpen: (task: Task) => void;
-  onCapture: (text: string) => Promise<void>;
 }
 
 /** Lo que hay que hacer hoy pero sin hora: el foco del día y las tareas para hoy. */
-export function UntimedCard({ focus, tasks, onToggle, onOpen, onCapture }: UntimedCardProps) {
-  const [text, setText] = useState("");
-
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (!text.trim()) return;
-    await onCapture(text);
-    setText("");
-  }
-
+export function UntimedCard({ focus, tasks, onToggle, onOpen }: UntimedCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -46,14 +35,9 @@ export function UntimedCard({ focus, tasks, onToggle, onOpen, onCapture }: Untim
             </motion.div>
           ))}
         </AnimatePresence>
-        <form onSubmit={submit} className="mt-2">
-          <Input
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            placeholder="Captura rápida: escribe una tarea o idea · «gym mañana 18:00» le pone hora"
-            aria-label="Captura rápida"
-          />
-        </form>
+        <div className="mt-2">
+          <CaptureBox compact />
+        </div>
       </CardContent>
     </Card>
   );

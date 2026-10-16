@@ -4,6 +4,7 @@ import {
   CheckIcon,
   ClockIcon,
   InboxIcon,
+  LightbulbIcon,
   SunIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -54,6 +55,14 @@ export const TASK_VIEWS: TaskViewInfo[] = [
     icon: CheckIcon,
   },
 ];
+
+/** Las ideas no son tareas: tienen su vista en la barra, justo debajo del Inbox. */
+export const IDEAS_VIEW: Omit<TaskViewInfo, "view"> = {
+  slug: "ideas",
+  label: "Ideas",
+  description: "Lo que se te ocurre y aún no es una tarea. Conviértelo en tarea o bórralo.",
+  icon: LightbulbIcon,
+};
 
 export function findView(slug: string | undefined): TaskViewInfo {
   return TASK_VIEWS.find((info) => info.slug === slug) ?? TASK_VIEWS[0]!;

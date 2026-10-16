@@ -4,6 +4,7 @@ import {
   CheckIcon,
   ClockIcon,
   FileTextIcon,
+  LightbulbIcon,
   Trash2Icon,
   type LucideIcon,
 } from "lucide-react";
@@ -26,11 +27,12 @@ import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { cn } from "@/lib/utils";
 import { noteName } from "./taskLabels";
 
-type Kind = "task" | "someday" | "delete";
+type Kind = "task" | "someday" | "idea" | "delete";
 
 const KINDS: { kind: Kind; label: string; icon: LucideIcon }[] = [
   { kind: "task", label: "Tarea", icon: CheckIcon },
   { kind: "someday", label: "Algún día", icon: ClockIcon },
+  { kind: "idea", label: "Es una idea", icon: LightbulbIcon },
   { kind: "delete", label: "Borrar", icon: Trash2Icon },
 ];
 
@@ -122,10 +124,12 @@ function TaskDecision({ task, today, onSkip }: { task: Task; today: string; onSk
   // Para salir del inbox necesita fecha o área; si no, volvería a salir aquí.
   const canSave =
     kind === "delete" ||
+    kind === "idea" ||
     (kind === "someday" ? !!changes.area : !!(changes.scheduled || changes.area));
 
   async function save() {
     if (kind === "delete") return rumbo.tasks.remove(task);
+    if (kind === "idea") return rumbo.ideas.fromTask(task);
     // Algún día es solo el área, aunque antes se eligiera fecha como tarea.
     await rumbo.tasks.update(task, kind === "someday" ? { area: changes.area } : changes);
   }
@@ -143,7 +147,7 @@ function TaskDecision({ task, today, onSkip }: { task: Task; today: string; onSk
 
         <div className="flex flex-col gap-2">
           <span className="text-sm text-muted-foreground">¿Qué es?</span>
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="¿Qué es?">
+          <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="¿Qué es?">
             {KINDS.map(({ kind: option, label, icon: Icon }) => (
               <button
                 key={option}
@@ -163,7 +167,7 @@ function TaskDecision({ task, today, onSkip }: { task: Task; today: string; onSk
           </div>
         </div>
 
-        {kind !== "delete" && (
+        {kind !== "delete" && kind !== "idea" && (
           <div className="grid grid-cols-2 gap-4">
             <Field>
               <FieldLabel>Área</FieldLabel>

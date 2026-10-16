@@ -103,7 +103,6 @@ export function FocusScreen() {
                 tasks={otherTasks}
                 onToggle={toggleTask}
                 onOpen={taskPanel.edit}
-                onCapture={async (text) => void (await rumbo.tasks.capture(text))}
               />
             </div>
             <div className="flex flex-col gap-6">
