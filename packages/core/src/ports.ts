@@ -20,3 +20,20 @@ export interface Clock {
 }
 
 export const systemClock: Clock = { now: () => new Date() };
+
+export interface AiMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+/** Un modelo de IA. Core no sabe cuál es ni dónde está: se lo pasa la app. */
+export interface AiProvider {
+  /** Lo que responde el modelo a la conversación. */
+  complete(messages: AiMessage[]): Promise<string>;
+}
+
+/** Lo que core necesita de `fetch`: así vale el del navegador, el de Tauri o uno de prueba. */
+export type HttpFetch = (
+  url: string,
+  init: { method: "POST"; headers: Record<string, string>; body: string },
+) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;

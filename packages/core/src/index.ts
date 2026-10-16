@@ -1,5 +1,7 @@
-export type { Clock, DirEntry, FileSystem } from "./ports";
+export type { AiMessage, AiProvider, Clock, DirEntry, FileSystem, HttpFetch } from "./ports";
 export { systemClock } from "./ports";
+export { AiError, type AiFailure } from "./ai/aiError";
+export { openAiCompatible, type OpenAiCompatibleOptions } from "./ai/openAiCompatible";
 
 export { createRumbo, type Rumbo } from "./app/rumbo";
 export { createNewVault } from "./app/newVault";
