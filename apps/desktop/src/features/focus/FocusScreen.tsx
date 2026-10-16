@@ -7,12 +7,12 @@ import {
   type RoutineStep,
   type Task,
 } from "@rumbo/core";
-import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
 import { timeOf, useNow } from "@/hooks/useNow";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
-import { choiceMinutes, QUICK_MINUTES, type FocusChoice } from "./choice";
+import { useSession } from "@/features/session/SessionProvider";
+import { choiceRequest, QUICK_MINUTES, type FocusChoice } from "./choice";
 import { dayEntries, routineOfHabits } from "./dayEntries";
 import { DayPlanCard } from "./DayPlanCard";
 import { FocusHeader } from "./FocusHeader";
@@ -21,7 +21,6 @@ import { StreakRiskCard } from "./StreakRiskCard";
 import { TodayHabitsCard } from "./TodayHabitsCard";
 import { UntimedCard } from "./UntimedCard";
 import { useFocusDay, type RoutineGroup } from "./useFocusDay";
-import { useFocusTimer } from "./useFocusTimer";
 
 export function FocusScreen() {
   const rumbo = useRumbo();
@@ -29,7 +28,7 @@ export function FocusScreen() {
   const today = rumbo.daily.today();
   const now = useNow();
   const time = timeOf(now);
-  const timer = useFocusTimer(() => toast.success("Tiempo terminado. Descansa un poco."));
+  const session = useSession();
   const day = useFocusDay(today);
 
   const choice: FocusChoice | undefined = chooseStart({
@@ -53,16 +52,17 @@ export function FocusScreen() {
     items.filter((item) => item.done).length + day.habits.filter((h) => h.doneToday).length;
   const total = items.length + day.habits.length;
 
-  async function start() {
+  async function start(quick = false) {
     if (!choice) return;
-    if (choice.kind === "next-step" && choice.step.topic.roadmap) {
+    if (!quick && choice.kind === "next-step" && choice.step.topic.roadmap) {
       await rumbo.learning.planToday(choice.step.topic.roadmap);
     }
     const left =
       choice.kind === "routine-step"
         ? minutesBetween(time > choice.step.start ? time : choice.step.start, choice.step.end)
         : 0;
-    timer.start(choiceMinutes(choice, left));
+    const request = choiceRequest(rumbo, choice, left);
+    session.start(quick ? { ...request, minutes: QUICK_MINUTES } : request);
   }
 
   async function toggleBadDay() {
@@ -109,14 +109,13 @@ export function FocusScreen() {
             <div className="flex flex-col gap-6">
               <NowCard
                 choice={choice}
-                timer={timer}
                 badDay={{
                   active: day.badDay,
                   used: day.badDaysUsed,
                   left: MAX_BAD_DAYS_PER_MONTH - day.badDaysUsed,
                 }}
-                onStart={start}
-                onQuickStart={() => timer.start(QUICK_MINUTES)}
+                onStart={() => start()}
+                onQuickStart={() => start(true)}
                 onToggleBadDay={toggleBadDay}
               />
               {day.atRisk.length > 0 && <StreakRiskCard habits={day.atRisk} onSave={saveStreak} />}

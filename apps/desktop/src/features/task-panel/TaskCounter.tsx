@@ -1,6 +1,5 @@
 import type { Counter, TaskStep } from "@rumbo/core";
 import { PlusIcon } from "lucide-react";
-import type { ReactNode } from "react";
 import { CounterCard } from "@/features/counters/CounterCard";
 import { CounterTypeMenu } from "@/features/counters/CounterTypeMenu";
 
@@ -8,16 +7,13 @@ import { CounterTypeMenu } from "@/features/counters/CounterTypeMenu";
 export function TaskCounter({
   counter,
   steps,
-  live,
   onChange,
 }: {
   counter: Counter | undefined;
   steps: TaskStep[];
-  live: ReactNode;
   onChange: (counter: Counter | undefined) => void;
 }) {
-  if (counter)
-    return <CounterCard counter={counter} steps={steps} live={live} onChange={onChange} />;
+  if (counter) return <CounterCard counter={counter} steps={steps} onChange={onChange} />;
 
   return (
     <CounterTypeMenu

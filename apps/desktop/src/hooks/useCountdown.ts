@@ -5,6 +5,10 @@ export interface Countdown {
   running: boolean;
   start: (minutes: number) => void;
   toggle: () => void;
+  /** Alarga (o acorta, con negativos) lo que queda, esté en marcha o en pausa. */
+  extend: (minutes: number) => void;
+  /** Para la cuenta y la deja en `minutes`, sin avisar de que ha terminado. */
+  reset: (minutes: number) => void;
 }
 
 /**
@@ -12,7 +16,7 @@ export interface Countdown {
  * de restar segundos, así no se desfasa aunque la ventana se congele un rato.
  */
 export function useCountdown(initialMinutes: number, onFinish: () => void): Countdown {
-  const [pausedSeconds, setPausedSeconds] = useState(initialMinutes * 60);
+  const [pausedSeconds, setPausedSeconds] = useState(Math.round(initialMinutes * 60));
   const [endsAt, setEndsAt] = useState<number>();
   const [now, setNow] = useState(() => Date.now());
   // Siempre la última versión del aviso, sin reiniciar el intervalo cuando cambia.
@@ -41,6 +45,14 @@ export function useCountdown(initialMinutes: number, onFinish: () => void): Coun
     start(minutes) {
       setNow(Date.now());
       setEndsAt(Date.now() + minutes * 60_000);
+    },
+    extend(minutes) {
+      if (endsAt === undefined) setPausedSeconds(Math.max(0, secondsLeft + minutes * 60));
+      else setEndsAt(endsAt + minutes * 60_000);
+    },
+    reset(minutes) {
+      setEndsAt(undefined);
+      setPausedSeconds(Math.round(minutes * 60));
     },
     toggle() {
       if (endsAt === undefined) {

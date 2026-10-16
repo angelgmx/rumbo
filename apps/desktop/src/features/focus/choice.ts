@@ -1,10 +1,17 @@
-import type { HabitSummary, StartChoice, Task } from "@rumbo/core";
+import {
+  DEFAULT_SESSION_MINUTES,
+  type HabitSummary,
+  type Rumbo,
+  type StartChoice,
+  type Task,
+} from "@rumbo/core";
+import { moduleRequest, taskRequest } from "@/features/session/requests";
+import type { SessionPlace, SessionRequest } from "@/features/session/types";
 import { formatMinutes } from "@/lib/format";
 import type { DayStep, NextStep } from "./useFocusDay";
 
 export type FocusChoice = StartChoice<DayStep, Task, HabitSummary, NextStep>;
 
-export const DEFAULT_FOCUS_MINUTES = 50;
 export const QUICK_MINUTES = 5;
 
 /** Cómo se cuenta lo elegido en la tarjeta «Ahora». */
@@ -27,11 +34,43 @@ export function describeChoice(choice: FocusChoice): { title: string; subtitle: 
   }
 }
 
-/** Cuánto dura lo elegido: lo que queda del bloque, el objetivo del hábito o el foco por defecto. */
-export function choiceMinutes(choice: FocusChoice, minutesLeftInStep: number): number {
-  if (choice.kind === "routine-step") return minutesLeftInStep;
-  if (choice.kind === "habit" && choice.habit.habit.kind === "duration") {
-    return choice.habit.habit.target ?? DEFAULT_FOCUS_MINUTES;
+/**
+ * La sesión de lo elegido. Un bloque de rutina dura lo que queda de él; un hábito de tiempo,
+ * su objetivo; una tarea, lo que dice su contador; y si no hay nada, el tiempo por defecto.
+ */
+export function choiceRequest(
+  rumbo: Rumbo,
+  choice: FocusChoice,
+  minutesLeftInStep: number,
+): SessionRequest {
+  switch (choice.kind) {
+    case "routine-step":
+      return {
+        title: choice.step.title,
+        minutes: minutesLeftInStep,
+        place: routineStepPlace(rumbo, choice.step),
+      };
+    case "task":
+      return taskRequest(rumbo, choice.task);
+    case "habit": {
+      const { habit } = choice.habit;
+      const target = habit.kind === "duration" ? habit.target : undefined;
+      return { title: habit.name, minutes: target ?? DEFAULT_SESSION_MINUTES };
+    }
+    case "next-step": {
+      const { topic } = choice.step;
+      const module = topic.roadmap?.current;
+      return module
+        ? moduleRequest(topic, module)
+        : { title: choice.step.module, minutes: DEFAULT_SESSION_MINUTES };
+    }
   }
-  return DEFAULT_FOCUS_MINUTES;
+}
+
+/** Un bloque de tema se trabaja en su módulo; los demás bloques, donde estés. */
+function routineStepPlace(rumbo: Rumbo, step: DayStep): SessionPlace | undefined {
+  const block = step.summary.routine.blocks[step.index];
+  const module = block?.kind === "module" ? rumbo.routines.moduleFor(block)?.module : undefined;
+  const found = module && rumbo.learning.findModule(module.name);
+  return found && { topic: found.topic.path, module: found.module.name };
 }

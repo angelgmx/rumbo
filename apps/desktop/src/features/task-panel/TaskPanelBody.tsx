@@ -1,5 +1,4 @@
 import type { TaskDraft } from "@rumbo/core";
-import type { ReactNode } from "react";
 import { TaskChips } from "./TaskChips";
 import { TaskCounter } from "./TaskCounter";
 import { TaskProperties } from "./TaskProperties";
@@ -17,7 +16,6 @@ export function TaskPanelBody({
   context,
   status,
   creating,
-  live,
   onPatch,
   onTitleChange,
   onTitleBlur,
@@ -26,8 +24,6 @@ export function TaskPanelBody({
   context: TaskContext;
   status: TaskStatus | undefined;
   creating: boolean;
-  /** El cronómetro o temporizador en marcha, que ocupa el sitio de la cantidad. */
-  live?: ReactNode;
   onPatch: (changes: Partial<TaskDraft>) => void;
   onTitleChange: (title: string) => void;
   onTitleBlur?: () => void;
@@ -53,7 +49,6 @@ export function TaskPanelBody({
       <TaskCounter
         counter={draft.counter}
         steps={draft.steps ?? []}
-        live={live}
         onChange={(counter) => onPatch({ counter })}
       />
       <TaskProperties

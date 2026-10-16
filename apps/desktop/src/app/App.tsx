@@ -55,7 +55,7 @@ export function App() {
               </Router>
             </TaskPanelProvider>
           </VaultGate>
-          <Toaster position="bottom-right" />
+          <Toaster position="bottom-center" />
         </TooltipProvider>
       </ThemeProvider>
     </MotionConfig>

@@ -1,6 +1,5 @@
 import { stepCounter, type Counter, type TaskStep } from "@rumbo/core";
 import { ChevronDownIcon, MinusIcon, PlusIcon } from "lucide-react";
-import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { formatList } from "@/lib/format";
 import { CounterBar } from "./CounterBar";
@@ -8,18 +7,15 @@ import { COUNTER_INFO } from "./counterKinds";
 import { CounterTypeMenu } from "./CounterTypeMenu";
 
 /**
- * El contador de la tarea en grande: tipo, cantidad, − y +, y cómo va. Con `live` el
- * cronómetro o el temporizador en marcha ocupan el sitio de la cantidad.
+ * El contador de la tarea en grande: tipo, cantidad, − y +, y cómo va.
  */
 export function CounterCard({
   counter,
   steps,
-  live,
   onChange,
 }: {
   counter: Counter;
   steps: TaskStep[];
-  live?: ReactNode;
   onChange: (counter: Counter | undefined) => void;
 }) {
   const { label, icon: Icon, unit } = COUNTER_INFO[counter.kind];
@@ -44,35 +40,33 @@ export function CounterCard({
         />
       </header>
 
-      {live ?? (
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-5xl font-medium tracking-tight tabular-nums">
-            {counter.current}
-          </span>
-          <span className="mr-auto text-muted-foreground">
-            / {counter.target}
-            {unit && ` ${unit}`}
-          </span>
-          {counter.kind !== "minutes" && (
-            <>
-              <Button
-                variant="outline"
-                size="icon-lg"
-                onClick={() => step(-1)}
-                disabled={counter.current === 0}
-                aria-label="Quitar uno"
-              >
-                <MinusIcon />
-              </Button>
-              <Button size="icon-lg" onClick={() => step(1)} aria-label="Sumar uno">
-                <PlusIcon />
-              </Button>
-            </>
-          )}
-        </div>
-      )}
+      <div className="flex items-center gap-3">
+        <span className="font-mono text-5xl font-medium tracking-tight tabular-nums">
+          {counter.current}
+        </span>
+        <span className="mr-auto text-muted-foreground">
+          / {counter.target}
+          {unit && ` ${unit}`}
+        </span>
+        {counter.kind !== "minutes" && (
+          <>
+            <Button
+              variant="outline"
+              size="icon-lg"
+              onClick={() => step(-1)}
+              disabled={counter.current === 0}
+              aria-label="Quitar uno"
+            >
+              <MinusIcon />
+            </Button>
+            <Button size="icon-lg" onClick={() => step(1)} aria-label="Sumar uno">
+              <PlusIcon />
+            </Button>
+          </>
+        )}
+      </div>
 
-      {!live && <CounterBar counter={counter} />}
+      <CounterBar counter={counter} />
       {counter.kind === "progress" && <StepsSummary steps={steps} />}
     </section>
   );

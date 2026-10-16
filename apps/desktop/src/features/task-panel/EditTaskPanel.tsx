@@ -1,11 +1,10 @@
 import type { Task, TaskDraft } from "@rumbo/core";
 import { PlayIcon } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
 import { Button } from "@/components/ui/button";
-import { CounterControl } from "@/features/counters/CounterControl";
-import { hasCounter } from "@/features/counters/countedTask";
+import { taskRequest } from "@/features/session/requests";
+import { useSession } from "@/features/session/SessionProvider";
 import { TaskMenu } from "./TaskMenu";
 import { TaskPanelBody } from "./TaskPanelBody";
 import { TaskPanelHeader } from "./TaskPanelHeader";
@@ -26,7 +25,7 @@ export function EditTaskPanel({
   const rumbo = useRumbo();
   const { task, draft, patch, flush } = useAutosavedTask(initial);
   const context = useTaskContext(draft);
-  const [started, setStarted] = useState(false);
+  const session = useSession();
 
   async function attempt(action: () => Promise<void>) {
     try {
@@ -60,9 +59,11 @@ export function EditTaskPanel({
       onClose();
     });
 
-  const timed =
-    hasCounter(task) && (task.counter.kind === "minutes" || task.counter.kind === "pomodoro");
-  const live = started && timed;
+  function begin() {
+    flush();
+    session.start(taskRequest(rumbo, task));
+    onClose();
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -77,13 +78,12 @@ export function EditTaskPanel({
           onChange: (done) => void attempt(() => rumbo.tasks.setDone(task, done)),
         }}
         creating={false}
-        live={live && <CounterControl task={task} autoStart />}
         onPatch={change}
         onTitleChange={(text) => patch({ text })}
       />
-      {timed && !started && (
+      {!task.done && (
         <footer className="flex justify-end border-t px-6 py-4">
-          <Button onClick={() => setStarted(true)}>
+          <Button onClick={begin}>
             <PlayIcon data-icon="inline-start" />
             Empezar
           </Button>
