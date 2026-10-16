@@ -1,0 +1,190 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Colores del diseño (docs/design). Los nombres son los de shadcn
+   para que los componentes los usen sin tocar nada. */
+:root {
+  --background: #f7f6f3;
+  --foreground: #18181b;
+  --surface: #ecebe7;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --primary: #e8471c;
+  --primary-foreground: #ffffff;
+  --primary-soft: #fdede6;
+  --primary-text: #c83c13;
+  --secondary: #f2f1ee;
+  --secondary-foreground: #18181b;
+  --muted: #f2f1ee;
+  --muted-foreground: #6b6a66;
+  --faint: #a3a19b;
+  --accent: #f2f1ee;
+  --accent-foreground: #18181b;
+  --destructive: #d93b3f;
+  --success: #169b62;
+  --warning: #c3860a;
+  --border: #e6e4df;
+  --input: #d8d5ce;
+  --ring: #e8471c;
+  --radius: 0.75rem;
+  --card-shadow: 0 1px 2px rgb(26 26 26 / 5%), 0 4px 16px rgb(26 26 26 / 4%);
+
+  --sidebar: #ecebe7;
+  --sidebar-foreground: #6b6a66;
+  --sidebar-primary: #e8471c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ffffff;
+  --sidebar-accent-foreground: #18181b;
+  --sidebar-border: #e6e4df;
+  --sidebar-ring: #e8471c;
+
+  --chart-1: #e8471c;
+  --chart-2: #169b62;
+  --chart-3: #c3860a;
+  --chart-4: #6b6a66;
+  --chart-5: #d8d5ce;
+
+  /* Movimiento (nota 13): nada pasa de 320 ms. */
+  --dur-instant: 80ms;
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 260ms;
+  --dur-page: 320ms;
+  --ease-enter: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-emphasis: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.dark {
+  --background: #0f0f11;
+  --foreground: #eeece7;
+  --surface: #09090a;
+  --card: #141416;
+  --card-foreground: #eeece7;
+  --popover: #19191c;
+  --popover-foreground: #eeece7;
+  --primary: #ff5b2e;
+  --primary-foreground: #ffffff;
+  --primary-soft: #2a170f;
+  --primary-text: #ff7a52;
+  --secondary: #1c1c1f;
+  --secondary-foreground: #eeece7;
+  --muted: #1c1c1f;
+  --muted-foreground: #9b9a95;
+  --faint: #65645f;
+  --accent: #1c1c1f;
+  --accent-foreground: #eeece7;
+  --destructive: #f2555a;
+  --success: #34c38f;
+  --warning: #f5b83d;
+  --border: #232327;
+  --input: #2f2f34;
+  --ring: #ff5b2e;
+  --card-shadow: inset 0 1px 0 rgb(255 255 255 / 4.5%), 0 8px 24px rgb(0 0 0 / 22%);
+
+  --sidebar: #09090a;
+  --sidebar-foreground: #9b9a95;
+  --sidebar-primary: #ff5b2e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1c1c1f;
+  --sidebar-accent-foreground: #eeece7;
+  --sidebar-border: #232327;
+  --sidebar-ring: #ff5b2e;
+
+  --chart-1: #ff5b2e;
+  --chart-2: #34c38f;
+  --chart-3: #f5b83d;
+  --chart-4: #9b9a95;
+  --chart-5: #2f2f34;
+}
+
+@theme inline {
+  --font-sans: "Geist Variable", system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-text: var(--primary-text);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+
+  --shadow-card: var(--card-shadow);
+  --ease-enter: var(--ease-enter);
+  --ease-exit: var(--ease-exit);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans antialiased;
+  }
+  body {
+    @apply bg-surface text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* Con «reducir movimiento» todo pasa a fundidos muy cortos. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: var(--dur-instant) !important;
+    transition-duration: var(--dur-instant) !important;
+    scroll-behavior: auto !important;
+  }
+}
