@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link, useParams } from "wouter";
 import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
+import { InlineTitle } from "@/components/InlineTitle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
@@ -19,6 +20,7 @@ import { NoteReader } from "./NoteReader";
 import { ObsidianButton } from "./ObsidianButton";
 import { PaceCard } from "./PaceCard";
 import { PageTitle } from "./PageTitle";
+import { RoadmapMenu } from "./RoadmapMenu";
 import { RoadmapDiagram } from "./RoadmapDiagram";
 import { RoadmapLegend } from "./RoadmapLegend";
 import { WeeksList } from "./TopicRoadmap";
@@ -71,6 +73,7 @@ function Roadmap({ topic }: { topic: TopicSummary }) {
         actions={
           <>
             <ObsidianButton path={roadmap.path} />
+            <RoadmapMenu roadmap={roadmap} />
             {roadmap.current && (
               <Button onClick={addToToday}>
                 <PlusIcon data-icon="inline-start" />
@@ -85,7 +88,14 @@ function Roadmap({ topic }: { topic: TopicSummary }) {
           <PageTitle
             backHref="/roadmaps"
             icon={topic}
-            title={roadmap.title}
+            title={
+              <InlineTitle
+                label="Nombre de la ruta"
+                value={roadmap.title}
+                onSave={(title) => rumbo.roadmaps.rename(roadmap, title)}
+                className="-mx-1 px-1"
+              />
+            }
             subtitle={<Subtitle topic={topic} />}
             aside={
               <div className="flex w-44 flex-col gap-2">

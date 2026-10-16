@@ -1,4 +1,4 @@
-import { appendIdea, parseIdeas, removeIdea, type Idea } from "../domain/ideas";
+import { appendIdea, editIdea, parseIdeas, removeIdea, type Idea } from "../domain/ideas";
 import type { Task } from "../domain/tasks";
 import type { DailyService } from "./dailyService";
 import type { TaskService } from "./taskService";
@@ -19,6 +19,10 @@ export class IdeaService {
   async capture(text: string): Promise<void> {
     const source = await this.readIfExists();
     await this.store.write(this.path, appendIdea(source, text, this.daily.today()));
+  }
+
+  async edit(idea: Idea, text: string): Promise<void> {
+    await this.store.write(this.path, editIdea(await this.store.read(this.path), idea, text));
   }
 
   async remove(idea: Idea): Promise<void> {

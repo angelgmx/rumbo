@@ -4,16 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { useRumbo } from "@/app/RumboContext";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -86,23 +77,13 @@ export function RoutineMenu({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <AlertDialog open={confirming} onOpenChange={setConfirming}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar «{summary.title}»?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Se borra la nota de la rutina. Lo que ya hiciste (hábitos y tareas) se queda en tus
-              notas. Si solo quieres dejarla un tiempo, mejor páusala.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={remove}>
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title={`¿Eliminar «${summary.title}»?`}
+        description="Se borra la nota de la rutina. Lo que ya hiciste (hábitos y tareas) se queda en tus notas. Si solo quieres dejarla un tiempo, mejor páusala."
+        onConfirm={remove}
+      />
     </>
   );
 }

@@ -36,3 +36,14 @@ export function removeIdea(source: string, idea: Pick<Idea, "line" | "text">): s
   lines.splice(idea.line, 1);
   return lines.join("\n");
 }
+
+/** Cambia el texto de la idea en su línea, conservando su fecha. */
+export function editIdea(source: string, idea: Pick<Idea, "line" | "text">, text: string): string {
+  const lines = source.split("\n");
+  const current = lines[idea.line] ?? "";
+  if (parseIdeas("", current)[0]?.text !== idea.text || !text.trim()) return source;
+
+  const created = CREATED.exec(current)?.[0] ?? "";
+  lines[idea.line] = `- ${text.trim()}${created}`;
+  return lines.join("\n");
+}

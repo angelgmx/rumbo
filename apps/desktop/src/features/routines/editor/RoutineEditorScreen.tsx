@@ -25,7 +25,7 @@ import { useRoutinePurpose } from "../useRoutinePurpose";
 import { useStartRoutine } from "../useStartRoutine";
 import { BlockLibrary, type LibraryItem, type LibraryTab } from "./BlockLibrary";
 import { BLOCK_LIST_ID, BlockList } from "./BlockList";
-import { InlineTitle } from "./InlineTitle";
+import { InlineTitle } from "@/components/InlineTitle";
 import { RoutineOverview } from "./RoutineOverview";
 import { RoutineSettings } from "./RoutineSettings";
 

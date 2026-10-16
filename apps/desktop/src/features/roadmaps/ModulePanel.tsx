@@ -9,13 +9,16 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "wouter";
+import { useRumbo } from "@/app/RumboContext";
 import { AreaIcon } from "@/components/AreaIcon";
+import { InlineTitle } from "@/components/InlineTitle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { exerciseHref } from "@/features/exercises/links";
 import { formatDayMonth, formatMinutes } from "@/lib/format";
 import { openUrl } from "@/platform/openUrl";
 import { moduleHref } from "./links";
+import { ModuleMenu } from "./ModuleMenu";
 import { STATUS_LABEL, STATUS_STYLE } from "./moduleStatus";
 import { ResourceIcon } from "./ResourceIcon";
 import { Tag } from "./Tag";
@@ -29,6 +32,7 @@ interface ModulePanelProps {
 
 /** El módulo pulsado en el diagrama: cuánto lleva, con qué se aprende y qué toca practicar. */
 export function ModulePanel({ topic, module, onOpenNote }: ModulePanelProps) {
+  const rumbo = useRumbo();
   const roadmap = topic.roadmap!;
   const isCurrent = module.path === roadmap.current?.path;
   const track = roadmap.tracks.find((item) => item.key === module.track);
@@ -41,7 +45,14 @@ export function ModulePanel({ topic, module, onOpenNote }: ModulePanelProps) {
           className="size-10 rounded-lg"
         />
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-xl font-semibold">{module.title}</h2>
+          <h2 className="text-xl font-semibold">
+            <InlineTitle
+              label="Nombre del módulo"
+              value={module.title}
+              onSave={(title) => rumbo.roadmaps.renameModule(module, title)}
+              className="-mx-1 w-full px-1"
+            />
+          </h2>
           <p className="text-sm text-muted-foreground">
             {roadmap.tracks.length > 1 && track ? `Pista ${track.label} · ` : ""}
             módulo {String(module.order).padStart(2, "0")}
@@ -56,6 +67,7 @@ export function ModulePanel({ topic, module, onOpenNote }: ModulePanelProps) {
             {STATUS_LABEL[module.status]}
           </Tag>
         )}
+        <ModuleMenu module={module} />
       </div>
 
       <div className="flex flex-col gap-5 px-5 pb-5">

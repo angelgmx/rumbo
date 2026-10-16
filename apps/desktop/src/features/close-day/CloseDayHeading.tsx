@@ -1,10 +1,6 @@
 import { addDays, type IsoDate } from "@rumbo/core";
+import { ProgressRing } from "@/components/ProgressRing";
 import { formatWeekday } from "@/lib/format";
-
-const SIZE = 60;
-const STROKE = 4;
-const RADIUS = (SIZE - STROKE) / 2;
-const LENGTH = 2 * Math.PI * RADIUS;
 
 /** El título del cierre con lo hecho hoy y su porcentaje en un anillo. */
 export function CloseDayHeading({
@@ -31,29 +27,9 @@ export function CloseDayHeading({
           {done} de {total} hecho · mañana es {formatWeekday(addDays(today, 1))}
         </p>
       </div>
-      <div className="relative grid size-15 place-items-center">
-        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="absolute inset-0 -rotate-90" aria-hidden>
-          <circle
-            cx={SIZE / 2}
-            cy={SIZE / 2}
-            r={RADIUS}
-            fill="none"
-            strokeWidth={STROKE}
-            className="stroke-muted"
-          />
-          <circle
-            cx={SIZE / 2}
-            cy={SIZE / 2}
-            r={RADIUS}
-            fill="none"
-            strokeWidth={STROKE}
-            strokeLinecap="round"
-            strokeDasharray={LENGTH}
-            strokeDashoffset={LENGTH * (1 - percent / 100)}
-            className="stroke-success"
-          />
-        </svg>
-        <span className="font-mono text-sm">{percent}%</span>
+      <div className="relative grid place-items-center">
+        <ProgressRing value={percent / 100} color="var(--success)" size={60} stroke={4} />
+        <span className="absolute font-mono text-sm">{percent}%</span>
       </div>
     </div>
   );

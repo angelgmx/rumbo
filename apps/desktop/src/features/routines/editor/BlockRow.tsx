@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { BLOCK_KIND_ICON, BLOCK_KIND_LABEL, BREAK_PATTERN, useBlockColor } from "../look";
-import { InlineTitle } from "./InlineTitle";
+import { InlineTitle } from "@/components/InlineTitle";
 import { MinutesSelect } from "./MinutesSelect";
 import { ModuleTasksPreview } from "./ModuleTasksPreview";
 import { useBlockDetails } from "./useBlockDetails";

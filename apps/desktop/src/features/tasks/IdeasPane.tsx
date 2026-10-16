@@ -45,6 +45,7 @@ export function IdeasPane() {
               >
                 <IdeaRow
                   idea={idea}
+                  onEdit={(text) => rumbo.ideas.edit(idea, text)}
                   onConvert={async () => {
                     const task = await rumbo.ideas.toTask(idea);
                     if (task) taskPanel.edit(task);

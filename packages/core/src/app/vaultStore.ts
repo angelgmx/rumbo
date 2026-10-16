@@ -1,5 +1,6 @@
 import type { FileSystem } from "../ports";
 import { loadConfig, type RumboConfig } from "../vault/config";
+import { joinPath, parentOf, safeFileName } from "../vault/paths";
 import {
   isTemplate,
   noteName,
@@ -56,9 +57,9 @@ export class VaultStore {
 
   /** Una ruta libre en la carpeta para una nota nueva: si ya existe, le añade « 2», « 3»… */
   async freePath(folder: string, name: string): Promise<string> {
-    const fileName = name.trim().replace(/[\\/:*?"<>|#^[\]]/g, "-");
-    let path = `${folder}/${fileName}.md`;
-    for (let n = 2; await this.exists(path); n++) path = `${folder}/${fileName} ${n}.md`;
+    const fileName = joinPath(folder, safeFileName(name));
+    let path = `${fileName}.md`;
+    for (let n = 2; await this.exists(path); n++) path = `${fileName} ${n}.md`;
     return path;
   }
 
@@ -126,8 +127,4 @@ export class VaultStore {
     this.changes++;
     for (const listener of this.listeners) listener();
   }
-}
-
-function parentOf(path: string): string {
-  return path.split("/").slice(0, -1).join("/");
 }
