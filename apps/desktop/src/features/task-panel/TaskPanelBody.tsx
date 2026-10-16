@@ -1,5 +1,6 @@
-import type { TaskDraft } from "@rumbo/core";
+import { resourcesInText, type TaskDraft } from "@rumbo/core";
 import { TaskChips } from "./TaskChips";
+import { TaskNotes } from "./TaskNotes";
 import { TaskProperties } from "./TaskProperties";
 import { TaskResources } from "./TaskResources";
 import { TaskSteps } from "./TaskSteps";
@@ -9,7 +10,7 @@ import { useInheritance } from "./useInheritance";
 import type { TaskContext } from "./useTaskContext";
 import { useTaskOptions } from "./useTaskOptions";
 
-/** Lo que se ve en el panel, igual al crear y al editar: título, propiedades y pasos. */
+/** Lo que se ve en el panel, igual al crear y al editar: título, notas, propiedades, pasos y recursos. */
 export function TaskPanelBody({
   draft,
   context,
@@ -29,6 +30,7 @@ export function TaskPanelBody({
 }) {
   const options = useTaskOptions();
   const inheritance = useInheritance(draft);
+  const resources = [...resourcesInText(draft.notes ?? ""), ...context.resources];
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 pb-6">
@@ -41,6 +43,7 @@ export function TaskPanelBody({
           onBlur={onTitleBlur}
           onToggleDone={(done) => status?.onChange(done)}
         />
+        <TaskNotes value={draft.notes ?? ""} onChange={(notes) => onPatch({ notes })} />
         <TaskChips draft={draft} status={status} onChange={onPatch} />
       </div>
       <TaskProperties
@@ -51,7 +54,7 @@ export function TaskPanelBody({
         onChange={onPatch}
       />
       <TaskSteps steps={draft.steps ?? []} onChange={(steps) => onPatch({ steps })} />
-      {context.resources.length > 0 && <TaskResources resources={context.resources} />}
+      {resources.length > 0 && <TaskResources resources={resources} />}
     </div>
   );
 }

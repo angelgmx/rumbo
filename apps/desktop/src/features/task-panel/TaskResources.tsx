@@ -4,7 +4,7 @@ import { ResourceIcon } from "@/features/roadmaps/ResourceIcon";
 import { openUrl } from "@/platform/openUrl";
 import { SectionLabel } from "./SectionLabel";
 
-/** Los recursos del módulo de la tarea: lo que usas para hacerla. */
+/** Lo que usas para hacer la tarea: los enlaces de sus notas y los recursos de su módulo. */
 export function TaskResources({ resources }: { resources: Resource[] }) {
   return (
     <section className="flex flex-col gap-2">

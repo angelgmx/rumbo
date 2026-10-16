@@ -49,7 +49,12 @@ export {
   type LinkSide,
   type RoadmapLayout,
 } from "./domain/roadmapLayout";
-export { guessFromUrl, type Resource, type ResourceKind } from "./domain/resources";
+export {
+  guessFromUrl,
+  resourcesInText,
+  type Resource,
+  type ResourceKind,
+} from "./domain/resources";
 
 export type { HabitSummary } from "./app/habitService";
 export { type CaptureResult } from "./app/taskService";

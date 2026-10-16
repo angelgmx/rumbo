@@ -12,7 +12,7 @@ import type { Inheritance } from "./useInheritance";
 import type { TaskContext } from "./useTaskContext";
 import type { TaskOptions } from "./useTaskOptions";
 
-/** Las propiedades de la tarea, una fila cada una; «Estimado / real» solo sale si hay datos. */
+/** Las propiedades de la tarea, una fila cada una. */
 export function TaskProperties({
   draft,
   context,
@@ -73,13 +73,11 @@ export function TaskProperties({
         known={options.tags}
         onChange={(tags) => onChange({ tags })}
       />
-      {(draft.duration !== undefined || draft.spent !== undefined) && (
-        <EstimateProperty
-          estimated={draft.duration}
-          real={draft.spent}
-          onChange={(duration) => onChange({ duration })}
-        />
-      )}
+      <EstimateProperty
+        estimated={draft.duration}
+        real={draft.spent}
+        onChange={(duration) => onChange({ duration })}
+      />
     </section>
   );
 }

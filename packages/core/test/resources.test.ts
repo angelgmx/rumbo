@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { guessFromUrl, readResources } from "../src/domain/resources";
+import { guessFromUrl, readResources, resourcesInText } from "../src/domain/resources";
 
 describe("readResources", () => {
   it("reads the list and skips entries without a title", () => {
@@ -46,5 +46,32 @@ describe("guessFromUrl", () => {
       kind: "article",
       source: "baeldung.com",
     });
+  });
+});
+
+describe("resourcesInText", () => {
+  it("finds markdown links and bare addresses once each", () => {
+    const text =
+      "Mira [Curso de escritura](https://developers.google.com/tech-writing) y\nhttps://www.youtube.com/watch?v=1 y otra vez https://www.youtube.com/watch?v=1";
+    expect(resourcesInText(text)).toEqual([
+      {
+        title: "Curso de escritura",
+        url: "https://developers.google.com/tech-writing",
+        kind: "article",
+        source: "developers.google.com",
+        status: "pending",
+      },
+      {
+        title: "youtube.com",
+        url: "https://www.youtube.com/watch?v=1",
+        kind: "video",
+        source: "YouTube",
+        status: "pending",
+      },
+    ]);
+  });
+
+  it("is empty without links", () => {
+    expect(resourcesInText("solo texto")).toEqual([]);
   });
 });

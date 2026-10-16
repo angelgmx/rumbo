@@ -1,9 +1,9 @@
 import type { Priority, TaskDraft } from "@rumbo/core";
 import { useRumbo } from "@/app/RumboContext";
+import { DateRangePicker } from "@/components/DateRangePicker";
 import { PRIORITY_LABEL } from "@/features/tasks/taskLabels";
 import { formatRelativeDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { DatePicker } from "./DatePicker";
 import { OptionList } from "./OptionList";
 import { PropertyPopover } from "./PropertyPopover";
 import { PRIORITIES, STATUSES } from "./taskChoices";
@@ -102,17 +102,16 @@ function DateChip({
   return (
     <PropertyPopover
       label="Fecha"
-      width="w-64 p-1"
+      width="w-auto p-1"
       className={cn(CHIP, !date && "border-dashed text-muted-foreground")}
       trigger={
         date ? `${field === "due" ? "Vence " : ""}${formatRelativeDay(date, today)}` : "Sin fecha"
       }
     >
       {(close) => (
-        <DatePicker
-          label="Fecha"
-          value={date}
-          onChange={(next) => onChange({ [field]: next })}
+        <DateRangePicker
+          value={{ start: draft.scheduled, end: draft.due }}
+          onChange={({ start, end }) => onChange({ scheduled: start, due: end })}
           onDone={close}
         />
       )}
