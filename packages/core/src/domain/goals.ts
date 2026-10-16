@@ -82,6 +82,42 @@ export function daysLeft(goal: Goal, today: IsoDate): number | undefined {
   return goal.deadline ? daysBetween(today, goal.deadline) : undefined;
 }
 
+export type GoalPaceState = "ahead" | "on-track" | "behind";
+
+/** Avance por semana, de 0 a 1: lo que llevas de media y lo que hace falta para llegar. */
+export interface GoalPace {
+  /** Sin él, aún es pronto para medir el ritmo (menos de una semana desde el inicio). */
+  state?: GoalPaceState;
+  actualPerWeek?: number;
+  /** Sin él, la fecha límite ya ha pasado. */
+  requiredPerWeek?: number;
+}
+
+// Menos de una semana de datos no dice nada del ritmo; un 10 % de margen cuenta como ir al día.
+const MIN_DAYS_FOR_PACE = 7;
+const PACE_MARGIN = 0.1;
+
+/** El ritmo real frente al necesario; solo para un objetivo en marcha, con fecha límite y sin terminar. */
+export function goalPace(
+  goal: Goal,
+  progress: number | undefined,
+  today: IsoDate,
+): GoalPace | undefined {
+  if (goal.status !== "active" || !goal.deadline || progress === undefined || progress >= 1) {
+    return undefined;
+  }
+  const left = daysBetween(today, goal.deadline);
+  const elapsed = goal.start ? daysBetween(goal.start, today) : 0;
+  const requiredPerWeek = left > 0 ? ((1 - progress) / left) * 7 : undefined;
+  const actualPerWeek = elapsed >= MIN_DAYS_FOR_PACE ? (progress / elapsed) * 7 : undefined;
+  if (requiredPerWeek === undefined) return { state: "behind", actualPerWeek };
+  if (actualPerWeek === undefined) return { requiredPerWeek };
+
+  const ratio = actualPerWeek / requiredPerWeek;
+  const state = ratio < 1 - PACE_MARGIN ? "behind" : ratio > 1 + PACE_MARGIN ? "ahead" : "on-track";
+  return { state, actualPerWeek, requiredPerWeek };
+}
+
 /** «2027» es de todo el año; «2027-T1», de un trimestre. */
 export function periodHorizon(period: string): GoalHorizon {
   return /-T[1-4]$/.test(period) ? "quarter" : "year";

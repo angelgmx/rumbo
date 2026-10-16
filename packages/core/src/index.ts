@@ -119,7 +119,7 @@ export {
   type RoutineInput,
   type TimedBlock,
 } from "./domain/routines";
-export type { GoalDriverRefs, GoalSummary } from "./app/goalService";
+export type { GoalDriverRefs, GoalLink, GoalSummary } from "./app/goalService";
 export type { ProjectSummary } from "./app/projectService";
 export {
   GOAL_STATUSES,
@@ -130,6 +130,8 @@ export {
   type Goal,
   type GoalHorizon,
   type GoalInput,
+  type GoalPace,
+  type GoalPaceState,
   type KeyResult,
   type GoalStatus,
   type IfThen,
@@ -138,6 +140,7 @@ export {
 export {
   PROJECT_STATUSES,
   type Milestone,
+  type UpcomingMilestone,
   type Project,
   type ProjectInput,
   type ProjectLink,
