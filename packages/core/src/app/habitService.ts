@@ -1,4 +1,3 @@
-import { stringify } from "yaml";
 import { habitHistories } from "../domain/daily";
 import { addDays, type IsoDate } from "../domain/dates";
 import {
@@ -20,7 +19,7 @@ import {
   type Streak,
 } from "../domain/habits";
 import { streaksAtRisk } from "../domain/focus";
-import { setFrontmatter } from "../vault/frontmatter";
+import { newNoteSource, setFrontmatter } from "../vault/frontmatter";
 import { habitHistoryFromTasks, type Task } from "../domain/tasks";
 import type { DailyService } from "./dailyService";
 import type { TaskService } from "./taskService";
@@ -130,12 +129,11 @@ export class HabitService {
       started: this.daily.today(),
       archived: false,
     };
-    const frontmatter = stringify(withoutEmpty(fields), { lineWidth: 0 }).trimEnd();
-
-    await this.store.write(
-      await this.freePath(input.name),
-      `---\n${frontmatter}\n---\n\n# ${input.name.trim()}\n`,
+    const path = await this.store.freePath(
+      this.store.config.folders.habits,
+      `${HABIT_FILE_PREFIX}${input.name.trim()}`,
     );
+    await this.store.write(path, newNoteSource(fields, input.name));
     return key;
   }
 
@@ -169,17 +167,4 @@ export class HabitService {
   private allKeys(): string[] {
     return this.store.notesOfType("habit").map((note) => String(note.data.key));
   }
-
-  private async freePath(name: string): Promise<string> {
-    const folder = this.store.config.folders.habits;
-    const fileName = name.trim().replace(/[\\/:*?"<>|#^[\]]/g, "-");
-    let path = `${folder}/${HABIT_FILE_PREFIX}${fileName}.md`;
-    for (let n = 2; await this.store.exists(path); n++)
-      path = `${folder}/${HABIT_FILE_PREFIX}${fileName} ${n}.md`;
-    return path;
-  }
-}
-
-function withoutEmpty(fields: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined));
 }

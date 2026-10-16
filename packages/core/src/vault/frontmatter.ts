@@ -1,4 +1,4 @@
-import { parseDocument } from "yaml";
+import { parseDocument, stringify } from "yaml";
 
 export interface ParsedNote {
   data: Record<string, unknown>;
@@ -71,4 +71,13 @@ function isNestedLine(line: string): boolean {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** Una nota nueva: el frontmatter (sin los campos vacíos) y el título como encabezado. */
+export function newNoteSource(fields: Record<string, unknown>, title: string): string {
+  const filled = Object.fromEntries(
+    Object.entries(fields).filter(([, value]) => value !== undefined),
+  );
+  const frontmatter = stringify(filled, { lineWidth: 0 }).trimEnd();
+  return `---\n${frontmatter}\n---\n\n# ${title.trim()}\n`;
 }

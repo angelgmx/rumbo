@@ -5,6 +5,15 @@ export type IsoDate = string;
 
 export const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 export type Weekday = (typeof WEEKDAYS)[number];
+export const SPANISH_WEEKDAYS = [
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábado",
+  "domingo",
+];
 
 export function toIsoDate(date: Date): IsoDate {
   const year = date.getFullYear();

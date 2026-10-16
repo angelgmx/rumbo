@@ -54,6 +54,14 @@ export class VaultStore {
     return [...this.index.values()].find((note) => note.name === name);
   }
 
+  /** Una ruta libre en la carpeta para una nota nueva: si ya existe, le añade « 2», « 3»… */
+  async freePath(folder: string, name: string): Promise<string> {
+    const fileName = name.trim().replace(/[\\/:*?"<>|#^[\]]/g, "-");
+    let path = `${folder}/${fileName}.md`;
+    for (let n = 2; await this.exists(path); n++) path = `${folder}/${fileName} ${n}.md`;
+    return path;
+  }
+
   exists(path: string): Promise<boolean> {
     return this.fs.exists(path);
   }
