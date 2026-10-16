@@ -2,6 +2,7 @@ import type { GoalRepository } from "../db/goalRepository";
 import type { ProjectRepository } from "../db/projectRepository";
 import {
   projectProgress,
+  projectSteps,
   type Project,
   type ProjectInput,
   type ProjectStatus,
@@ -18,6 +19,8 @@ export interface ProjectSummary {
   /** Sus tareas sin terminar, las que tienen fecha primero. */
   nextTasks: Task[];
   doneTasks: number;
+  /** Los hitos hechos y los que hay; sin hitos, las tareas. */
+  steps: { done: number; total: number };
   goal?: { id: number; title: string };
 }
 
@@ -104,6 +107,7 @@ export class ProjectService {
       progress: projectProgress(project, tasks),
       nextTasks: tasks.filter((task) => !task.done).sort(byDate),
       doneTasks: tasks.filter((task) => task.done).length,
+      steps: projectSteps(project, tasks),
       goal: goal && { id: goal.id, title: goal.goal.title },
     };
   }

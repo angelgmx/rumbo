@@ -44,6 +44,13 @@ export function formatDayMonth(date: IsoDate): string {
   return dayMonthFormat.format(toDate(date)).replace(".", "");
 }
 
+const monthYearFormat = new Intl.DateTimeFormat("es", { month: "short", year: "numeric" });
+
+/** "sep 2027" */
+export function formatMonthYear(date: IsoDate): string {
+  return monthYearFormat.format(toDate(date)).replace(".", "").replace(" de ", " ");
+}
+
 const weekdayFormat = new Intl.DateTimeFormat("es", { weekday: "short" });
 
 /** "vie" */

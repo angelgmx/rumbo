@@ -1,4 +1,5 @@
 import { periodChoices, periodHorizon, type GoalInput } from "@rumbo/core";
+import type { LucideIcon } from "lucide-react";
 import { useRumbo } from "@/app/RumboContext";
 import { OptionList } from "@/components/panel/OptionList";
 import { PropertyRow } from "@/components/panel/PropertyRow";
@@ -8,11 +9,20 @@ import { periodLabel } from "./goalLabels";
 
 type Change = (changes: Partial<GoalInput>) => void;
 
-export function AreaRow({ area, onChange }: { area: string | undefined; onChange: Change }) {
+export function AreaRow({
+  icon,
+  area,
+  onChange,
+}: {
+  icon?: LucideIcon;
+  area: string | undefined;
+  onChange: Change;
+}) {
   const areas = useAreaNames();
 
   return (
     <PropertyRow
+      icon={icon}
       label="Área"
       empty="Sin área"
       value={

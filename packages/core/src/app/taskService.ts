@@ -118,6 +118,13 @@ export class TaskService {
     return this.all().filter((task) => task.goalId === goalId);
   }
 
+  /** Las tareas pendientes de un módulo de una ruta (por el nombre de su nota) programadas para ese día. */
+  forModule(module: string, date: IsoDate): Task[] {
+    return this.all().filter(
+      (task) => !task.done && task.module === module && task.scheduled === date,
+    );
+  }
+
   /** Las tareas de un proyecto, hechas o no. */
   forProject(projectId: number): Task[] {
     return this.all().filter((task) => task.projectId === projectId);
@@ -184,15 +191,28 @@ export class TaskService {
       return { kind: "agenda", date: capture.date };
     }
 
+    const task = await this.createFromTitle(input, {});
+    return { kind: "task", date: capture.date, task };
+  }
+
+  /**
+   * Crea una tarea con el título escrito en lenguaje natural («ejercicios hoy 45m !alta»),
+   * unida a lo que se diga. Sin área propia toma la del proyecto.
+   */
+  createFromTitle(
+    input: string,
+    links: Pick<TaskDraft, "goalId" | "projectId" | "area">,
+  ): Promise<Task | undefined> {
     const title = parseTaskTitle(input, this.daily.today());
-    const task = await this.create({
+    return this.create({
       text: title.text,
       scheduled: title.date,
       duration: title.duration,
       priority: title.priority,
       tags: title.tags,
+      ...links,
+      area: links.area ?? this.inheritedArea(links),
     });
-    return { kind: "task", date: title.date, task };
   }
 
   private named(name: string | undefined): Note | undefined {

@@ -40,10 +40,9 @@ export function daysLeftLabel(days: number): string {
   return days === -1 ? "venció ayer" : `venció hace ${-days} días`;
 }
 
-/** «2,5 % por semana» */
-export function weeklyPaceLabel(progressPerWeek: number): string {
-  const value = new Intl.NumberFormat("es", { maximumFractionDigits: 1 }).format(
-    progressPerWeek * 100,
-  );
-  return `${value} % por semana`;
+/** «257 días», «1 día», «hoy» o «hace 3 días» en la cabecera del objetivo. */
+export function daysChipLabel(days: number): string {
+  if (days === 0) return "hoy";
+  if (days === 1) return "1 día";
+  return days > 1 ? `${days} días` : `hace ${-days} días`;
 }

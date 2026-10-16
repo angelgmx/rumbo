@@ -1,4 +1,4 @@
-import type { Priority, Task } from "@rumbo/core";
+import type { Task } from "@rumbo/core";
 import { CalendarIcon, ClockIcon, FlagIcon, FolderKanbanIcon, RepeatIcon } from "lucide-react";
 import { formatShortDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -6,14 +6,8 @@ import { AreaDot } from "./AreaDot";
 import { MetaItem } from "./MetaItem";
 import { StepsChip } from "./StepsChip";
 import { projectOf } from "./taskFilters";
-import { PRIORITY_LABEL } from "./taskLabels";
+import { FLAG_COLOR, PRIORITY_LABEL } from "./taskLabels";
 import { useProjectTitle } from "./useProjectTitle";
-
-const FLAG_COLOR: Record<Priority, string> = {
-  high: "text-destructive",
-  medium: "text-warning",
-  low: "text-muted-foreground",
-};
 
 // El rojo de «vencida» se oscurece (en claro) o se aclara (en oscuro) hasta pasar AA en texto de 12px.
 const LATE = "text-[color-mix(in_oklab,var(--destructive),var(--foreground)_30%)]";

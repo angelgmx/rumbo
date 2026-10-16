@@ -122,11 +122,10 @@ export {
   type RoutineInput,
   type TimedBlock,
 } from "./domain/routines";
-export type { GoalDriverRefs, GoalLink, GoalSummary } from "./app/goalService";
+export type { GoalDriverRefs, GoalLink, GoalRoadmap, GoalSummary } from "./app/goalService";
 export type { ProjectSummary } from "./app/projectService";
 export {
   GOAL_STATUSES,
-  groupByPeriod,
   keyResultProgress,
   periodChoices,
   periodHorizon,
@@ -138,12 +137,10 @@ export {
   type KeyResult,
   type GoalStatus,
   type IfThen,
-  type PeriodGroup,
 } from "./domain/goals";
 export {
   PROJECT_STATUSES,
   type Milestone,
-  type UpcomingMilestone,
   type Project,
   type ProjectInput,
   type ProjectLink,

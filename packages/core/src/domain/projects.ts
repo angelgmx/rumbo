@@ -34,27 +34,18 @@ export interface Project {
 /** Lo que se rellena al crear o editar un proyecto. */
 export type ProjectInput = Omit<Project, "finished" | "archived">;
 
-/** De 0 a 1: hecho es 1; si tiene hitos, los hechos; si no, sus tareas terminadas. */
+/** Los pasos de un proyecto: sus hitos si los tiene y, si no, sus tareas. */
+export function projectSteps(
+  project: Project,
+  tasks: { done: boolean }[],
+): { done: number; total: number } {
+  const steps = project.milestones.length > 0 ? project.milestones : tasks;
+  return { done: steps.filter((step) => step.done).length, total: steps.length };
+}
+
+/** De 0 a 1: hecho es 1; si no, los pasos hechos entre todos. */
 export function projectProgress(project: Project, tasks: { done: boolean }[]): number {
   if (project.status === "done") return 1;
-  const steps = project.milestones.length > 0 ? project.milestones : tasks;
-  if (steps.length === 0) return 0;
-  return steps.filter((step) => step.done).length / steps.length;
-}
-
-export interface UpcomingMilestone {
-  project: string;
-  title: string;
-  date: IsoDate;
-}
-
-/** El hito sin hacer con fecha más cercano de entre varios proyectos. */
-export function nearestMilestone(projects: Project[]): UpcomingMilestone | undefined {
-  return projects
-    .flatMap((project) =>
-      project.milestones.flatMap(({ title, date, done }) =>
-        done || !date ? [] : [{ project: project.title, title, date }],
-      ),
-    )
-    .sort((a, b) => a.date.localeCompare(b.date))[0];
+  const { done, total } = projectSteps(project, tasks);
+  return total === 0 ? 0 : done / total;
 }

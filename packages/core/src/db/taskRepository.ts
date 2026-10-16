@@ -2,7 +2,7 @@ import type { IsoDate } from "../domain/dates";
 import type { Priority, Task, TaskDraft, TaskStep } from "../domain/tasks";
 import type { SqlValue } from "../ports";
 import type { AppDatabase } from "./appDatabase";
-import { withoutUndefined } from "./rows";
+import { PRIORITY_FROM_ROW, PRIORITY_TO_ROW, withoutUndefined } from "./rows";
 
 /** Una fila de `tareas`, tal como sale de SQLite. */
 interface TaskRow {
@@ -28,9 +28,6 @@ interface TaskRow {
   creada: string;
   hecha_el: string | null;
 }
-
-const PRIORITY_TO_ROW: Record<Priority, string> = { high: "alta", medium: "media", low: "baja" };
-const PRIORITY_FROM_ROW: Record<string, Priority> = { alta: "high", media: "medium", baja: "low" };
 
 // Columna de la tabla para cada campo del borrador.
 const COLUMNS = {

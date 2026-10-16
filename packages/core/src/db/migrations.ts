@@ -196,4 +196,8 @@ export const MIGRATIONS: string[][] = [
       SELECT 1 FROM json_each(rutinas.bloques) WHERE json_extract(value, '$.tipo') IN ('libre', 'tarea')
     )`,
   ],
+  [
+    // La prioridad de un objetivo, como la de una tarea.
+    "ALTER TABLE objetivos ADD COLUMN prioridad TEXT CHECK (prioridad IN ('alta', 'media', 'baja'))",
+  ],
 ];

@@ -11,7 +11,6 @@ import {
   type KeyResult,
 } from "../domain/goals";
 import type { Resource } from "../domain/resources";
-import { nearestMilestone, type UpcomingMilestone } from "../domain/projects";
 import type { Task } from "../domain/tasks";
 import type { Note } from "../vault/vault";
 import type { DailyService } from "./dailyService";
@@ -29,15 +28,18 @@ export interface GoalSummary {
   daysLeft?: number;
   /** Ritmo real frente al necesario; solo en un objetivo en marcha, con fecha límite y sin terminar. */
   pace?: GoalPace;
-  /** El hito sin hacer con fecha más cercano de sus proyectos. */
-  milestone?: UpcomingMilestone;
   projects: ProjectSummary[];
-  /** Sus tareas pendientes, propias y de sus proyectos, las que tienen fecha primero. */
-  tasks: Task[];
+  /** Sus tareas pendientes sueltas, sin proyecto, las que tienen fecha primero. */
+  looseTasks: Task[];
   habits: HabitSummary[];
-  roadmaps: RoadmapSummary[];
+  roadmaps: GoalRoadmap[];
   /** Las notas del vault que lo acompañan. */
   notes: Note[];
+}
+
+export interface GoalRoadmap extends RoadmapSummary {
+  /** Las tareas de hoy del módulo que toca. */
+  todayTasks: Task[];
 }
 
 /**
@@ -137,6 +139,28 @@ export class GoalService {
     }));
   }
 
+  /** Crea un proyecto activo, con el área del objetivo, y lo conecta. Devuelve su id. */
+  async createProject(id: number, title: string): Promise<number | undefined> {
+    const stored = this.goals.get(id);
+    if (!stored) return undefined;
+    return this.projects.create({
+      title: title.trim(),
+      outcome: "",
+      area: stored.goal.area,
+      goalId: id,
+      status: "active",
+      links: [],
+      milestones: [],
+    });
+  }
+
+  /** Crea una tarea suelta del objetivo escribiendo su título en lenguaje natural. */
+  async createTask(id: number, input: string): Promise<Task | undefined> {
+    const stored = this.goals.get(id);
+    if (!stored) return undefined;
+    return this.tasks.createFromTitle(input, { goalId: id, area: stored.goal.area });
+  }
+
   /** Lo borra. Sus proyectos y hábitos se quedan, sin objetivo. */
   remove(id: number): Promise<void> {
     return this.goals.remove(id);
@@ -192,8 +216,13 @@ export class GoalService {
   ): GoalSummary {
     const projects = all.projects.filter(({ project }) => project.goalId === id);
     const habits = all.habits.filter(({ habit }) => habit.goalId === id);
-    const roadmaps = all.roadmaps.filter((roadmap) => roadmapNames.includes(roadmap.name));
     const today: IsoDate = this.daily.today();
+    const roadmaps = all.roadmaps
+      .filter((roadmap) => roadmapNames.includes(roadmap.name))
+      .map((roadmap) => ({
+        ...roadmap,
+        todayTasks: roadmap.current ? this.tasks.forModule(roadmap.current.name, today) : [],
+      }));
     const progress = goalProgress(goal, {
       projects: projects.map((project) => project.progress),
       roadmaps: roadmaps.map((roadmap) =>
@@ -207,12 +236,11 @@ export class GoalService {
       progress,
       daysLeft: daysLeft(goal, today),
       pace: goalPace(goal, progress, today),
-      milestone: nearestMilestone(projects.map((summary) => summary.project)),
       projects,
-      tasks: [
-        ...this.tasks.forGoal(id).filter((task) => !task.done),
-        ...projects.flatMap((project) => project.nextTasks),
-      ].sort(byDate),
+      looseTasks: this.tasks
+        .forGoal(id)
+        .filter((task) => !task.done)
+        .sort(byDate),
       habits,
       roadmaps,
       notes: notes.flatMap((name) => this.store.findByName(name) ?? []),
