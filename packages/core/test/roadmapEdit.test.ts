@@ -55,4 +55,26 @@ describe("RoadmapEditService", () => {
     expect(files.get("Areas/Python/Python.md")).not.toContain("roadmap:");
     expect(files.has("Areas/Python/Notes/01 - Variables/01 - Assignment.md")).toBe(true);
   });
+
+  it("pauses and resumes the roadmap by rewriting its status", async () => {
+    await rumbo.learning.setRoadmapStatus(roadmap(), "paused");
+    expect(roadmap().status).toBe("paused");
+
+    await rumbo.learning.setRoadmapStatus(roadmap(), "active");
+    expect(roadmap().status).toBe("active");
+  });
+
+  it("dates the last activity from a worked task of one of its modules", async () => {
+    expect(roadmap().lastActivity).toBeUndefined();
+
+    const module = roadmap().modules[0]!;
+    await rumbo.tasks.create({
+      text: "Practicar",
+      module: module.name,
+      spent: 25,
+      scheduled: "2026-10-12",
+    });
+
+    expect(roadmap().lastActivity).toBe("2026-10-12");
+  });
 });

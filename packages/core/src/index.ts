@@ -32,6 +32,7 @@ export type {
 } from "./app/learningService";
 export { exerciseMinutes, sessionStart, weekSessions, type StudySlot } from "./domain/planner";
 export { capacityUntil, trimToFit } from "./domain/pace";
+export { idleDays, isStalled } from "./domain/idle";
 export type { RoadmapStatus, Track } from "./domain/roadmaps";
 export type { ReviewCard } from "./app/reviewService";
 export type { ReviewRating } from "./domain/review";

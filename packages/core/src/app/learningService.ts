@@ -17,6 +17,7 @@ import {
 } from "../domain/learning";
 import { challengeName, parseChallenge, type ChallengeContent } from "../domain/challenges";
 import { linkTarget, linkTargets } from "../domain/links";
+import { latestDay } from "../domain/idle";
 import { pace, type Pace } from "../domain/pace";
 import { pendingMinutes, planModules, weeklyMinutes, type StudySlot } from "../domain/planner";
 import { readResources, resourceSchema, type Resource } from "../domain/resources";
@@ -84,6 +85,8 @@ export interface RoadmapSummary extends NoteRef {
   plan: RoadmapPlan;
   /** Si llegas a la fecha con tu horario. */
   pace: Pace;
+  /** El último día con una sesión apuntada o una tarea de la ruta trabajada. */
+  lastActivity?: IsoDate;
 }
 
 export interface RoadmapPlan {
@@ -154,6 +157,8 @@ export class LearningService {
 
   roadmaps(): RoadmapSummary[] {
     const modules = this.store.notesOfType("module").map((note) => this.toModule(note));
+    const today = this.daily.today();
+    const tasks = this.tasks.all();
 
     return this.store
       .notesOfType("roadmap")
@@ -170,6 +175,16 @@ export class LearningService {
         const schedule = scheduleSchema.parse(note.data.schedule ?? []);
         const plan = this.plan(own, schedule);
         const deadline = readDate(note.data.deadline);
+        const names = new Set(own.map((module) => module.name));
+        const lastActivity = latestDay(
+          [
+            ...own.map((module) => module.content.lastSession?.date),
+            ...tasks
+              .filter((task) => task.module && names.has(task.module) && (task.done || task.spent))
+              .map((task) => task.doneOn ?? task.scheduled ?? task.created),
+          ],
+          today,
+        );
         return {
           path: note.path,
           name: note.name,
@@ -189,10 +204,11 @@ export class LearningService {
             totalMinutes: plan.totalMinutes,
             remainingMinutes: plan.remainingMinutes,
             weeklyMinutes: plan.weeklyMinutes,
-            today: this.daily.today(),
+            today,
             deadline,
             projectedFinish: plan.finishes,
           }),
+          lastActivity,
         };
       })
       .sort((a, b) => a.title.localeCompare(b.title));
@@ -269,6 +285,15 @@ export class LearningService {
   async setDeadline(roadmap: RoadmapSummary, deadline: IsoDate | undefined): Promise<void> {
     const source = await this.store.read(roadmap.path);
     await this.store.write(roadmap.path, setFrontmatter(source, ["deadline"], deadline));
+  }
+
+  /** Pausa o reanuda la ruta, o la marca como terminada. */
+  async setRoadmapStatus(roadmap: RoadmapSummary, status: RoadmapStatus): Promise<void> {
+    const source = await this.store.read(roadmap.path);
+    await this.store.write(
+      roadmap.path,
+      setFrontmatter(source, [this.ownKey(source, "status")], status),
+    );
   }
 
   /** Reducir el alcance: los módulos pasan a «saltado» y dejan de contar para la fecha. */
