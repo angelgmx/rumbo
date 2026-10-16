@@ -99,15 +99,21 @@ export {
 export type { Idea } from "./db/ideaRepository";
 export { parseTaskTitle, type TaskTitle } from "./domain/capture";
 export {
+  BLOCK_KINDS,
   blockTitle,
+  insertBlock,
   isRoutineOn,
-  ROUTINE_TEMPLATES,
+  moveBlock,
+  removeBlock,
+  routineEnd,
+  routineMinutes,
   routineSchema,
+  timedBlocks,
+  updateBlock,
   type BlockKind,
   type Routine,
   type RoutineBlock,
   type RoutineInput,
-  type RoutineTemplate,
   type TimedBlock,
 } from "./domain/routines";
 export type { GoalDriverRefs, GoalSummary } from "./app/goalService";

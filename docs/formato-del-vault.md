@@ -365,7 +365,7 @@ Un hueco del día con bloques en orden: une hábitos, temas de una ruta y tareas
 
 - **La hora de cada bloque no se guarda:** empieza cuando acaba el anterior, a partir de la hora de inicio. Al reordenar, se recalcula.
 - **Bloque de un tema → tareas de hoy.** Genera el recurso pendiente que toca ver (con su duración estimada) y los siguientes ejercicios sin hacer, como mucho 3 (cada uno, un paso de la tarea). Si no queda nada, «repasar conceptos y criterio de dominado». Llevan el hábito de la ruta si lo tiene, así cuentan para cumplirlo. Las que ya existen hoy no se repiten.
-- Plantillas para empezar: mañana, estudio, gym, noche y fin de semana.
+- **Vigencia:** `from` y `until` (opcionales) acotan los días en que toca; pasada `until`, la rutina deja de tocar. Se crean y editan en la app, no en notas.
 - **Lo que ya tenías:** las notas `type: routine` se importan una vez; los bloques de hábito pasan del enlace a la nota del hábito a su clave. Las notas no se tocan; las mal escritas no se importan.
 
 ### Tipos previstos

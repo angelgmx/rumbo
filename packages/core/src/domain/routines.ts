@@ -21,6 +21,7 @@ import type { TaskDraft } from "./tasks";
 //     - { kind: habit, ref: "[[Hábito — Inglés]]", minutes: 15 }
 //     - { kind: module, ref: "[[Java desde cero]]", minutes: 45 }
 //     - { kind: break, minutes: 10 }
+// `from` y `until` acotan su vigencia: pasada `until`, la rutina deja de tocar.
 
 const ROUTINE_KINDS = ["morning", "afternoon", "evening", "study", "gym", "custom"] as const;
 export const BLOCK_KINDS = ["habit", "module", "task", "break", "custom"] as const;
@@ -34,6 +35,8 @@ const blockSchema = z.object({
   minutes: z.number().int().positive(),
 });
 
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
 export const routineSchema = z.object({
   title: z.string().optional(),
   area: z.string().optional(),
@@ -41,6 +44,13 @@ export const routineSchema = z.object({
   days: scheduleSchema.default("daily"),
   start: timeSchema,
   active: z.boolean().default(true),
+  /** Primer y último día en que toca; sin ellos, siempre. */
+  from: dateSchema.optional(),
+  until: dateSchema.optional(),
+  /** El objetivo al que empuja. */
+  goalId: z.number().int().positive().optional(),
+  /** La clave del hábito que marca la rutina, además de los de sus bloques. */
+  habit: z.string().optional(),
   blocks: z.array(blockSchema).default([]),
 });
 
@@ -74,8 +84,12 @@ export function routineEnd(routine: Routine): string {
   return addMinutesToTime(routine.start, routineMinutes(routine));
 }
 
+export function isInForce(routine: Routine, date: IsoDate): boolean {
+  return (!routine.from || routine.from <= date) && (!routine.until || date <= routine.until);
+}
+
 export function isRoutineOn(routine: Routine, date: IsoDate): boolean {
-  return routine.active && isScheduledOn(routine.days, date);
+  return routine.active && isInForce(routine, date) && isScheduledOn(routine.days, date);
 }
 
 /** Lo que se lee del bloque: su título, o el nombre de la nota a la que apunta. */
@@ -118,7 +132,7 @@ export function nextRoutineDay(routine: Routine, from: IsoDate): IsoDate | undef
   if (!routine.active) return undefined;
   for (let offset = 1; offset <= 7; offset++) {
     const day = addDays(from, offset);
-    if (isScheduledOn(routine.days, day)) return day;
+    if (isInForce(routine, day) && isScheduledOn(routine.days, day)) return day;
   }
   return undefined;
 }
@@ -251,65 +265,3 @@ function exercisesLabel(exercises: { id: string; title: string }[]): string {
   if (exercises.length === 1) return `ejercicio ${exercises[0]!.id} — ${exercises[0]!.title}`;
   return `ejercicios ${exercises[0]!.id}–${exercises.at(-1)!.id}`;
 }
-
-export type RoutineTemplate = "morning" | "study" | "gym" | "evening" | "weekend";
-
-/** Puntos de partida: se crean como nota y luego cada uno los cambia a su gusto. */
-export const ROUTINE_TEMPLATES: Record<RoutineTemplate, RoutineInput> = {
-  morning: {
-    title: "Rutina de mañana",
-    kind: "morning",
-    days: ["mon", "tue", "wed", "thu", "fri"],
-    start: "07:30",
-    blocks: [
-      { kind: "custom", title: "Café", minutes: 10 },
-      { kind: "custom", title: "Escuchar inglés", minutes: 15 },
-      { kind: "custom", title: "Revisar Hoy", minutes: 5 },
-    ],
-  },
-  study: {
-    title: "Rutina de estudio",
-    kind: "study",
-    days: ["mon", "tue", "wed", "fri"],
-    start: "18:00",
-    blocks: [
-      { kind: "custom", title: "Repaso del tema anterior", minutes: 15 },
-      { kind: "module", title: "Tema de la ruta", minutes: 45 },
-      { kind: "break", minutes: 10 },
-      { kind: "module", title: "Tema de la ruta", minutes: 50 },
-    ],
-  },
-  gym: {
-    title: "Rutina de gym",
-    kind: "gym",
-    days: ["mon", "wed", "fri"],
-    start: "18:00",
-    blocks: [
-      { kind: "custom", title: "Calentamiento", minutes: 10 },
-      { kind: "custom", title: "Entrenamiento", minutes: 60 },
-      { kind: "custom", title: "Estiramientos", minutes: 10 },
-    ],
-  },
-  evening: {
-    title: "Rutina de noche",
-    kind: "evening",
-    days: "daily",
-    start: "21:30",
-    blocks: [
-      { kind: "custom", title: "Cerrar el día", minutes: 10 },
-      { kind: "custom", title: "Leer", minutes: 20 },
-      { kind: "custom", title: "Preparar mañana", minutes: 10 },
-    ],
-  },
-  weekend: {
-    title: "Rutina de fin de semana",
-    kind: "custom",
-    days: ["sat", "sun"],
-    start: "10:00",
-    blocks: [
-      { kind: "custom", title: "Proyecto en curso", minutes: 120 },
-      { kind: "break", minutes: 15 },
-      { kind: "custom", title: "Ejercicios del tema", minutes: 45 },
-    ],
-  },
-};

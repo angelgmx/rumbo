@@ -13,7 +13,6 @@ import {
   routineClashes,
   updateBlock,
   weeklyCompliance,
-  ROUTINE_TEMPLATES,
   routineEnd,
   routineMinutes,
   routineSchema,
@@ -23,7 +22,6 @@ import {
   type RoutineClash,
   type RoutineBlock,
   type RoutineInput,
-  type RoutineTemplate,
   type TimedBlock,
 } from "../domain/routines";
 import type { TaskDraft } from "../domain/tasks";
@@ -119,7 +117,7 @@ export class RoutineService {
   }
 
   private routineHabits(routine: Routine, habits: HabitSummary[]): HabitSummary[] {
-    const keys = new Set(routine.blocks.map((block) => this.habitKeyOf(block)));
+    const keys = new Set([routine.habit, ...routine.blocks.map((block) => this.habitKeyOf(block))]);
     return habits.filter((summary) => keys.has(summary.habit.key));
   }
 
@@ -178,18 +176,17 @@ export class RoutineService {
     return this.change(id, (routine) => ({ ...routine, ...withoutEmptyFields(changes) }));
   }
 
-  /** Crea una rutina a partir de una plantilla. Devuelve su id. */
-  createFromTemplate(
-    template: RoutineTemplate,
-    changes: Partial<RoutineInput> = {},
-  ): Promise<number | undefined> {
-    return this.create({ ...ROUTINE_TEMPLATES[template], ...changes });
-  }
-
   /** Crea una rutina. Devuelve su id. */
   create(input: RoutineInput): Promise<number | undefined> {
     const routine = routineSchema.parse({ ...input, title: input.title.trim() });
     return this.routines.insert(routine, this.daily.today());
+  }
+
+  /** Sustituye la rutina entera (propiedades y bloques). Conserva su tipo. */
+  save(id: number, input: RoutineInput): Promise<void> {
+    return this.change(id, ({ kind }) =>
+      routineSchema.parse({ ...input, kind, title: input.title.trim() }),
+    );
   }
 
   /** Borra la rutina. Lo que ya hiciste (hábitos, tareas) se queda donde está. */

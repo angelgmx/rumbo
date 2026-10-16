@@ -12,6 +12,10 @@ interface RoutineRow {
   hora_inicio: string;
   area: string | null;
   activa: number;
+  vigente_desde: string | null;
+  vigente_hasta: string | null;
+  objetivo_id: number | null;
+  habito: string | null;
   bloques: string;
 }
 
@@ -106,6 +110,10 @@ function toRow(routine: Routine) {
     hora_inicio: routine.start,
     area: routine.area ?? null,
     activa: routine.active ? 1 : 0,
+    vigente_desde: routine.from ?? null,
+    vigente_hasta: routine.until ?? null,
+    objetivo_id: routine.goalId ?? null,
+    habito: routine.habit ?? null,
     bloques: JSON.stringify(routine.blocks.map(blockToRow)),
   };
 }
@@ -118,6 +126,10 @@ function fromRow(row: RoutineRow): Routine {
     start: row.hora_inicio,
     area: row.area ?? undefined,
     active: row.activa === 1,
+    from: row.vigente_desde ?? undefined,
+    until: row.vigente_hasta ?? undefined,
+    goalId: row.objetivo_id ?? undefined,
+    habit: row.habito ?? undefined,
     blocks: (JSON.parse(row.bloques) as BlockRow[]).map(blockFromRow),
   };
 }

@@ -152,4 +152,12 @@ export const MIGRATIONS: string[][] = [
     // Una tarea suelta también puede empujar un objetivo, sin pasar por un proyecto.
     "ALTER TABLE tareas ADD COLUMN objetivo_id INTEGER REFERENCES objetivos (id) ON DELETE SET NULL",
   ],
+  [
+    // Una rutina puede tener vigencia (pasado `vigente_hasta` deja de tocar), empujar un
+    // objetivo y marcar un hábito, que se señala por su clave.
+    "ALTER TABLE rutinas ADD COLUMN vigente_desde TEXT",
+    "ALTER TABLE rutinas ADD COLUMN vigente_hasta TEXT",
+    "ALTER TABLE rutinas ADD COLUMN objetivo_id INTEGER REFERENCES objetivos (id) ON DELETE SET NULL",
+    "ALTER TABLE rutinas ADD COLUMN habito TEXT",
+  ],
 ];

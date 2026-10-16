@@ -39,6 +39,15 @@ describe("routine domain", () => {
     expect(routineEnd(routine)).toBe("19:10");
   });
 
+  it("runs only inside its validity, both days included", () => {
+    const limited = { ...routine, days: "daily" as const, from: "2026-10-19", until: "2026-10-21" };
+    expect(isRoutineOn(limited, "2026-10-18")).toBe(false);
+    expect(isRoutineOn(limited, "2026-10-19")).toBe(true);
+    expect(isRoutineOn(limited, "2026-10-21")).toBe(true);
+    expect(isRoutineOn(limited, "2026-10-22")).toBe(false);
+    expect(nextRoutineDay(limited, "2026-10-21")).toBeUndefined();
+  });
+
   it("runs on its days only while active", () => {
     // 2026-10-19 es lunes; el 20, martes.
     expect(isRoutineOn(routine, "2026-10-19")).toBe(true);
@@ -184,12 +193,63 @@ describe("RoutineService", () => {
     expect(rumbo.routines.get(id!)).toBeUndefined();
   });
 
-  it("creates a routine from a template", async () => {
-    const id = await rumbo.routines.createFromTemplate("study", { area: "Python" });
-    expect(rumbo.routines.get(id!)).toMatchObject({
-      title: "Rutina de estudio",
-      routine: { area: "Python", start: "18:00", kind: "study" },
+  it("replaces a routine with its validity, goal, habit and blocks", async () => {
+    const goal = await rumbo.goals.create({
+      title: "Inglés B2",
+      why: "",
+      keyResults: [],
+      obstacle: "",
+      plans: [],
+      resources: [],
     });
+    await rumbo.routines.save(routineId(), {
+      title: " Mañanas ",
+      start: "07:00",
+      days: ["mon"],
+      from: "2026-10-01",
+      until: "2026-12-31",
+      goalId: goal,
+      habit: "reading",
+      active: false,
+      blocks: [{ kind: "break", minutes: 5 }],
+    });
+    expect(rumbo.routines.get(routineId())).toMatchObject({
+      title: "Mañanas",
+      end: "07:05",
+      routine: {
+        start: "07:00",
+        from: "2026-10-01",
+        until: "2026-12-31",
+        goalId: goal,
+        habit: "reading",
+        active: false,
+      },
+    });
+  });
+
+  it("counts the habit it marks even without habit blocks", async () => {
+    await rumbo.routines.save(routineId(), {
+      title: "Evening study",
+      start: "18:00",
+      habit: "reading",
+      blocks: [{ kind: "break", minutes: 5 }],
+    });
+    expect(rumbo.routines.get(routineId())!.habits.map(({ habit }) => habit.key)).toEqual([
+      "reading",
+    ]);
+  });
+
+  it("stops running once its validity is over", async () => {
+    const id = routineId();
+    const input = { title: "Evening study", start: "18:00", days: "daily" as const, blocks: [] };
+    await rumbo.routines.save(id, { ...input, until: "2026-10-15" });
+    expect(rumbo.routines.today()).toEqual([]);
+    expect(rumbo.routines.get(id)!.next).toBeUndefined();
+    await rumbo.routines.save(id, { ...input, from: "2026-10-17" });
+    expect(rumbo.routines.today()).toEqual([]);
+    expect(rumbo.routines.get(id)!.next).toBe("2026-10-17");
+    await rumbo.routines.save(id, { ...input, from: "2026-10-16", until: "2026-10-16" });
+    expect(rumbo.routines.today()).toHaveLength(1);
   });
 
   it("keeps everything after reopening, without importing twice", async () => {
