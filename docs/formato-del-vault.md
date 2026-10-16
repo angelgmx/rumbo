@@ -68,6 +68,8 @@ archived: false
 | `duration` | llegas a los minutos              | `target` (`unit: min`) | daily: `meditar: 10`                                |
 | `tasks`    | terminas todas sus tareas del día | —                      | en las propias tareas, con `[habit:: programacion]` |
 
+**Versión mínima.** En los de cantidad y tiempo, `minimum: 10` es lo mínimo que salva la racha un día flojo (si no lo pones, la mitad de `target`). El hábito sigue sin darse por cumplido, pero la racha no se rompe. Foco la ofrece cuando una racha de 3 días o más corre peligro.
+
 **Hábitos de tareas.** El hábito es el hueco fijo de tu rutina («Programación, de lunes a viernes de 17:00 a 19:00») y lo que haces dentro cambia cada día: son tareas normales con fecha y el campo `[habit:: clave]`. Ese día cuenta como hecho si tenía tareas vinculadas y estaban todas terminadas. No se guarda nada en la daily: se calcula a partir de las tareas.
 
 ```markdown
@@ -80,7 +82,7 @@ archived: false
 - **Archivar** (`archived: true`) lo oculta sin borrar nada. **Eliminar** borra la nota; lo marcado se queda.
 - Con `until` es un **reto**: la app enseña «día 15 de 66» y, al terminar, deja de salir en tu día.
 - La app calcula racha, mejor racha, % de los últimos 30 días, total acumulado (días, páginas, minutos…) y el día de la semana en que más lo cumples. Nada de eso se guarda.
-- Los días que no tocan no rompen la racha. Con `times_per_week` la racha se cuenta en semanas cumplidas.
+- Los días que no tocan no rompen la racha, ni los **días malos** de la daily. Con `times_per_week` la racha se cuenta en semanas cumplidas.
 - Con `start` y `end`, el hábito sale en **Tu día** como un bloque de la rutina los días que toca (no se escribe en la agenda: se dibuja a partir de la nota). Si es de tareas, sus tareas de hoy salen dentro del bloque.
 
 ### Daily — `type: daily`
@@ -91,6 +93,7 @@ Una nota por día con los hechos de ese día. Un fichero por día evita conflict
 ---
 type: daily
 date: 2026-10-15
+bad_day: true # opcional: día malo
 habits:
   gym: true
   ingles: 35
@@ -110,6 +113,7 @@ habits:
 ```
 
 - **Foco de hoy:** como mucho 3 tareas.
+- **Día malo:** con `bad_day: true` ese día los hábitos no rompen la racha (se salta, y si hiciste algo, cuenta). Como mucho 2 al mes: Foco no deja marcar más. Se quita borrando la línea.
 - **Agenda:** bloques con hora en el formato del plugin Day Planner (`HH:MM - HH:MM texto`). Se muestran ordenados por hora.
 - Si la daily no existe, la app la crea con la plantilla `Daily.md` de la carpeta de plantillas (rellenando las fechas de Templater) o con una por defecto.
 

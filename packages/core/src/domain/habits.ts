@@ -23,6 +23,8 @@ export const habitSchema = z.object({
   /** Cómo se cumple: hecho o no, una cantidad, un tiempo, o terminando sus tareas del día. */
   kind: z.enum(["check", "count", "duration", "tasks"]).default("check"),
   target: z.number().positive().optional(),
+  /** Lo mínimo que salva la racha en un hábito de cantidad o tiempo. Por defecto, la mitad del objetivo. */
+  minimum: z.number().positive().optional(),
   unit: z.string().optional(),
   schedule: scheduleSchema.default("daily"),
   area: z.string().optional(),
@@ -62,6 +64,19 @@ export function habitProgress(habit: Habit, value: HabitValue | undefined): numb
   return Math.min(value / (habit.target ?? 1), 1);
 }
 
+/** La versión mínima de un hábito de cantidad o tiempo; los demás no la tienen. */
+export function minimumOf(habit: Habit): number | undefined {
+  if (habit.kind !== "count" && habit.kind !== "duration") return undefined;
+  return habit.minimum ?? Math.ceil((habit.target ?? 1) / 2);
+}
+
+/** Si ese día mantiene la racha: el hábito cumplido o, al menos, su versión mínima. */
+export function keepsStreak(habit: Habit, value: HabitValue | undefined): boolean {
+  if (isDone(habit, value)) return true;
+  const minimum = minimumOf(habit);
+  return minimum !== undefined && typeof value === "number" && value >= minimum;
+}
+
 export function isScheduledOn(schedule: HabitSchedule, date: IsoDate): boolean {
   if (schedule === "daily") return true;
   if (Array.isArray(schedule)) return schedule.includes(weekdayOf(date));
@@ -69,14 +84,29 @@ export function isScheduledOn(schedule: HabitSchedule, date: IsoDate): boolean {
   return true;
 }
 
-export function currentStreak(habit: Habit, history: HabitHistory, today: IsoDate): Streak {
+/** Los días malos no rompen la racha: se saltan, y si ese día lo hiciste, cuenta. */
+export type BadDays = ReadonlySet<IsoDate>;
+
+const NO_BAD_DAYS: BadDays = new Set();
+
+export function currentStreak(
+  habit: Habit,
+  history: HabitHistory,
+  today: IsoDate,
+  badDays: BadDays = NO_BAD_DAYS,
+): Streak {
   if (isWeeklyTarget(habit.schedule)) {
-    return { count: countWeeksBack(habit, history, today), unit: "weeks" };
+    return { count: countWeeksBack(habit, history, today, badDays), unit: "weeks" };
   }
-  return { count: countDaysBack(habit, history, today), unit: "days" };
+  return { count: countDaysBack(habit, history, today, badDays), unit: "days" };
 }
 
-export function bestStreak(habit: Habit, history: HabitHistory, today: IsoDate): Streak {
+export function bestStreak(
+  habit: Habit,
+  history: HabitHistory,
+  today: IsoDate,
+  badDays: BadDays = NO_BAD_DAYS,
+): Streak {
   const first = firstDay(habit, history, today);
   const weekly = isWeeklyTarget(habit.schedule);
   let best = 0;
@@ -86,7 +116,11 @@ export function bestStreak(habit: Habit, history: HabitHistory, today: IsoDate):
   for (let day = weekly ? startOfWeek(first) : first; day <= today; day = addDays(day, step)) {
     if (!weekly && !isScheduledOn(habit.schedule, day)) continue;
 
-    const done = weekly ? isWeekDone(habit, history, day) : isDone(habit, history.get(day));
+    if (!weekly && isExcused(habit, history, day, badDays)) continue;
+
+    const done = weekly
+      ? isWeekDone(habit, history, day, badDays)
+      : keepsStreak(habit, history.get(day));
     running = done ? running + 1 : 0;
     best = Math.max(best, running);
   }
@@ -120,42 +154,65 @@ export function completionRate(
   return scheduled === 0 ? 0 : done / scheduled;
 }
 
-function countDaysBack(habit: Habit, history: HabitHistory, today: IsoDate): number {
+function isExcused(habit: Habit, history: HabitHistory, day: IsoDate, badDays: BadDays): boolean {
+  return badDays.has(day) && !keepsStreak(habit, history.get(day));
+}
+
+function countDaysBack(
+  habit: Habit,
+  history: HabitHistory,
+  today: IsoDate,
+  badDays: BadDays,
+): number {
   // Hoy aún está "en curso": no haberlo hecho todavía no rompe la racha.
-  let day = isDone(habit, history.get(today)) ? today : addDays(today, -1);
+  let day = keepsStreak(habit, history.get(today)) ? today : addDays(today, -1);
   const first = firstDay(habit, history, today);
   let count = 0;
 
   for (; day >= first; day = addDays(day, -1)) {
     // Un hábito de lunes a viernes no pierde la racha el fin de semana.
-    if (!isScheduledOn(habit.schedule, day)) continue;
-    if (!isDone(habit, history.get(day))) break;
+    if (!isScheduledOn(habit.schedule, day) || isExcused(habit, history, day, badDays)) continue;
+    if (!keepsStreak(habit, history.get(day))) break;
     count++;
   }
   return count;
 }
 
-function countWeeksBack(habit: Habit, history: HabitHistory, today: IsoDate): number {
+function countWeeksBack(
+  habit: Habit,
+  history: HabitHistory,
+  today: IsoDate,
+  badDays: BadDays,
+): number {
   // Lo mismo con semanas: la semana actual solo cuenta cuando se llega al objetivo.
   let week = startOfWeek(today);
-  if (!isWeekDone(habit, history, week)) week = addDays(week, -7);
+  if (!isWeekDone(habit, history, week, badDays)) week = addDays(week, -7);
   const first = startOfWeek(firstDay(habit, history, today));
   let count = 0;
 
   for (; week >= first; week = addDays(week, -7)) {
-    if (!isWeekDone(habit, history, week)) break;
+    if (!isWeekDone(habit, history, week, badDays)) break;
     count++;
   }
   return count;
 }
 
-function isWeekDone(habit: Habit, history: HabitHistory, weekStart: IsoDate): boolean {
+function isWeekDone(
+  habit: Habit,
+  history: HabitHistory,
+  weekStart: IsoDate,
+  badDays: BadDays = NO_BAD_DAYS,
+): boolean {
   const target = isWeeklyTarget(habit.schedule) ? habit.schedule.times_per_week : 7;
   let done = 0;
+  let excused = 0;
   for (let i = 0; i < 7; i++) {
-    if (isDone(habit, history.get(addDays(weekStart, i)))) done++;
+    const day = addDays(weekStart, i);
+    if (isDone(habit, history.get(day))) done++;
+    else if (isExcused(habit, history, day, badDays)) excused++;
   }
-  return done >= target;
+  // Cada día malo sin hacer rebaja lo que se pide esa semana.
+  return done >= Math.min(target, 7 - excused);
 }
 
 function isWeeklyTarget(schedule: HabitSchedule): schedule is { times_per_week: number } {

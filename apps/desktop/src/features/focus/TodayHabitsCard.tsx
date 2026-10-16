@@ -4,13 +4,16 @@ import { AreaIcon } from "@/components/AreaIcon";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { describeValue, HabitValueControl } from "@/features/habits/HabitValueControl";
 import { useArea } from "@/hooks/useArea";
+import { cn } from "@/lib/utils";
 
 interface TodayHabitsCardProps {
   habits: HabitSummary[];
+  /** La rutina de cada hábito que está en una, por su clave. */
+  routines: Map<string, string>;
   onChange: (key: string, value: HabitValue) => void;
 }
 
-export function TodayHabitsCard({ habits, onChange }: TodayHabitsCardProps) {
+export function TodayHabitsCard({ habits, routines, onChange }: TodayHabitsCardProps) {
   const done = habits.filter((summary) => summary.doneToday).length;
 
   return (
@@ -26,7 +29,12 @@ export function TodayHabitsCard({ habits, onChange }: TodayHabitsCardProps) {
       </CardHeader>
       <CardContent className="flex flex-col gap-1">
         {habits.map((summary) => (
-          <HabitLine key={summary.habit.key} summary={summary} onChange={onChange} />
+          <HabitLine
+            key={summary.habit.key}
+            summary={summary}
+            routine={routines.get(summary.habit.key)}
+            onChange={onChange}
+          />
         ))}
       </CardContent>
     </Card>
@@ -35,9 +43,11 @@ export function TodayHabitsCard({ habits, onChange }: TodayHabitsCardProps) {
 
 function HabitLine({
   summary,
+  routine,
   onChange,
 }: {
   summary: HabitSummary;
+  routine?: string;
   onChange: TodayHabitsCardProps["onChange"];
 }) {
   const { habit, today } = summary;
@@ -50,7 +60,10 @@ function HabitLine({
   return (
     <div className="flex items-center gap-3 py-1.5">
       <AreaIcon area={area} />
-      <span className="flex-1">{habit.name}</span>
+      <div className="min-w-0 flex-1">
+        <p className={cn(summary.doneToday && "text-muted-foreground")}>{habit.name}</p>
+        {routine && <p className="text-xs text-muted-foreground">en {routine}</p>}
+      </div>
       {amount && <span className="font-mono text-sm text-muted-foreground">{amount}</span>}
       <HabitValueControl
         habit={habit}

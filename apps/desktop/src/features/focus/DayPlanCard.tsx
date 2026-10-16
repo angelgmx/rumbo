@@ -1,8 +1,7 @@
-import { minutesBetween, type DayPlanItem, type HabitValue } from "@rumbo/core";
-import { CalendarPlusIcon, PlayIcon } from "lucide-react";
+import { minutesBetween, type DayPlanItem, type HabitValue, type RoutineStep } from "@rumbo/core";
+import { CalendarPlusIcon } from "lucide-react";
 import { AreaIcon } from "@/components/AreaIcon";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -17,33 +16,36 @@ import { HabitValueControl } from "@/features/habits/HabitValueControl";
 import { useArea } from "@/hooks/useArea";
 import { formatMinutes } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { DayEntry } from "./dayEntries";
+import { RoutineRow } from "./RoutineRow";
+import type { RoutineGroup } from "./useFocusDay";
 
 interface DayPlanCardProps {
-  items: DayPlanItem[];
+  entries: DayEntry[];
+  time: string;
   current?: DayPlanItem;
   onToggleBlock: (item: Extract<DayPlanItem, { kind: "agenda" }>, done: boolean) => void;
   onHabitChange: (key: string, value: HabitValue) => void;
-  onStart: (item: DayPlanItem) => void;
+  onCompleteStep: (group: RoutineGroup, step: RoutineStep) => void;
 }
 
-/** "Tu día": la agenda y los hábitos con hora, en orden. Es tu rutina de hoy. */
+/** "Tu día": rutinas, agenda y hábitos con hora, en orden. */
 export function DayPlanCard({
-  items,
+  entries,
+  time,
   current,
   onToggleBlock,
   onHabitChange,
-  onStart,
+  onCompleteStep,
 }: DayPlanCardProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Tu día</CardTitle>
-        <CardDescription>
-          Tu agenda y tus hábitos con hora · marca cada cosa al terminarla
-        </CardDescription>
+        <CardDescription>Tus rutinas y lo que toca, por hora</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-1">
-        {items.length === 0 ? (
+        {entries.length === 0 ? (
           <Empty>
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -56,29 +58,36 @@ export function DayPlanCard({
             </EmptyHeader>
           </Empty>
         ) : (
-          items.map((item) => (
-            <PlanRow
-              key={`${item.kind}:${item.start}:${item.text}`}
-              item={item}
-              isCurrent={item === current}
-              onToggleBlock={onToggleBlock}
-              onHabitChange={onHabitChange}
-              onStart={() => onStart(item)}
-            />
-          ))
+          entries.map((entry) =>
+            entry.kind === "routine" ? (
+              <RoutineRow
+                key={entry.group.summary.path}
+                group={entry.group}
+                time={time}
+                onCompleteStep={onCompleteStep}
+              />
+            ) : (
+              <PlanRow
+                key={`${entry.item.kind}:${entry.start}:${entry.item.text}`}
+                item={entry.item}
+                isCurrent={entry.item === current}
+                onToggleBlock={onToggleBlock}
+                onHabitChange={onHabitChange}
+              />
+            ),
+          )
         )}
       </CardContent>
     </Card>
   );
 }
 
-interface PlanRowProps extends Omit<DayPlanCardProps, "items" | "current" | "onStart"> {
+interface PlanRowProps extends Pick<DayPlanCardProps, "onToggleBlock" | "onHabitChange"> {
   item: DayPlanItem;
   isCurrent: boolean;
-  onStart: () => void;
 }
 
-function PlanRow({ item, isCurrent, onToggleBlock, onHabitChange, onStart }: PlanRowProps) {
+function PlanRow({ item, isCurrent, onToggleBlock, onHabitChange }: PlanRowProps) {
   const minutes = item.end ? minutesBetween(item.start, item.end) : undefined;
 
   const habitTasks =
@@ -121,16 +130,11 @@ function PlanRow({ item, isCurrent, onToggleBlock, onHabitChange, onStart }: Pla
         {minutes !== undefined && (
           <span className="font-mono text-sm text-muted-foreground">{formatMinutes(minutes)}</span>
         )}
-        {item.done ? (
+        {item.done && (
           <Badge variant="secondary" className="text-success">
             Hecho
           </Badge>
-        ) : isCurrent ? (
-          <Button size="sm" onClick={onStart}>
-            <PlayIcon data-icon="inline-start" />
-            Empezar
-          </Button>
-        ) : null}
+        )}
       </div>
       {/* Lo que vas a hacer hoy dentro de este hábito. */}
       {habitTasks && (
