@@ -1,32 +1,31 @@
-import { appendIdea, editIdea, parseIdeas, removeIdea, type Idea } from "../domain/ideas";
+import type { Idea, IdeaRepository } from "../db/ideaRepository";
 import type { Task } from "../domain/tasks";
 import type { DailyService } from "./dailyService";
 import type { TaskService } from "./taskService";
-import type { VaultStore } from "./vaultStore";
 
-/** Las ideas viven en una sola nota (`folders.ideas`), una viñeta por idea. */
+/** Las ideas: lo que se te ocurre y aún no es una tarea. Viven en la base de datos. */
 export class IdeaService {
   constructor(
-    private readonly store: VaultStore,
+    private readonly ideas: IdeaRepository,
     private readonly daily: DailyService,
     private readonly tasks: TaskService,
   ) {}
 
-  list(): Idea[] {
-    return parseIdeas(this.path, this.store.get(this.path)?.source ?? "");
+  list(): Promise<Idea[]> {
+    return this.ideas.list();
   }
 
   async capture(text: string): Promise<void> {
-    const source = await this.readIfExists();
-    await this.store.write(this.path, appendIdea(source, text, this.daily.today()));
+    if (!text.trim()) return;
+    await this.ideas.add(text, this.daily.today());
   }
 
-  async edit(idea: Idea, text: string): Promise<void> {
-    await this.store.write(this.path, editIdea(await this.store.read(this.path), idea, text));
+  edit(idea: Idea, text: string): Promise<void> {
+    return this.ideas.edit(idea.id, text);
   }
 
-  async remove(idea: Idea): Promise<void> {
-    await this.store.write(this.path, removeIdea(await this.store.read(this.path), idea));
+  remove(idea: Idea): Promise<void> {
+    return this.ideas.remove(idea.id);
   }
 
   /** La idea pasa a ser una tarea en el inbox, que se devuelve para poder completarla. */
@@ -40,13 +39,5 @@ export class IdeaService {
   async fromTask(task: Task): Promise<void> {
     await this.capture(task.text);
     await this.tasks.remove(task);
-  }
-
-  private get path(): string {
-    return this.store.config.folders.ideas;
-  }
-
-  private async readIfExists(): Promise<string> {
-    return (await this.store.exists(this.path)) ? this.store.read(this.path) : "";
   }
 }

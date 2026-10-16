@@ -18,6 +18,7 @@ import {
 } from "../src/domain/routines";
 import { parseNote } from "../src/vault/frontmatter";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
+import { memoryDatabase } from "./memoryDatabase";
 
 const routine = routineSchema.parse({
   start: "18:00",
@@ -155,7 +156,11 @@ let rumbo: Rumbo;
 
 beforeEach(async () => {
   files = await loadDemoVault();
-  rumbo = await createRumbo(memoryFileSystem(files), clock);
+  rumbo = await createRumbo({
+    fs: memoryFileSystem(files),
+    database: memoryDatabase(),
+    clock: clock,
+  });
 });
 
 describe("RoutineService", () => {
@@ -250,7 +255,11 @@ describe("RoutineService", () => {
         .get("Areas/Python/Notes/01 - Variables/Mastery — Variables.md")!
         .replace("status: learning", "status: not-started"),
     );
-    rumbo = await createRumbo(memoryFileSystem(files), clock);
+    rumbo = await createRumbo({
+      fs: memoryFileSystem(files),
+      database: memoryDatabase(),
+      clock: clock,
+    });
     const [summary] = rumbo.routines.today();
     await rumbo.routines.completeBlock(summary!, 1);
     expect(files.get("Areas/Python/Notes/01 - Variables/Mastery — Variables.md")).toContain(

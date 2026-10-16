@@ -37,3 +37,14 @@ export type HttpFetch = (
   url: string,
   init: { method: "POST"; headers: Record<string, string>; body: string },
 ) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
+
+export type SqlValue = string | number | null;
+
+/**
+ * Una base de datos SQLite. La app le pasa la suya (en su carpeta de datos) y los tests,
+ * una en memoria. Los parámetros van con `?`.
+ */
+export interface Database {
+  execute(sql: string, params?: SqlValue[]): Promise<void>;
+  select<T>(sql: string, params?: SqlValue[]): Promise<T[]>;
+}

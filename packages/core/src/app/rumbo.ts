@@ -1,4 +1,7 @@
-import { systemClock, type Clock, type FileSystem } from "../ports";
+import { ChangeFeed } from "../changeFeed";
+import { AppDatabase } from "../db/appDatabase";
+import { IdeaRepository } from "../db/ideaRepository";
+import { systemClock, type Clock, type Database, type FileSystem } from "../ports";
 import { AgendaService } from "./agendaService";
 import { CloseDayService } from "./closeDayService";
 import { DailyService } from "./dailyService";
@@ -13,9 +16,12 @@ import { ReviewService } from "./reviewService";
 import { RoutineService } from "./routineService";
 import { SavedViewService } from "./savedViewService";
 import { TaskService } from "./taskService";
+import { VaultImport } from "./vaultImport";
 import { VaultStore } from "./vaultStore";
 
 export interface Rumbo {
+  /** Avisa de cualquier cambio, en el vault o en la base de datos. */
+  changes: ChangeFeed;
   store: VaultStore;
   daily: DailyService;
   habits: HabitService;
@@ -33,18 +39,35 @@ export interface Rumbo {
   roadmaps: RoadmapEditService;
 }
 
-/** Abre un vault y monta todos los servicios de la app sobre él. */
-export async function createRumbo(fs: FileSystem, clock: Clock = systemClock): Promise<Rumbo> {
-  const store = await VaultStore.open(fs);
+export interface RumboSources {
+  /** El vault: el conocimiento (áreas, temas, rutas, apuntes) y el diario. */
+  fs: FileSystem;
+  /** La base de datos de la app: lo que organiza tu día. */
+  database: Database;
+  clock?: Clock;
+}
+
+/** Abre el vault y la base de datos y monta todos los servicios de la app sobre ellos. */
+export async function createRumbo({
+  fs,
+  database,
+  clock = systemClock,
+}: RumboSources): Promise<Rumbo> {
+  const changes = new ChangeFeed();
+  const store = await VaultStore.open(fs, changes);
+  const db = await AppDatabase.open(database, changes);
   const daily = new DailyService(store, clock);
   const agenda = new AgendaService(store, daily);
   const tasks = new TaskService(store, daily, agenda);
   const habits = new HabitService(store, daily, tasks);
   const learning = new LearningService(store, daily, tasks);
-  const ideas = new IdeaService(store, daily, tasks);
+  const ideaRepository = new IdeaRepository(db);
+  const ideas = new IdeaService(ideaRepository, daily, tasks);
+  await new VaultImport(db, store, daily, ideaRepository).run();
   const routines = new RoutineService(store, daily, habits, tasks, learning);
 
   return {
+    changes,
     store,
     daily,
     agenda,

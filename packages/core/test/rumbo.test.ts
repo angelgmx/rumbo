@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createNewVault, createRumbo, type Rumbo } from "../src";
 import { parseNote } from "../src/vault/frontmatter";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
+import { memoryDatabase } from "./memoryDatabase";
 
 // El 2026-10-15 es jueves, igual que la última daily del demo-vault.
 const clock = { now: () => new Date(2026, 9, 15, 10, 0) };
@@ -11,7 +12,11 @@ let rumbo: Rumbo;
 
 beforeEach(async () => {
   files = await loadDemoVault();
-  rumbo = await createRumbo(memoryFileSystem(files), clock);
+  rumbo = await createRumbo({
+    fs: memoryFileSystem(files),
+    database: memoryDatabase(),
+    clock: clock,
+  });
 });
 
 describe("habits", () => {
@@ -83,34 +88,48 @@ describe("capture", () => {
 describe("ideas", () => {
   it("keeps the ideas next to the inbox by default", async () => {
     expect(rumbo.store.config.folders.ideas).toBe("Inbox/Ideas.md");
-    const fresh = await createRumbo(memoryFileSystem(new Map()), clock);
+    const fresh = await createRumbo({
+      fs: memoryFileSystem(new Map()),
+      database: memoryDatabase(),
+      clock: clock,
+    });
     expect(fresh.store.config.folders.ideas).toBe("Ideas.md");
   });
 
-  it("captures an idea as a bullet with its date", async () => {
+  it("captures, edits and removes ideas in the database, not in the vault", async () => {
     await rumbo.ideas.capture("App de recetas");
-    expect(files.get("Inbox/Ideas.md")).toBe("- App de recetas [created:: 2026-10-15]\n");
-    expect(rumbo.ideas.list()).toMatchObject([{ text: "App de recetas", created: "2026-10-15" }]);
+    await rumbo.ideas.capture("  ");
+    expect(await rumbo.ideas.list()).toMatchObject([
+      { text: "App de recetas", created: "2026-10-15" },
+    ]);
+    expect(files.has("Inbox/Ideas.md")).toBe(false);
+
+    const [idea] = await rumbo.ideas.list();
+    await rumbo.ideas.edit(idea!, "App de menús");
+    expect((await rumbo.ideas.list()).map((current) => current.text)).toEqual(["App de menús"]);
+
+    await rumbo.ideas.remove(idea!);
+    expect(await rumbo.ideas.list()).toEqual([]);
   });
 
-  it("removes an idea", async () => {
-    await rumbo.ideas.capture("one");
-    await rumbo.ideas.capture("two");
-    await rumbo.ideas.remove(rumbo.ideas.list()[0]!);
-    expect(rumbo.ideas.list().map((idea) => idea.text)).toEqual(["two"]);
+  it("tells the UI when an idea changes", async () => {
+    const before = rumbo.changes.version;
+    await rumbo.ideas.capture("Una idea");
+    expect(rumbo.changes.version).toBe(before + 1);
   });
 
   it("turns an idea into an inbox task and removes the idea", async () => {
     await rumbo.ideas.capture("Write a post");
-    const task = await rumbo.ideas.toTask(rumbo.ideas.list()[0]!);
+    const [idea] = await rumbo.ideas.list();
+    const task = await rumbo.ideas.toTask(idea!);
     expect(task).toMatchObject({ text: "Write a post", path: "Inbox/Inbox.md", done: false });
-    expect(rumbo.ideas.list()).toEqual([]);
+    expect(await rumbo.ideas.list()).toEqual([]);
   });
 
   it("turns an inbox task into an idea", async () => {
     const [task] = await rumbo.tasks.list("inbox");
     await rumbo.ideas.fromTask(task!);
-    expect(rumbo.ideas.list().map((idea) => idea.text)).toEqual(["Buy a new notebook"]);
+    expect((await rumbo.ideas.list()).map((idea) => idea.text)).toEqual(["Buy a new notebook"]);
     expect(await rumbo.tasks.list("inbox")).toEqual([]);
   });
 });
@@ -146,7 +165,11 @@ describe("archiving done tasks", () => {
   beforeEach(() => files.set("Inbox/Inbox.md", inbox));
 
   it("moves the done tasks of the inbox to the archive note, next to it", async () => {
-    rumbo = await createRumbo(memoryFileSystem(files), clock);
+    rumbo = await createRumbo({
+      fs: memoryFileSystem(files),
+      database: memoryDatabase(),
+      clock: clock,
+    });
     expect(await rumbo.tasks.archiveDone()).toBe(1);
     expect(files.get("Inbox/Inbox.md")).toBe("# Inbox\n- [ ] Buy a new notebook\n");
     expect(files.get("Inbox/Archivo de tareas.md")).toBe("- [x] Old thing ✅ 2026-10-01\n");
@@ -154,7 +177,11 @@ describe("archiving done tasks", () => {
 
   it("appends to the archive instead of replacing it", async () => {
     files.set("Inbox/Archivo de tareas.md", "- [x] Older ✅ 2026-09-01\n");
-    rumbo = await createRumbo(memoryFileSystem(files), clock);
+    rumbo = await createRumbo({
+      fs: memoryFileSystem(files),
+      database: memoryDatabase(),
+      clock: clock,
+    });
     await rumbo.tasks.archiveDone();
     expect(files.get("Inbox/Archivo de tareas.md")).toBe(
       "- [x] Older ✅ 2026-09-01\n- [x] Old thing ✅ 2026-10-01\n",
@@ -165,14 +192,22 @@ describe("archiving done tasks", () => {
     const daily = "Journal/2026/10/2026-10-15.md";
     const before = files.get(daily)!;
     files.set(daily, `${before}\n- [x] Daily thing ✅ 2026-10-15\n`);
-    rumbo = await createRumbo(memoryFileSystem(files), clock);
+    rumbo = await createRumbo({
+      fs: memoryFileSystem(files),
+      database: memoryDatabase(),
+      clock: clock,
+    });
     await rumbo.tasks.archiveDone();
     expect(files.get(daily)).toContain("Daily thing");
   });
 
   it("does nothing when the inbox has no done tasks", async () => {
     files.set("Inbox/Inbox.md", "- [ ] Only pending\n");
-    rumbo = await createRumbo(memoryFileSystem(files), clock);
+    rumbo = await createRumbo({
+      fs: memoryFileSystem(files),
+      database: memoryDatabase(),
+      clock: clock,
+    });
     expect(await rumbo.tasks.archiveDone()).toBe(0);
     expect(files.has("Inbox/Archivo de tareas.md")).toBe(false);
   });
@@ -266,7 +301,7 @@ describe("createNewVault", () => {
     const fs = memoryFileSystem(empty);
     await createNewVault(fs);
 
-    const fresh = await createRumbo(fs, clock);
+    const fresh = await createRumbo({ fs: fs, database: memoryDatabase(), clock: clock });
     expect(fresh.store.config.folders.inbox).toBe("Inbox.md");
     expect(fresh.habits.list().habits.map((summary) => summary.habit.key)).toEqual(["leer"]);
 
@@ -692,13 +727,13 @@ describe("module resources", () => {
 describe("vault refresh", () => {
   it("does not repaint when a note is saved again without changes", async () => {
     const path = "Areas/Python/Python basics.md";
-    const before = rumbo.store.version;
+    const before = rumbo.changes.version;
     await rumbo.store.refresh(path);
-    expect(rumbo.store.version).toBe(before);
+    expect(rumbo.changes.version).toBe(before);
 
     files.set(path, `${files.get(path)!}\nUna línea nueva.`);
     await rumbo.store.refresh(path);
-    expect(rumbo.store.version).toBe(before + 1);
+    expect(rumbo.changes.version).toBe(before + 1);
   });
 });
 

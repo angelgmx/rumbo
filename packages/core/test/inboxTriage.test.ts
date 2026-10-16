@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createRumbo, type AiMessage, type AiProvider, type Rumbo } from "../src";
 import { changesSomething, parseTriage, triageMessages } from "../src/domain/inboxTriage";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
+import { memoryDatabase } from "./memoryDatabase";
 
 const context = { today: "2026-10-16", areas: ["Python", "Negocio"] };
 const items = ["Llamar al gestor el lunes", "App de recetas", "Aprender inglés"];
@@ -79,8 +80,12 @@ describe("InboxTriageService", () => {
 
   beforeEach(async () => {
     files = await loadDemoVault();
-    rumbo = await createRumbo(memoryFileSystem(files), {
-      now: () => new Date("2026-10-16T09:00"),
+    rumbo = await createRumbo({
+      fs: memoryFileSystem(files),
+      database: memoryDatabase(),
+      clock: {
+        now: () => new Date("2026-10-16T09:00"),
+      },
     });
   });
 
@@ -121,12 +126,12 @@ describe("InboxTriageService", () => {
     );
   });
 
-  it("turns an accepted idea into a bullet in the ideas note", async () => {
+  it("turns an accepted idea into an idea", async () => {
     const [suggestion] = await rumbo.triage.propose(fakeAi([{ index: 0, kind: "idea" }]));
 
     await rumbo.triage.accept(suggestion!);
 
-    expect(rumbo.ideas.list().map((idea) => idea.text)).toEqual(["Buy a new notebook"]);
+    expect((await rumbo.ideas.list()).map((idea) => idea.text)).toEqual(["Buy a new notebook"]);
     expect(files.get("Inbox/Inbox.md")).not.toContain("Buy a new notebook");
   });
 

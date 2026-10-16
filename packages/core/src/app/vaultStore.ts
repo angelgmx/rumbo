@@ -1,3 +1,4 @@
+import type { ChangeFeed } from "../changeFeed";
 import type { FileSystem } from "../ports";
 import { loadConfig, type RumboConfig } from "../vault/config";
 import { joinPath, parentOf, safeFileName } from "../vault/paths";
@@ -11,25 +12,21 @@ import {
   type VaultIndex,
 } from "../vault/vault";
 
-type Listener = () => void;
-
 /**
  * Punto único de lectura y escritura del vault.
- * Mantiene el índice al día y avisa a quien escuche (la UI) cuando algo cambia.
+ * Mantiene el índice al día y avisa por el canal de cambios cuando algo cambia.
  */
 export class VaultStore {
-  private readonly listeners = new Set<Listener>();
-  private changes = 0;
-
   private constructor(
     private readonly fs: FileSystem,
+    private readonly changes: ChangeFeed,
     readonly config: RumboConfig,
     private index: VaultIndex,
   ) {}
 
-  static async open(fs: FileSystem): Promise<VaultStore> {
+  static async open(fs: FileSystem, changes: ChangeFeed): Promise<VaultStore> {
     const config = await loadConfig(fs);
-    return new VaultStore(fs, config, await scanVault(fs, config));
+    return new VaultStore(fs, changes, config, await scanVault(fs, config));
   }
 
   allNotes(): Note[] {
@@ -113,18 +110,7 @@ export class VaultStore {
     this.notify();
   }
 
-  /** Sube cada vez que algo cambia. La UI lo usa para saber cuándo repintar. */
-  get version(): number {
-    return this.changes;
-  }
-
-  subscribe(listener: Listener): () => void {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
-
   private notify(): void {
-    this.changes++;
-    for (const listener of this.listeners) listener();
+    this.changes.notify();
   }
 }

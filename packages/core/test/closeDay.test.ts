@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createRumbo, type Rumbo } from "../src";
 import { setWins, winsOf } from "../src/domain/closeDay";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
+import { memoryDatabase } from "./memoryDatabase";
 
 describe("winsOf", () => {
   it("says what was done today, with the streak when there is one", () => {
@@ -43,8 +44,12 @@ describe("CloseDayService", () => {
   beforeEach(async () => {
     files = await loadDemoVault();
     // Domingo: mañana es lunes y toca la rutina de las 18:00.
-    rumbo = await createRumbo(memoryFileSystem(files), {
-      now: () => new Date("2026-10-18T21:00"),
+    rumbo = await createRumbo({
+      fs: memoryFileSystem(files),
+      database: memoryDatabase(),
+      clock: {
+        now: () => new Date("2026-10-18T21:00"),
+      },
     });
   });
 

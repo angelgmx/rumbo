@@ -1,10 +1,20 @@
-export type { AiMessage, AiProvider, Clock, DirEntry, FileSystem, HttpFetch } from "./ports";
+export type {
+  AiMessage,
+  AiProvider,
+  Clock,
+  Database,
+  DirEntry,
+  FileSystem,
+  HttpFetch,
+  SqlValue,
+} from "./ports";
 export { systemClock } from "./ports";
 export { AiError, type AiFailure } from "./ai/aiError";
 export { anthropic, type AnthropicOptions } from "./ai/anthropic";
 export { openAiCompatible, type OpenAiCompatibleOptions } from "./ai/openAiCompatible";
 
-export { createRumbo, type Rumbo } from "./app/rumbo";
+export { createRumbo, type Rumbo, type RumboSources } from "./app/rumbo";
+export type { ChangeFeed } from "./changeFeed";
 export { createNewVault } from "./app/newVault";
 export type { TriageSuggestion } from "./app/inboxTriageService";
 export type { DayClosing } from "./app/closeDayService";
@@ -117,7 +127,7 @@ export {
   type TaskStep,
   type TaskView,
 } from "./domain/tasks";
-export type { Idea } from "./domain/ideas";
+export type { Idea } from "./db/ideaRepository";
 export { parseCapture, parseTaskTitle, type Capture, type TaskTitle } from "./domain/capture";
 export {
   BLOCK_KINDS,

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createRumbo, type Rumbo } from "../src";
-import { editIdea } from "../src/domain/ideas";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
+import { memoryDatabase } from "./memoryDatabase";
 
 const ROADMAP = "Areas/Python/Python basics.md";
 const MODULE = "Areas/Python/Notes/01 - Variables/Mastery — Variables.md";
@@ -13,7 +13,11 @@ describe("RoadmapEditService", () => {
 
   beforeEach(async () => {
     files = await loadDemoVault();
-    rumbo = await createRumbo(memoryFileSystem(files), { now: () => new Date("2026-10-16T09:00") });
+    rumbo = await createRumbo({
+      fs: memoryFileSystem(files),
+      database: memoryDatabase(),
+      clock: { now: () => new Date("2026-10-16T09:00") },
+    });
   });
 
   it("renames the roadmap and a module without moving files", async () => {
@@ -50,20 +54,5 @@ describe("RoadmapEditService", () => {
     expect(modules.some((path) => files.has(path))).toBe(false);
     expect(files.get("Areas/Python/Python.md")).not.toContain("roadmap:");
     expect(files.has("Areas/Python/Notes/01 - Variables/01 - Assignment.md")).toBe(true);
-  });
-});
-
-describe("editIdea", () => {
-  it("changes the text and keeps the date", () => {
-    const source = "# Ideas\n- App de recetas [created:: 2026-10-14]\n";
-    expect(editIdea(source, { line: 1, text: "App de recetas" }, "App de menús")).toBe(
-      "# Ideas\n- App de menús [created:: 2026-10-14]\n",
-    );
-  });
-
-  it("does nothing if the line changed or the new text is empty", () => {
-    const source = "# Ideas\n- Otra\n";
-    expect(editIdea(source, { line: 1, text: "App" }, "Nueva")).toBe(source);
-    expect(editIdea(source, { line: 1, text: "Otra" }, "  ")).toBe(source);
   });
 });
