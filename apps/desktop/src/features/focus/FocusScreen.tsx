@@ -5,8 +5,8 @@ import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { timeOf, useNow } from "@/hooks/useNow";
 import { ScreenHeader } from "@/layout/ScreenHeader";
 import { capitalize, formatDay } from "@/lib/format";
-import { NextStepCard } from "@/features/learn/NextStepCard";
-import { ReviewTodayCard } from "@/features/learn/ReviewDialog";
+import { NextStepCard } from "@/features/roadmaps/NextStepCard";
+import { ReviewTodayCard } from "@/features/roadmaps/ReviewDialog";
 import { DayPlanCard } from "./DayPlanCard";
 import { NowCard } from "./NowCard";
 import { TodayHabitsCard } from "./TodayHabitsCard";
@@ -16,7 +16,7 @@ import { WeekCard } from "./WeekCard";
 
 const DEFAULT_FOCUS_MINUTES = 50;
 
-export function TodayScreen() {
+export function FocusScreen() {
   const rumbo = useRumbo();
   const today = rumbo.daily.today();
   const now = useNow();
@@ -55,7 +55,7 @@ export function TodayScreen() {
 
   return (
     <>
-      <ScreenHeader title="Hoy" />
+      <ScreenHeader title="Foco" />
       <main className="flex-1 overflow-y-auto p-6">
         <div className="mx-auto flex max-w-6xl flex-col gap-6">
           <div className="flex items-end justify-between gap-6">
