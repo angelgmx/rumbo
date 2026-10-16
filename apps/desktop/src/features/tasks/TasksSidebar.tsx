@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
-import { useQuickCapture } from "@/features/capture/QuickCapture";
+import { useTaskWindow } from "@/features/task-window/TaskWindowProvider";
 import { cn } from "@/lib/utils";
 import { AreaDot } from "./AreaDot";
 import type { TaskFilter } from "./taskFilters";
@@ -35,13 +35,13 @@ export function TasksSidebar({
   onOpenSavedView,
   onRemoveSavedView,
 }: TasksSidebarProps) {
-  const { open: openCapture } = useQuickCapture();
+  const { create } = useTaskWindow();
   const toggle = (key: "area" | "project", value: string) =>
     onFilterChange({ ...filter, [key]: filter[key] === value ? undefined : value });
 
   return (
     <aside className="flex w-60 shrink-0 flex-col gap-6 overflow-y-auto border-r p-3">
-      <Button variant="outline" className="justify-start" onClick={openCapture}>
+      <Button variant="outline" className="justify-start" onClick={create}>
         <PlusIcon data-icon="inline-start" className="text-primary" />
         Captura rápida
         <Kbd className="ml-auto">Ctrl N</Kbd>

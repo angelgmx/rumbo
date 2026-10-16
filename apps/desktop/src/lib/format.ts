@@ -1,4 +1,4 @@
-import type { IsoDate } from "@rumbo/core";
+import { addDays, type IsoDate } from "@rumbo/core";
 
 const dayFormat = new Intl.DateTimeFormat("es", { weekday: "long", day: "numeric", month: "long" });
 const shortDayFormat = new Intl.DateTimeFormat("es", { weekday: "short", day: "numeric" });
@@ -11,6 +11,13 @@ export function formatDay(date: IsoDate): string {
 /** "jue 15" */
 export function formatShortDay(date: IsoDate): string {
   return shortDayFormat.format(toDate(date));
+}
+
+/** "Hoy", "Mañana" o "vie 17" */
+export function formatRelativeDay(date: IsoDate, today: IsoDate): string {
+  if (date === today) return "Hoy";
+  if (date === addDays(today, 1)) return "Mañana";
+  return formatShortDay(date);
 }
 
 export function capitalize(text: string): string {

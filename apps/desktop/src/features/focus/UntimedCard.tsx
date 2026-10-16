@@ -12,11 +12,12 @@ interface UntimedCardProps {
   focus: Task[];
   tasks: Task[];
   onToggle: (task: Task, done: boolean) => void;
+  onOpen: (task: Task) => void;
   onCapture: (text: string) => Promise<void>;
 }
 
 /** Lo que hay que hacer hoy pero sin hora: el foco del día y las tareas para hoy. */
-export function UntimedCard({ focus, tasks, onToggle, onCapture }: UntimedCardProps) {
+export function UntimedCard({ focus, tasks, onToggle, onOpen, onCapture }: UntimedCardProps) {
   const [text, setText] = useState("");
 
   async function submit(event: FormEvent) {
@@ -41,7 +42,7 @@ export function UntimedCard({ focus, tasks, onToggle, onCapture }: UntimedCardPr
             ...tasks.map((task) => ({ task, label: undefined })),
           ].map(({ task, label }) => (
             <motion.div key={`${task.path}:${task.text}`} {...listItem} className="overflow-hidden">
-              <TaskLine task={task} label={label} onToggle={onToggle} />
+              <TaskLine task={task} label={label} onToggle={onToggle} onOpen={onOpen} />
             </motion.div>
           ))}
         </AnimatePresence>
@@ -62,24 +63,32 @@ function TaskLine({
   task,
   label,
   onToggle,
+  onOpen,
 }: {
   task: Task;
   label?: string;
   onToggle: UntimedCardProps["onToggle"];
+  onOpen: UntimedCardProps["onOpen"];
 }) {
   return (
-    <label className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted">
+    <div className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted">
       <Checkbox
         checked={task.done}
         onCheckedChange={(checked) => onToggle(task, checked === true)}
+        aria-label={task.text}
       />
       {label && <span className="font-mono text-xs text-primary-text uppercase">{label}</span>}
-      <span
-        className={cn("min-w-0 flex-1 truncate", task.done && "text-muted-foreground line-through")}
+      <button
+        type="button"
+        onClick={() => onOpen(task)}
+        className={cn(
+          "min-w-0 flex-1 truncate text-left",
+          task.done && "text-muted-foreground line-through",
+        )}
       >
         {task.text}
-      </span>
+      </button>
       {task.counter && <CounterChip counter={task.counter} />}
-    </label>
+    </div>
   );
 }
