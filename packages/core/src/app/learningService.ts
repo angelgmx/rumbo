@@ -375,6 +375,8 @@ export class LearningService {
       text,
       scheduled: today,
       habit: roadmap.habit,
+      module: module.name,
+      exercise: exercise?.id,
       area: this.habits.get(roadmap.habit)?.area,
     });
     return text;

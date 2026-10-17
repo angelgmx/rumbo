@@ -21,6 +21,8 @@ export interface Task {
   goalId?: number;
   /** Nombre de la nota del módulo de una ruta. */
   module?: string;
+  /** El número del ejercicio de ese módulo del que viene ("03"). */
+  exercise?: string;
   /** La clave del hábito al que pertenece: la tarea cuenta para cumplirlo ese día. */
   habit?: string;
   /** Minutos que calculo que me llevará. */
@@ -55,6 +57,7 @@ export interface TaskDraft {
   projectId?: number;
   goalId?: number;
   module?: string;
+  exercise?: string;
   habit?: string;
   tags?: string[];
   steps?: TaskStep[];
@@ -109,6 +112,7 @@ export function taskToDraft(task: Task): TaskDraft {
     projectId: task.projectId,
     goalId: task.goalId,
     module: task.module,
+    exercise: task.exercise,
     habit: task.habit,
     tags: task.tags,
     steps: task.steps,

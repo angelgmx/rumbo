@@ -1,15 +1,7 @@
 import { z } from "zod";
 import { addMinutesToTime, minutesBetween } from "./agenda";
-import { addDays, startOfWeek, WEEKDAYS, type IsoDate, type Weekday } from "./dates";
-import {
-  isDone,
-  isScheduledOn,
-  scheduleSchema,
-  timeSchema,
-  type Habit,
-  type HabitHistory,
-  type HabitSchedule,
-} from "./habits";
+import { WEEKDAYS, type IsoDate, type Weekday } from "./dates";
+import { isScheduledOn, scheduleSchema, timeSchema, type HabitSchedule } from "./habits";
 import { linkTarget } from "./links";
 import { taskInterval } from "./taskOrganizing";
 import type { Task, TaskDraft } from "./tasks";
@@ -131,16 +123,6 @@ export function updateBlock<T extends object>(
   return blocks.map((block, i) => (i === index ? { ...block, ...changes } : block));
 }
 
-/** El próximo día que toca la rutina después de `from`, mirando una semana hacia delante. */
-export function nextRoutineDay(routine: Routine, from: IsoDate): IsoDate | undefined {
-  if (!routine.active) return undefined;
-  for (let offset = 1; offset <= 7; offset++) {
-    const day = addDays(from, offset);
-    if (isInForce(routine, day) && isScheduledOn(routine.days, day)) return day;
-  }
-  return undefined;
-}
-
 export interface RoutineClash {
   title: string;
   days: Weekday[];
@@ -203,41 +185,6 @@ function overlapsInTime(a: Routine, b: Routine): boolean {
   const [aStart, aEnd] = routineSpan(a);
   const [bStart, bEnd] = routineSpan(b);
   return aStart < bEnd && bStart < aEnd;
-}
-
-/** Un hábito de la rutina con lo apuntado en las dailies. */
-interface RoutineHabit {
-  habit: Habit;
-  history: HabitHistory;
-}
-
-/**
- * Cumplimiento de las últimas semanas, de la más antigua a la actual, de 0 a 1:
- * de los hábitos de la rutina, cuántos se hicieron los días que tocaba.
- * La semana actual cuenta hasta hoy. Sin hábitos no hay forma de medirla.
- */
-export function weeklyCompliance(
-  routine: Routine,
-  habits: RoutineHabit[],
-  today: IsoDate,
-  weeks = 4,
-): number[] {
-  if (habits.length === 0) return [];
-  const thisWeek = startOfWeek(today);
-  return Array.from({ length: weeks }, (_, i) => {
-    const weekStart = addDays(thisWeek, (i - weeks + 1) * 7);
-    const days = Array.from({ length: 7 }, (_day, d) => addDays(weekStart, d)).filter(
-      (day) => day <= today && isScheduledOn(routine.days, day),
-    );
-    const expected = days.length * habits.length;
-    if (expected === 0) return 0;
-    const done = days.reduce(
-      (total, day) =>
-        total + habits.filter(({ habit, history }) => isDone(habit, history.get(day))).length,
-      0,
-    );
-    return done / expected;
-  });
 }
 
 /** Lo que hay pendiente del tema que toca, para decidir las tareas de un bloque de estudio. */

@@ -4,13 +4,13 @@ import { Route, Router, Switch } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { CalendarScreen } from "@/features/calendar/CalendarScreen";
 import { CloseDayScreen } from "@/features/close-day/CloseDayScreen";
 import { ExerciseScreen } from "@/features/exercises/ExerciseScreen";
 import { ExercisesScreen } from "@/features/exercises/ExercisesScreen";
 import { GoalsScreen } from "@/features/goals/GoalsScreen";
 import { HabitsScreen } from "@/features/habits/HabitsScreen";
 import { RoadmapsScreen } from "@/features/roadmaps/RoadmapsScreen";
-import { RoutinesScreen } from "@/features/routines/RoutinesScreen";
 import { SettingsScreen } from "@/features/settings/SettingsScreen";
 import { ModuleScreen } from "@/features/roadmaps/ModuleScreen";
 import { RoadmapScreen } from "@/features/roadmaps/RoadmapScreen";
@@ -42,10 +42,10 @@ export function App() {
                         <Route path="/" component={FocusScreen} />
                         <Route path="/cerrar-el-dia" component={CloseDayScreen} />
                         <Route path="/tareas/:view" component={TasksScreen} />
+                        <Route path="/calendario" component={CalendarScreen} />
                         <Route path="/roadmaps" component={RoadmapsScreen} />
                         <Route path="/roadmaps/:topic" component={RoadmapScreen} />
                         <Route path="/roadmaps/:topic/:module" component={ModuleScreen} />
-                        <Route path="/rutinas" component={RoutinesScreen} />
                         <Route path="/ejercicios" component={ExercisesScreen} />
                         <Route
                           path="/ejercicios/:topic/:module/:exercise"

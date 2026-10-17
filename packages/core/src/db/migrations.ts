@@ -200,4 +200,8 @@ export const MIGRATIONS: string[][] = [
     // La prioridad de un objetivo, como la de una tarea.
     "ALTER TABLE objetivos ADD COLUMN prioridad TEXT CHECK (prioridad IN ('alta', 'media', 'baja'))",
   ],
+  [
+    // El ejercicio de un módulo del que viene una tarea, por su número: junto a `modulo` lo señala.
+    "ALTER TABLE tareas ADD COLUMN ejercicio TEXT",
+  ],
 ];

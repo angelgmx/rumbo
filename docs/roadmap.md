@@ -8,7 +8,7 @@ El proyecto avanza por fases. Una fase no empieza hasta que la anterior se usa d
 | 1. Esqueleto                    | v0.1    | App de escritorio, Hoy, hábitos, tareas, agenda, captura rápida, tema claro/oscuro                  | Hecha                           |
 | 2. Roadmaps y Ejercicios        | v0.2    | Rutas, temas, módulos, ejercicios y retos, repaso, ritmo de la ruta                                 | **En curso**                    |
 | 3. Rutinas y Foco sin fricción  | v0.3    | Rutinas, contadores por tarea, botón Empezar, modo 5 minutos, día malo, cerrar el día, modo enfoque | **Diseñada** · lógica en `core` |
-| 4. Calendario                   | v0.4    | Semana, día y mes con rutinas y hábitos, arrastrar tareas, avisos                                   | Pendiente                       |
+| 4. Calendario                   | v0.4    | Semana, día y mes con rutinas y hábitos, arrastrar tareas, avisos                                   | **En curso**                    |
 | 5. Notas y lectura fácil        | v0.5    | Árbol, lector, editor, búsqueda `Ctrl K`, modo dislexia                                             | Pendiente                       |
 | 6. Áreas, objetivos y proyectos | v0.6    | Áreas, visión, objetivos, proyectos y estimación de si llegas a tiempo                              | **En curso**                    |
 | 7. IA: motor y panel            | v0.7    | Propuestas con vista previa, panel `Ctrl J`, perfil, crear rutas, proponer el día, delegar tareas   | **Base adelantada**             |
@@ -82,12 +82,12 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] Un bloque de tema genera las tareas del día; completar un bloque marca su hábito y empieza el tema
 
 - [x] Bloques que hacen algo: hábito, estudio de ruta, tarea (completarlo la marca hecha), actividad (antes «libre») y descanso; migración de los bloques guardados
-- [x] Cumplimiento de las últimas 4 semanas y choques de una rutina con otras rutinas activas y con tareas con hora
+- [x] Choques de una rutina con otras rutinas activas y con tareas con hora
 
 **Pantallas:**
 
-- [x] **Rutinas**: el día en una franja (rutinas, huecos libres, línea de ahora, la siguiente con «Empezar»), una tarjeta por rutina con sus días, bloques y cumplimiento, filtro por área y un panel único para crear y editar con propiedades, bloques y aviso de choques
-- [x] Eliminar una rutina (con confirmación) desde su tarjeta
+- [x] **Rutinas** (ahora dentro del Calendario, ver la Fase 4): un panel único para crear y editar con propiedades, bloques y aviso de choques; la página Rutinas desaparece del raíl
+- [x] Eliminar una rutina (con confirmación) desde su tarjeta en la fuente «Rutinas» del Calendario
 - [x] **Panel de rutina**: pulsar una rutina (tarjeta o franja del día) abre su panel; «Añadir bloque» ofrece los tipos y, según el tipo, su selector; cada bloque se edita en línea (título, minutos, referencia), se arrastra para ordenarlo y se quita
 - [x] Interruptor rediseñado (encendido con halo, foco con anillo, deshabilitado)
 - [x] Contadores en la interfaz: elegir el contador al crear una tarea, verlo en las filas de Tareas y en Foco, y usarlo en el detalle de la tarea (cronómetro, pomodoro, −/+ y progreso)
@@ -111,6 +111,30 @@ Programada entera y funcionando en la app real con un vault de verdad. Queda usa
 - [x] Página **Ejercicios** por niveles y retos, y la nota de ejercicio: código para el IDE, pistas, tests, solución tapada, temporizador y «Mi solución» guardada en la nota
 - [x] La página de tema vive en `/areas/…` (se enlazará desde Áreas cuando exista)
 - [ ] Diagrama de la ruta con el diseño definitivo (`feat/roadmap-diagram`)
+
+## Fase 4 en detalle
+
+**Diseño:** láminas en `docs/design/03-calendario`.
+
+**Lógica en `core` (hecha):**
+
+- [x] Huecos libres del día (`freeTime.ts`, `calendar.ts`): de 8:00 a 22:00, de 2 h o más, solo lo que queda por delante; la IA usa el mismo cálculo con huecos de media hora
+- [x] Eventos de cada día (`calendarService.ts`): tareas con hora, hábitos con franja, rutinas con el estado de sus pasos ese día y la agenda de la daily; fechas límite de objetivos, proyectos e hitos
+- [x] Colocación: poner una tarea en un día y una hora (con duración por defecto), moverla, estirarla y repartir en columnas lo que se solapa
+- [x] Fuentes del calendario: tareas del Inbox, sin fecha, de un área y de la semana que se mira
+
+**Pantalla Calendario (hecha):**
+
+- [x] Barra lateral con mini mes (salta de semana y marca los días con fecha límite), fuentes con casilla de color para mostrar u ocultar, «Hábitos de hoy» marcables y «Organizar con IA»
+- [x] Panel de fuente con tarjetas «Sin fecha» y «Esta semana», buscador y «Nueva tarea» desde el contexto; arrastrar una tarjeta a la rejilla le pone fecha y hora
+- [x] Día · Semana · Mes, todo el día, rejilla horaria con eventos, rutinas en banda rayada, huecos libres y línea de ahora; mover y estirar una tarea con el puntero
+- [x] Crear arrastrando sobre un hueco: tarea, hábito (con su franja) o rutina (abre su panel con la hora)
+- [x] Las rutinas viven aquí: se quita la página Rutinas
+
+**Pendiente:**
+
+- [ ] Avisos de lo que empieza
+- [ ] Panel de rutina con el diseño de `02-rutina.png` (cumplimiento semanal, «Saltar hoy» y «Empezar ahora»)
 
 ## Fase 6 en detalle
 

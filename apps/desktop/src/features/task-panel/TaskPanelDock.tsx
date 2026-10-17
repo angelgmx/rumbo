@@ -15,7 +15,13 @@ export function TaskPanelDock() {
   return (
     <DockedPanel open={target !== undefined} label="Detalle de la tarea">
       {target && (
-        <TaskPanel key={panelKey(target)} task={target.task} onClose={close} onOpen={edit} />
+        <TaskPanel
+          key={panelKey(target)}
+          task={target.task}
+          draft={target.draft}
+          onClose={close}
+          onOpen={edit}
+        />
       )}
     </DockedPanel>
   );

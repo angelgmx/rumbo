@@ -2,9 +2,7 @@ import { AnimatePresence, motion } from "motion/react";
 import type { ReactNode } from "react";
 import { duration, ease } from "@/lib/motion";
 
-const PANEL_WIDTH = 520;
-// El ancho de la columna incluye el margen de 8 px a cada lado que lo separa del borde.
-const COLUMN_WIDTH = PANEL_WIDTH + 16;
+const DETAIL_WIDTH = 520;
 
 /**
  * Un panel fijo como columna a la derecha, algo suelto del borde para que se note.
@@ -14,11 +12,14 @@ const COLUMN_WIDTH = PANEL_WIDTH + 16;
 export function DockedPanel({
   open,
   label,
+  width = DETAIL_WIDTH,
   children,
 }: {
   open: boolean;
   /** Para los lectores de pantalla. */
   label: string;
+  /** Lo que mide el panel; la columna suma el margen de 8 px a cada lado que lo separa del borde. */
+  width?: number;
   children: ReactNode;
 }) {
   return (
@@ -28,14 +29,14 @@ export function DockedPanel({
           key="docked-panel"
           className="shrink-0 overflow-hidden"
           initial={{ width: 0 }}
-          animate={{ width: COLUMN_WIDTH }}
+          animate={{ width: width + 16 }}
           exit={{ width: 0 }}
           transition={{ duration: duration.slow, ease: ease.emphasis }}
         >
           <motion.aside
             aria-label={label}
             className="m-2 flex h-[calc(100%-1rem)] flex-col overflow-hidden rounded-xl border bg-card shadow-card"
-            style={{ width: PANEL_WIDTH }}
+            style={{ width }}
             initial={{ x: 48 }}
             animate={{ x: 0 }}
             exit={{ x: 48 }}

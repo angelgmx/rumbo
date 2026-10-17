@@ -1,6 +1,6 @@
 import {
-  ArrowRightLeftIcon,
   BookOpenIcon,
+  CalendarIcon,
   CodeIcon,
   FlameIcon,
   InboxIcon,
@@ -19,7 +19,7 @@ import { useSidebar } from "./SidebarState";
 const SCREENS: { href: string; match: string; label: string; icon: LucideIcon }[] = [
   { href: "/", match: "/", label: "Foco", icon: SunIcon },
   { href: "/tareas/inbox", match: "/tareas/*?", label: "Tareas", icon: InboxIcon },
-  { href: "/rutinas", match: "/rutinas", label: "Rutinas", icon: ArrowRightLeftIcon },
+  { href: "/calendario", match: "/calendario", label: "Calendario", icon: CalendarIcon },
   { href: "/habitos", match: "/habitos", label: "Hábitos", icon: FlameIcon },
   { href: "/objetivos", match: "/objetivos/*?", label: "Objetivos", icon: TargetIcon },
   { href: "/roadmaps", match: "/roadmaps/*?", label: "Roadmaps", icon: BookOpenIcon },

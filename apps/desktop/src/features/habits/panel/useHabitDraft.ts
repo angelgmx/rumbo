@@ -4,8 +4,8 @@ import { useState } from "react";
 const BLANK: HabitInput = { name: "", kind: "check", target: 20, schedule: "daily" };
 
 /** Lo que se rellena en el panel, con lo que impide guardarlo (si algo lo impide). */
-export function useHabitDraft(habit: Habit | undefined) {
-  const [draft, setDraft] = useState<HabitInput>(habit ? inputOf(habit) : BLANK);
+export function useHabitDraft(habit: Habit | undefined, initial?: Partial<HabitInput>) {
+  const [draft, setDraft] = useState<HabitInput>(habit ? inputOf(habit) : { ...BLANK, ...initial });
   const patch = (changes: Partial<HabitInput>) =>
     setDraft((current) => ({ ...current, ...changes }));
   return { draft, patch, reset: () => setDraft(BLANK), problem: problemOf(draft) };

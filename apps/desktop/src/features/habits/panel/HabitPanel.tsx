@@ -24,22 +24,33 @@ const KINDS: { value: HabitInput["kind"]; label: string }[] = [
 export function HabitPanel({
   open,
   habit,
+  initial,
   onClose,
 }: {
   open: boolean;
   habit?: Habit;
+  /** Lo que ya se sabe de un hábito nuevo, por ejemplo la franja marcada en el calendario. */
+  initial?: Partial<HabitInput>;
   onClose: () => void;
 }) {
   return (
     <SidePanel open={open} title={habit ? "Editar hábito" : "Nuevo hábito"} onClose={onClose}>
-      {open && <HabitPanelContent habit={habit} onClose={onClose} />}
+      {open && <HabitPanelContent habit={habit} initial={initial} onClose={onClose} />}
     </SidePanel>
   );
 }
 
-function HabitPanelContent({ habit, onClose }: { habit?: Habit; onClose: () => void }) {
+function HabitPanelContent({
+  habit,
+  initial,
+  onClose,
+}: {
+  habit?: Habit;
+  initial?: Partial<HabitInput>;
+  onClose: () => void;
+}) {
   const rumbo = useRumbo();
-  const { draft, patch, reset, problem } = useHabitDraft(habit);
+  const { draft, patch, reset, problem } = useHabitDraft(habit, initial);
   const [another, setAnother] = useState(false);
   const look = useHabitLook({ ...draft, key: "", archived: false });
 

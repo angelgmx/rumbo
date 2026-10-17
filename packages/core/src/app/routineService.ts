@@ -1,15 +1,13 @@
 import type { RoutineRepository } from "../db/routineRepository";
 import type { IsoDate } from "../domain/dates";
-import type { Habit } from "../domain/habits";
+import { isDone, type Habit } from "../domain/habits";
 import { linkTarget } from "../domain/links";
 import {
   blockTitle,
   isRoutineOn,
   moduleBlockTasks,
-  nextRoutineDay,
   routineClashes,
   taskClashes,
-  weeklyCompliance,
   routineEnd,
   routineMinutes,
   routineSchema,
@@ -37,10 +35,6 @@ export interface RoutineSummary {
   end: string;
   /** Hábitos que cumple: los de sus bloques y los de las rutas que avanza. */
   habits: HabitSummary[];
-  /** Cumplimiento de las últimas 4 semanas, de la más antigua a la actual. */
-  weeks: number[];
-  /** El próximo día que toca, si no es hoy. */
-  next?: IsoDate;
 }
 
 export interface RoutineStep {
@@ -91,7 +85,6 @@ export class RoutineService {
 
   private summarize(item: StoredRoutine, habits: HabitSummary[]): RoutineSummary {
     const { routine } = item;
-    const today = this.daily.today();
     const own = this.routineHabits(routine, habits);
     return {
       ...item,
@@ -99,8 +92,6 @@ export class RoutineService {
       minutes: routineMinutes(routine),
       end: routineEnd(routine),
       habits: own,
-      weeks: weeklyCompliance(routine, own, today),
-      next: isRoutineOn(routine, today) ? undefined : nextRoutineDay(routine, today),
     };
   }
 
@@ -142,12 +133,12 @@ export class RoutineService {
 
   /**
    * Los pasos de la rutina que se pueden comprobar: los bloques de hábito, de tema y de tarea,
-   * hechos o pendientes según su hábito o su tarea. Las actividades y los descansos no dejan
-   * rastro y no salen.
+   * hechos o pendientes según su hábito o su tarea ese día (hoy, si no se dice). Las actividades
+   * y los descansos no dejan rastro y no salen.
    */
-  steps(summary: RoutineSummary): RoutineStep[] {
+  steps(summary: RoutineSummary, date = this.daily.today()): RoutineStep[] {
     return summary.blocks.flatMap((block) => {
-      const state = this.stateOf(block, summary);
+      const state = this.stateOf(block, summary, date);
       if (!state) return [];
       return [
         {
@@ -165,24 +156,32 @@ export class RoutineService {
   private stateOf(
     block: RoutineBlock,
     summary: RoutineSummary,
+    date: IsoDate,
   ): Pick<RoutineStep, "done" | "completable"> | undefined {
+    const isToday = date === this.daily.today();
     if (block.kind === "task") {
       const task = this.taskOf(block);
-      return task && { done: task.done, completable: !task.done };
+      return (
+        task && {
+          done: task.done && (isToday || task.doneOn === date),
+          completable: isToday && !task.done,
+        }
+      );
     }
     const key = this.habitKeyOf(block);
     const habit = summary.habits.find((candidate) => candidate.habit.key === key);
-    return habit && { done: habit.doneToday, completable: habit.habit.kind !== "tasks" };
+    return (
+      habit && {
+        done: isDone(habit.habit, habit.history.get(date)),
+        completable: isToday && habit.habit.kind !== "tasks",
+      }
+    );
   }
 
   /** Las rutinas activas que tocan hoy, por hora de inicio. */
   today(): RoutineSummary[] {
     const today = this.daily.today();
     return this.list().filter((summary) => isRoutineOn(summary.routine, today));
-  }
-
-  setActive(id: number, active: boolean): Promise<void> {
-    return this.change(id, (routine) => ({ ...routine, active }));
   }
 
   /** Crea una rutina. Devuelve su id. */

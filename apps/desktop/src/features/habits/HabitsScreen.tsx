@@ -63,7 +63,6 @@ export function HabitsScreen() {
                 onWeekChange={(week) =>
                   setWeekStart(week > startOfWeek(today) ? startOfWeek(today) : week)
                 }
-                onChange={(key, value, date) => rumbo.habits.setValue(key, value, date)}
               />
               {habits.map((summary) => (
                 <YearHeatmap key={summary.habit.key} summary={summary} today={today} />

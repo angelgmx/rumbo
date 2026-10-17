@@ -16,10 +16,18 @@ import { useRoutineLook } from "../look";
 import { ClashNotice } from "./ClashNotice";
 import { RoutineBlocks } from "./RoutineBlocks";
 import { RoutineProperties } from "./RoutineProperties";
-import { isBlockComplete, routineInput, useRoutineDraft } from "./useRoutineDraft";
+import {
+  isBlockComplete,
+  routineInput,
+  useRoutineDraft,
+  type RoutineDraft,
+} from "./useRoutineDraft";
 
-/** Qué abre el panel: una rutina nueva o una que ya existe. */
-export type RoutineTarget = "new" | RoutineSummary;
+/** Qué abre el panel: una rutina que ya existe o una nueva, con lo que ya se sabe de ella. */
+export interface RoutineTarget {
+  summary?: RoutineSummary;
+  draft?: Partial<RoutineDraft>;
+}
 
 /** Crear o editar una rutina en el panel lateral: nombre, propiedades y bloques. */
 export function RoutinePanel({
@@ -34,8 +42,9 @@ export function RoutinePanel({
     <SidePanel open={target !== undefined} title="Rutina" onClose={onClose}>
       {target !== undefined && (
         <RoutinePanelContent
-          key={target === "new" ? "new" : target.id}
-          summary={target === "new" ? undefined : target}
+          key={target.summary?.id ?? "new"}
+          summary={target.summary}
+          draft={target.draft}
           onClose={onClose}
         />
       )}
@@ -45,13 +54,15 @@ export function RoutinePanel({
 
 function RoutinePanelContent({
   summary,
+  draft: initial,
   onClose,
 }: {
   summary: RoutineSummary | undefined;
+  draft: Partial<RoutineDraft> | undefined;
   onClose: () => void;
 }) {
   const rumbo = useRumbo();
-  const { draft, patch, ...blocks } = useRoutineDraft(summary);
+  const { draft, patch, ...blocks } = useRoutineDraft(summary, initial);
   const input = routineInput(draft);
   const routine = routineSchema.parse(input);
   const look = useRoutineLook(routine);

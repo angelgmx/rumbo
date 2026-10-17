@@ -73,6 +73,18 @@ Una tarea suelta (sin fecha ni pasos y sin hacer) puede organizarla la IA: pasos
 
 Las propuestas pendientes en modo Sugerir no se guardan: viven en la pantalla hasta que las aceptas o las descartas. El ajuste «Organizar tareas nuevas» (apagado · sugerir · automático) está en Ajustes › IA, junto al resto, no en la base de datos.
 
+## Calendario
+
+El calendario no tiene tablas: se calcula al leer de lo que ya hay.
+
+- **Tareas** con `programada` y `hora` (y `duracion_min`; sin ella se da por media hora). Con día pero sin hora salen en la franja «todo el día».
+- **Hábitos** con `hora_inicio` y `hora_fin`, los días que toca su `frecuencia` entre `empezado` y `hasta`. Un hábito que ya está dentro de una rutina de ese día sale en la rutina, no suelto.
+- **Rutinas** activas y vigentes, en `hora_inicio`; el estado de cada paso se lee del registro del hábito o de la tarea de ese día.
+- **Fechas límite**: `fecha_limite` de objetivos y proyectos sin terminar y las fechas de sus hitos sin hacer.
+- **Huecos libres**: lo que queda entre las 8:00 y las 22:00 sin nada con hora, a partir de 2 h; en hoy, solo desde ahora.
+
+Mover una tarea con el puntero cambia `programada` y `hora`; estirarla, `duracion_min`. Arrastrar una tarea sin fecha a la rejilla le pone las tres.
+
 ## Enlaces de antes
 
 Los bloques «libre» pasaron a «actividad» (versión 9), y los de «tarea» que no apuntaban a ninguna tarea también: solo tenían título. Ahora un bloque de tarea guarda el id de su tarea en `tarea`.

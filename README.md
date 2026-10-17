@@ -39,7 +39,7 @@ Tenía objetivos claros y notas por todas partes, pero ningún sitio que me dije
 | **Hábitos**                      | Rachas, tracker semanal y el año en un mapa de calor              | Hecho    |
 | **Roadmaps**                     | Rutas, módulos, ejercicios, retos, recursos y repaso espaciado    | Hecho    |
 | **Rutinas**                      | Bloques que unen hábitos, temas y tareas a una hora               | En curso |
-| **Calendario**                   | Tu semana con rutinas, hábitos y bloques                          | Roadmap  |
+| **Calendario**                   | Tu semana con rutinas, hábitos y tareas para arrastrar            | En curso |
 | **Notas**                        | Leer y editar tus notas, búsqueda con `Ctrl K`                    | Roadmap  |
 | **Áreas, Objetivos y Proyectos** | Hacia dónde vas y si llegas a tiempo                              | Roadmap  |
 | **IA**                           | Crear rutas, proponer el día, corregir ejercicios, delegar tareas | Roadmap  |

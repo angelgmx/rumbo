@@ -7,8 +7,6 @@ import {
   PencilIcon,
   type LucideIcon,
 } from "lucide-react";
-import { useRumbo } from "@/app/RumboContext";
-import { useHabitLook } from "@/hooks/useHabitLook";
 import { useArea, type AreaLook } from "@/hooks/useArea";
 
 // Colores de las láminas para las rutinas sin área: así cada tipo se reconoce de un vistazo.
@@ -30,16 +28,6 @@ export function useRoutineLook(routine: Routine): AreaLook {
     color: routine.area ? area.color : fallback.color,
     icon: (routine.area && area.icon) || fallback.icon,
   };
-}
-
-/** Color de un bloque: el del área de su hábito; los demás, el de la rutina o neutro. */
-export function useBlockColor(kind: BlockKind, ref: string | undefined, routineColor: string) {
-  const { routines } = useRumbo();
-  const habit = kind === "habit" ? routines.habitOf(ref) : undefined;
-  const look = useHabitLook(habit);
-
-  if (kind === "habit") return habit?.color || habit?.area ? look.color : routineColor;
-  return kind === "break" ? "var(--muted-foreground)" : routineColor;
 }
 
 export const BLOCK_KIND_LABEL: Record<BlockKind, string> = {
@@ -65,7 +53,3 @@ export const BLOCK_KIND_ICON: Record<BlockKind, LucideIcon> = {
   activity: PencilIcon,
   break: CoffeeIcon,
 };
-
-/** Fondo rayado de los descansos, en la franja del día y en la tarjeta. */
-export const BREAK_PATTERN =
-  "repeating-linear-gradient(135deg, color-mix(in oklab, var(--muted-foreground) 18%, transparent) 0 4px, transparent 4px 8px)";

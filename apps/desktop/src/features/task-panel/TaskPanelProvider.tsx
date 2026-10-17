@@ -1,12 +1,12 @@
-import type { Task } from "@rumbo/core";
+import type { Task, TaskDraft } from "@rumbo/core";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { TaskSheet } from "./TaskSheet";
 
-/** `undefined` es cerrado; `{}` es una tarea nueva; `{ task }`, editar esa. */
-export type PanelTarget = { task?: Task } | undefined;
+/** `undefined` es cerrado; `{}` es una tarea nueva (con `draft`, ya empezada); `{ task }`, editar esa. */
+export type PanelTarget = { task?: Task; draft?: TaskDraft } | undefined;
 
 interface TaskPanelApi {
-  create: () => void;
+  create: (draft?: TaskDraft) => void;
   edit: (task: Task) => void;
   target: PanelTarget;
   close: () => void;
@@ -49,7 +49,9 @@ export function TaskPanelProvider({ children }: { children: ReactNode }) {
   const close = () => setTarget(undefined);
 
   return (
-    <TaskPanelContext value={{ create: () => setTarget({}), edit, target, close, dock: setDocked }}>
+    <TaskPanelContext
+      value={{ create: (draft) => setTarget({ draft }), edit, target, close, dock: setDocked }}
+    >
       {children}
       {!docked && <TaskSheet target={target} onClose={close} onOpen={edit} />}
     </TaskPanelContext>

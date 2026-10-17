@@ -37,6 +37,35 @@ describe("habits", () => {
     expect(rumbo.habits.list().find((h) => h.habit.key === "reading")?.doneToday).toBe(true);
   });
 
+  it("marks a habit done in one go and undoes it, whatever its kind", async () => {
+    const water = await rumbo.habits.create({
+      name: "Agua",
+      kind: "count",
+      target: 8,
+      schedule: "daily",
+    });
+    const meditate = await rumbo.habits.create({
+      name: "Meditar",
+      kind: "check",
+      schedule: "daily",
+    });
+    const doneToday = (key: string) =>
+      rumbo.habits.list().find((h) => h.habit.key === key)!.doneToday;
+
+    for (const key of [water, meditate, "reading"]) {
+      await rumbo.habits.toggleDone(key);
+      expect(doneToday(key)).toBe(true);
+    }
+    expect(rumbo.habits.list().find((h) => h.habit.key === water)?.today).toBe(8);
+
+    await rumbo.habits.toggleDone(water);
+    expect(doneToday(water)).toBe(false);
+
+    await rumbo.habits.toggleDone(water, "2026-10-14");
+    const history = rumbo.habits.list().find((h) => h.habit.key === water)!.history;
+    expect(history.get("2026-10-14")).toBe(8);
+  });
+
   it("forgets a day that is set back to nothing", async () => {
     await rumbo.habits.setValue("reading", 0);
     const reading = rumbo.habits.list().find((h) => h.habit.key === "reading")!;
@@ -504,6 +533,28 @@ describe("habits with tasks", () => {
     expect(done.streak.count).toBe(1);
   });
 
+  it("can be ticked by hand and unticked again", async () => {
+    const key = await rumbo.habits.create({ name: "Inglés", kind: "tasks", schedule: "daily" });
+    const doneToday = () =>
+      rumbo.habits.list().find((summary) => summary.habit.key === key)!.doneToday;
+
+    await rumbo.habits.toggleDone(key);
+    expect(doneToday()).toBe(true);
+    await rumbo.habits.toggleDone(key);
+    expect(doneToday()).toBe(false);
+  });
+
+  it("stays done through its tasks when the manual tick is removed", async () => {
+    const key = await rumbo.habits.create({ name: "Inglés", kind: "tasks", schedule: "daily" });
+    await rumbo.tasks.create({ text: "Unit 4", scheduled: "2026-10-15", habit: key });
+    const summary = () => rumbo.habits.list().find((h) => h.habit.key === key)!;
+    await rumbo.tasks.setDone(summary().todayTasks[0]!, true);
+
+    await rumbo.habits.toggleDone(key);
+    await rumbo.habits.toggleDone(key);
+    expect(summary().doneToday).toBe(true);
+  });
+
   it("doesn't count as done a day without tasks", async () => {
     const key = await rumbo.habits.create({ name: "Inglés", kind: "tasks", schedule: "daily" });
     expect(rumbo.habits.list().find((summary) => summary.habit.key === key)!.doneToday).toBe(false);
@@ -597,6 +648,14 @@ describe("learning", () => {
     expect(text).toBe("Python basics · Variables: ejercicio 01 — Swap two values");
     const coding = rumbo.habits.list().find((summary) => summary.habit.key === habit)!;
     expect(coding.todayTasks.map((task) => task.text)).toEqual([text]);
+  });
+
+  it("links the task of the day to its module and exercise", async () => {
+    const roadmap = rumbo.learning.roadmaps()[0]!;
+    const text = await rumbo.learning.planToday(roadmap);
+    const task = rumbo.tasks.all().find((candidate) => candidate.text === text);
+    expect(task!.module).toBe(roadmap.current!.name);
+    expect(task!.exercise).toBe(roadmap.nextExercise!.id);
   });
 
   it("does not add the same step twice to today", async () => {

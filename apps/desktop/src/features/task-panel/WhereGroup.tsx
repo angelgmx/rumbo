@@ -1,9 +1,13 @@
 import type { TaskDraft } from "@rumbo/core";
 import { BookOpenIcon, MapPinIcon } from "lucide-react";
 import { PanelSection } from "@/components/panel/PanelSection";
+import { ReadOnlyRow } from "@/components/panel/PropertyRow";
+import { TaskLinkButton } from "@/features/tasks/TaskLinkButton";
+import { useTaskLink } from "@/features/tasks/useTaskLink";
 import { AreaProperty } from "./AreaProperty";
 import { GoalProperty } from "./GoalProperty";
 import { OptionProperty } from "./OptionProperty";
+import { useTaskPanel } from "./TaskPanelProvider";
 import { TagsProperty } from "./TagsProperty";
 import type { Inheritance } from "./useInheritance";
 import type { TaskContext } from "./useTaskContext";
@@ -23,6 +27,9 @@ export function WhereGroup({
   options: TaskOptions;
   onChange: (changes: Partial<TaskDraft>) => void;
 }) {
+  const link = useTaskLink(draft);
+  const { close } = useTaskPanel();
+
   return (
     <PanelSection title="Dónde" icon={MapPinIcon}>
       {options.areas.length > 0 && (
@@ -51,8 +58,13 @@ export function WhereGroup({
           empty="Elegir módulo"
           value={draft.module}
           options={options.modules}
-          onChange={(module) => onChange({ module })}
+          onChange={(module) => onChange({ module, exercise: undefined })}
         />
+      )}
+      {link?.kind === "exercise" && (
+        <ReadOnlyRow label="Ejercicio">
+          <TaskLinkButton link={link} onOpen={close} className="text-sm" />
+        </ReadOnlyRow>
       )}
       {(options.goals.length > 0 || context.goal) && (
         <GoalProperty
