@@ -6,7 +6,7 @@ import {
   filterAreas,
   mergeOrder,
   orderAreas,
-  starredAreas,
+  sidebarAreas,
 } from "../src/domain/areas";
 import { memoryDatabase } from "./memoryDatabase";
 import { memoryFileSystem } from "./memoryFileSystem";
@@ -67,29 +67,43 @@ describe("orderAreas", () => {
   });
 });
 
-describe("starredAreas", () => {
-  it("lists the starred ones in tree order, parents first", () => {
-    const tree = orderAreas(areaTree(areas), []);
-    const names = starredAreas(tree, ["Gym", "Java", "Desarrollo", "Gone"]).map(({ name }) => name);
-    expect(names).toEqual(["Desarrollo", "Java", "Gym"]);
+describe("sidebarAreas", () => {
+  const tree = orderAreas(areaTree(areas), []);
+
+  it("lists the chosen ones in tree order, indenting a child only under a chosen parent", () => {
+    const rows = sidebarAreas(tree, ["Gym", "Java", "Desarrollo", "Programación", "Gone"]);
+    expect(rows.map(({ node, depth }) => [node.name, depth])).toEqual([
+      ["Desarrollo", 0],
+      ["Programación", 1],
+      ["Java", 2],
+      ["Gym", 0],
+    ]);
+  });
+
+  it("lifts a chosen child whose parent is not chosen", () => {
+    const rows = sidebarAreas(tree, ["Java", "Desarrollo"]);
+    expect(rows.map(({ node, depth }) => [node.name, depth])).toEqual([
+      ["Desarrollo", 0],
+      ["Java", 1],
+    ]);
   });
 });
 
 describe("AreaService", () => {
-  it("remembers the starred areas between sessions and ignores missing ones", async () => {
+  it("remembers the sidebar areas between sessions and ignores missing ones", async () => {
     const files = new Map([
       ["Areas/Gym/Gym.md", "---\ntype: area\n---\n"],
       ["Areas/Arte/Arte.md", "---\ntype: area\n---\n"],
     ]);
     const database = memoryDatabase();
     const first = await createRumbo({ fs: memoryFileSystem(files), database });
-    await first.areas.toggleStar("Gym");
-    await first.areas.toggleStar("Arte");
-    await first.areas.toggleStar("Arte");
-    await first.areas.toggleStar("Gone");
+    await first.areas.toggleInSidebar("Gym");
+    await first.areas.toggleInSidebar("Arte");
+    await first.areas.toggleInSidebar("Arte");
+    await first.areas.toggleInSidebar("Gone");
 
     const second = await createRumbo({ fs: memoryFileSystem(files), database });
-    expect(second.areas.starredNodes().map(({ name }) => name)).toEqual(["Gym"]);
+    expect(second.areas.sidebarAreas().map(({ node }) => node.name)).toEqual(["Gym"]);
   });
 
   it("remembers the order between sessions", async () => {

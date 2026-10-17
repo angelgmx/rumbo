@@ -1,26 +1,33 @@
 import type { AppDatabase } from "../db/appDatabase";
-import { areaTree, mergeOrder, orderAreas, starredAreas, type AreaNode } from "../domain/areas";
+import {
+  areaTree,
+  mergeOrder,
+  orderAreas,
+  sidebarAreas,
+  type AreaNode,
+  type SidebarArea,
+} from "../domain/areas";
 import type { VaultStore } from "./vaultStore";
 
 const ORDER_KEY = "areas.orden";
-const STARRED_KEY = "areas.destacadas";
+const SIDEBAR_KEY = "areas.barra";
 
-/** Las áreas del vault como árbol, con el orden y las destacadas que ha dado quien las usa (guardado en la base de datos). */
+/** Las áreas del vault como árbol, con el orden y las que salen en la barra que ha dado quien las usa (guardado en la base de datos). */
 export class AreaService {
   private constructor(
     private readonly store: VaultStore,
     private readonly db: AppDatabase,
     private order: string[],
-    private starred: string[],
+    private inSidebar: string[],
   ) {}
 
   static async open(store: VaultStore, db: AppDatabase): Promise<AreaService> {
-    const [order, starred] = await Promise.all([db.setting(ORDER_KEY), db.setting(STARRED_KEY)]);
+    const [order, inSidebar] = await Promise.all([db.setting(ORDER_KEY), db.setting(SIDEBAR_KEY)]);
     return new AreaService(
       store,
       db,
       order ? (JSON.parse(order) as string[]) : [],
-      starred ? (JSON.parse(starred) as string[]) : [],
+      inSidebar ? (JSON.parse(inSidebar) as string[]) : [],
     );
   }
 
@@ -32,9 +39,14 @@ export class AreaService {
     return orderAreas(areaTree(areas), this.order);
   }
 
-  /** Las áreas destacadas que existen, en el orden del árbol. */
-  starredNodes(): AreaNode[] {
-    return starredAreas(this.tree(), this.starred);
+  /** Los nombres elegidos para la barra, existan o no ya. */
+  sidebarNames(): readonly string[] {
+    return this.inSidebar;
+  }
+
+  /** Las áreas elegidas para la barra que existen, en el orden del árbol. */
+  sidebarAreas(): SidebarArea[] {
+    return sidebarAreas(this.tree(), this.inSidebar);
   }
 
   /** Guarda el orden de las áreas de un mismo nivel. */
@@ -45,13 +57,13 @@ export class AreaService {
     });
   }
 
-  /** Destaca el área o, si ya lo estaba, deja de destacarla. */
-  async toggleStar(name: string): Promise<void> {
-    const next = this.starred.includes(name)
-      ? this.starred.filter((starred) => starred !== name)
-      : [...this.starred, name];
-    await this.save(STARRED_KEY, next, () => {
-      this.starred = next;
+  /** Pone el área en la barra o, si ya estaba, la quita. */
+  async toggleInSidebar(name: string): Promise<void> {
+    const next = this.inSidebar.includes(name)
+      ? this.inSidebar.filter((chosen) => chosen !== name)
+      : [...this.inSidebar, name];
+    await this.save(SIDEBAR_KEY, next, () => {
+      this.inSidebar = next;
     });
   }
 

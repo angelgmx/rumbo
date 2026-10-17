@@ -92,6 +92,7 @@ export function CalendarScreen() {
             onPickDay={view.setAnchor}
             onToggleSource={toggleSource}
             onPickSource={pickSource}
+            visibility={visibility}
           />
           <div className="flex min-w-0 flex-1 flex-col">
             <CalendarHeader

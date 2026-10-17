@@ -46,12 +46,23 @@ export function areaFamily(node: AreaNode): string[] {
   return [node.name, ...node.children.flatMap(areaFamily)];
 }
 
-/** Las áreas destacadas que existen, en el orden del árbol (cada madre antes que sus hijas). */
-export function starredAreas(nodes: readonly AreaNode[], starred: readonly string[]): AreaNode[] {
-  return nodes.flatMap((node) => [
-    ...(starred.includes(node.name) ? [node] : []),
-    ...starredAreas(node.children, starred),
-  ]);
+/** Un área de la barra con lo que se sangra bajo su madre cuando las dos están elegidas. */
+export interface SidebarArea {
+  node: AreaNode;
+  depth: number;
+}
+
+/** Las áreas elegidas para la barra, en el orden del árbol; una subárea solo se sangra si su madre también está. */
+export function sidebarAreas(
+  nodes: readonly AreaNode[],
+  chosen: readonly string[],
+  depth = 0,
+): SidebarArea[] {
+  return nodes.flatMap((node) =>
+    chosen.includes(node.name)
+      ? [{ node, depth }, ...sidebarAreas(node.children, chosen, depth + 1)]
+      : sidebarAreas(node.children, chosen, depth),
+  );
 }
 
 /** El orden guardado tras ordenar un nivel: lo nuevo delante, el resto de niveles como estaba. */
