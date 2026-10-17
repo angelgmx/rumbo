@@ -3,18 +3,15 @@ import { FlameIcon } from "lucide-react";
 import { useRumbo } from "@/app/RumboContext";
 import { useHabitLook } from "@/hooks/useHabitLook";
 import { cn } from "@/lib/utils";
-import { ColorCheck } from "../ColorCheck";
+import { HabitCheck } from "../habits/HabitCheck";
 import { HabitIcon } from "../habits/HabitIcon";
-import { HabitStepper } from "../habits/HabitStepper";
-import { useHabitControls } from "../habits/useHabitControls";
 
-/** Un hábito de hoy con su racha; se marca ahí mismo con una casilla o sumando y restando. */
+/** Un hábito de hoy con su racha; se marca ahí mismo con una casilla. */
 export function HabitRow({ summary, today }: { summary: HabitSummary; today: IsoDate }) {
   const { habit, streak } = summary;
   const look = useHabitLook(habit);
-  const controls = useHabitControls(summary, today);
   const tasks = useRumbo().tasks.forHabit(habit.key, today);
-  const atRisk = streak.count > 0 && !controls.done;
+  const atRisk = streak.count > 0 && !summary.doneToday;
 
   return (
     <li className="flex items-center gap-2.5 py-1.5">
@@ -31,22 +28,12 @@ export function HabitRow({ summary, today }: { summary: HabitSummary; today: Iso
           {streak.count} {streak.unit === "days" ? "d" : "sem"}
         </p>
       </div>
-      {habit.kind === "check" && (
-        <ColorCheck
-          checked={controls.done}
-          color={look.color}
-          label={habit.name}
+      {habit.kind !== "tasks" && (
+        <HabitCheck
+          summary={summary}
+          done={summary.doneToday}
+          date={today}
           className="size-[18px]"
-          onToggle={() => void controls.toggle()}
-        />
-      )}
-      {(habit.kind === "count" || habit.kind === "duration") && (
-        <HabitStepper
-          label={habit.name}
-          amount={controls.amount}
-          target={habit.target ?? 1}
-          unit={habit.unit ?? ""}
-          onStep={(direction) => void controls.step(direction)}
         />
       )}
       {habit.kind === "tasks" && (

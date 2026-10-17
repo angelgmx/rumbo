@@ -15,12 +15,10 @@ import {
   visibleWindow,
 } from "../src/domain/calendar";
 import { freeIntervals } from "../src/domain/freeTime";
-import { habitStep } from "../src/domain/habits";
 import type { Goal } from "../src/domain/goals";
 import type { Project } from "../src/domain/projects";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
 import { memoryDatabase } from "./memoryDatabase";
-import { makeHabit } from "./makeHabit";
 
 let nextId = 1;
 function task(fields: Partial<Task> = {}): Task {
@@ -273,18 +271,13 @@ describe("visibleWindow", () => {
   });
 });
 
-describe("isoWeek and habitStep", () => {
+describe("isoWeek", () => {
   it("numbers the weeks the ISO way", () => {
     expect(isoWeek("2026-10-16")).toBe(42);
     expect(isoWeek("2026-10-12")).toBe(42);
     expect(isoWeek("2026-10-18")).toBe(42);
     expect(isoWeek("2026-01-01")).toBe(1);
     expect(isoWeek("2027-01-01")).toBe(53);
-  });
-
-  it("adds a minute-sized step for amounts and five minutes for time", () => {
-    expect(habitStep(makeHabit({ key: "agua", name: "Agua", kind: "count" }))).toBe(1);
-    expect(habitStep(makeHabit({ key: "leer", name: "Leer", kind: "duration" }))).toBe(5);
   });
 });
 

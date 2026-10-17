@@ -80,6 +80,14 @@ export class HabitService {
     return this.habits.record(key, date, value);
   }
 
+  /** Marca el hábito como hecho un día, o lo deja sin hacer si ya lo estaba. Cantidad y tiempo cuentan como su objetivo. */
+  toggleDone(key: string, date = this.daily.today()): Promise<void> {
+    const habit = this.habits.get(key);
+    if (!habit || habit.kind === "tasks") return Promise.resolve();
+    if (isDone(habit, this.habits.history(key).get(date))) return this.setValue(key, false, date);
+    return this.setValue(key, habit.kind === "check" ? true : (habit.target ?? 1), date);
+  }
+
   /** Crea el hábito y devuelve su clave. */
   async create(input: HabitInput): Promise<string> {
     const today = this.daily.today();

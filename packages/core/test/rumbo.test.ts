@@ -37,6 +37,35 @@ describe("habits", () => {
     expect(rumbo.habits.list().find((h) => h.habit.key === "reading")?.doneToday).toBe(true);
   });
 
+  it("marks a habit done in one go and undoes it, whatever its kind", async () => {
+    const water = await rumbo.habits.create({
+      name: "Agua",
+      kind: "count",
+      target: 8,
+      schedule: "daily",
+    });
+    const meditate = await rumbo.habits.create({
+      name: "Meditar",
+      kind: "check",
+      schedule: "daily",
+    });
+    const doneToday = (key: string) =>
+      rumbo.habits.list().find((h) => h.habit.key === key)!.doneToday;
+
+    for (const key of [water, meditate, "reading"]) {
+      await rumbo.habits.toggleDone(key);
+      expect(doneToday(key)).toBe(true);
+    }
+    expect(rumbo.habits.list().find((h) => h.habit.key === water)?.today).toBe(8);
+
+    await rumbo.habits.toggleDone(water);
+    expect(doneToday(water)).toBe(false);
+
+    await rumbo.habits.toggleDone(water, "2026-10-14");
+    const history = rumbo.habits.list().find((h) => h.habit.key === water)!.history;
+    expect(history.get("2026-10-14")).toBe(8);
+  });
+
   it("forgets a day that is set back to nothing", async () => {
     await rumbo.habits.setValue("reading", 0);
     const reading = rumbo.habits.list().find((h) => h.habit.key === "reading")!;

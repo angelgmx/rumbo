@@ -109,7 +109,6 @@ export {
 export {
   completionRate,
   habitProgress,
-  habitStep,
   isDone,
   isScheduledOn,
   minimumOf,
