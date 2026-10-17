@@ -14,7 +14,7 @@ export function useRoutinePurpose(summary: RoutineSummary): string {
 
   if (roadmaps.size > 0) return `Avanza ${[...roadmaps].map((title) => `«${title}»`).join(" y ")}`;
   if (habits.length > 0) return `Marca ${joinNames(habits)}`;
-  return `${summary.blocks.length} bloques`;
+  return `${summary.blocks.length} ${summary.blocks.length === 1 ? "bloque" : "bloques"}`;
 }
 
 function joinNames(names: string[]): string {

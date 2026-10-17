@@ -46,7 +46,7 @@ export function TasksSidebar({
 
   return (
     <aside className="flex w-60 shrink-0 flex-col gap-6 overflow-y-auto border-r p-3">
-      <Button variant="outline" className="justify-start" onClick={create}>
+      <Button variant="outline" className="justify-start" onClick={() => create()}>
         <PlusIcon data-icon="inline-start" className="text-primary" />
         Captura rápida
         <Kbd className="ml-auto">Ctrl N</Kbd>
