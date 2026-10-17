@@ -1,6 +1,6 @@
 import type { CalendarEvent, IsoDate } from "@rumbo/core";
 import { useRumbo } from "@/app/RumboContext";
-import { ColorCheck } from "../ColorCheck";
+import { ColorCheck } from "@/components/ColorCheck";
 import { tint } from "./tint";
 
 type AgendaCalendarEvent = Extract<CalendarEvent, { kind: "agenda" }>;

@@ -1,17 +1,15 @@
-import type { CalendarSource, IsoDate, Task } from "@rumbo/core";
+import type { CalendarSource, IsoDate } from "@rumbo/core";
 import { CalendarIcon } from "lucide-react";
 import type { Visibility } from "../visibility";
 import { HabitsToday } from "./HabitsToday";
 import { MiniMonth } from "./MiniMonth";
-import { OrganizeCard } from "./OrganizeCard";
 import { SourceList } from "./SourceList";
 
-/** La barra de la izquierda: el mes, las fuentes del calendario, los hábitos de hoy y la IA. */
+/** La barra de la izquierda: el mes, las fuentes del calendario y los hábitos de hoy. */
 export function CalendarSidebar({
   anchor,
   today,
   source,
-  undated,
   visibility,
   onPickDay,
   onOpenSource,
@@ -19,8 +17,6 @@ export function CalendarSidebar({
   anchor: IsoDate;
   today: IsoDate;
   source: CalendarSource | undefined;
-  /** Las tareas sin fecha que la IA aún puede organizar. */
-  undated: Task[];
   visibility: Visibility;
   onPickDay: (date: IsoDate) => void;
   onOpenSource: (source: CalendarSource) => void;
@@ -42,9 +38,6 @@ export function CalendarSidebar({
         />
       </section>
       <HabitsToday today={today} />
-      <div className="mt-auto">
-        <OrganizeCard tasks={undated} />
-      </div>
     </aside>
   );
 }

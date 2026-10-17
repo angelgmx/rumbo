@@ -136,7 +136,8 @@ export function deadlinesBetween(
 export type CalendarSource =
   | { kind: "inbox" }
   | { kind: "undated" }
-  | { kind: "area"; area: string }
+  /** `within` son las subáreas: sus tareas cuentan también en el área madre. */
+  | { kind: "area"; area: string; within?: string[] }
   | { kind: "routines" };
 
 /** Lo que se ve u oculta en el calendario: lo que no tiene área se agrupa bajo el Inbox. */
@@ -181,7 +182,8 @@ export function sourceTasks(
     case "routines":
       return { undated: [], scheduled: [] };
     case "area": {
-      const own = tasks.filter((task) => areaKey(task.area) === sourceKey(source));
+      const areaKeys = [source.area, ...(source.within ?? [])].map(areaKey);
+      const own = tasks.filter((task) => areaKeys.includes(areaKey(task.area)));
       return {
         undated: own.filter(isUndated),
         scheduled: own.filter(

@@ -1,7 +1,7 @@
 import { ChevronRightIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { ColorCheck } from "../ColorCheck";
+import { ColorCheck } from "@/components/ColorCheck";
 
 /** Una fuente del calendario: su casilla de color, su nombre y cuántas tareas ofrece; pulsarla abre su panel. */
 export function SourceRow({
@@ -9,6 +9,7 @@ export function SourceRow({
   label,
   count,
   active,
+  fold,
   visibility,
   onOpen,
 }: {
@@ -16,6 +17,8 @@ export function SourceRow({
   label: string;
   count: number;
   active: boolean;
+  /** El control para plegar las subáreas, si las tiene. */
+  fold?: ReactNode;
   /** Sin él la fuente no pinta nada en la rejilla y no tiene casilla. */
   visibility?: { color: string; shown: boolean; onToggle: () => void };
   onOpen: () => void;
@@ -29,6 +32,7 @@ export function SourceRow({
         active && "border-border bg-card shadow-card hover:bg-card",
       )}
     >
+      {fold}
       {visibility ? (
         <ColorCheck
           checked={visibility.shown}

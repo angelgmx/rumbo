@@ -99,7 +99,6 @@ export function FocusScreen() {
                 time={time}
                 current={around.now}
                 onToggleBlock={(item, done) => rumbo.agenda.setDone(today, item.block, done)}
-                onHabitChange={(key, value) => rumbo.habits.setValue(key, value)}
                 onCompleteStep={completeStep}
               />
               <UntimedCard
@@ -124,11 +123,7 @@ export function FocusScreen() {
                 onToggleBadDay={toggleBadDay}
               />
               {day.atRisk.length > 0 && <StreakRiskCard habits={day.atRisk} onSave={saveStreak} />}
-              <TodayHabitsCard
-                habits={day.habits}
-                routines={routineOfHabits(day.groups)}
-                onChange={(key, value) => rumbo.habits.setValue(key, value)}
-              />
+              <TodayHabitsCard habits={day.habits} routines={routineOfHabits(day.groups)} />
             </div>
           </div>
         </div>

@@ -15,7 +15,7 @@ async function databaseAt(version: number) {
 
 describe("migrations", () => {
   it("turns saved free and task blocks into activities", async () => {
-    const database = await databaseAt(MIGRATIONS.length - 2);
+    const database = await databaseAt(MIGRATIONS.length - 3);
     const blocks = [
       { tipo: "habito", habito: "ingles", minutos: 15 },
       { tipo: "libre", titulo: "Café", minutos: 10 },

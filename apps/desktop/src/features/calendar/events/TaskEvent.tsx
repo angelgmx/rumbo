@@ -2,7 +2,7 @@ import type { CalendarEvent } from "@rumbo/core";
 import { useRumbo } from "@/app/RumboContext";
 import { useArea } from "@/hooks/useArea";
 import { cn } from "@/lib/utils";
-import { ColorCheck } from "../ColorCheck";
+import { ColorCheck } from "@/components/ColorCheck";
 import { useGestures } from "../gestures/Gestures";
 import { tint } from "./tint";
 import { TimePill } from "./TimePill";

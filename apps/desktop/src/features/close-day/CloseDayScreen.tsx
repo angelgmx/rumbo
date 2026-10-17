@@ -74,10 +74,7 @@ export function CloseDayScreen() {
       <main className="flex-1 overflow-y-auto p-6">
         <div className="mx-auto flex max-w-3xl flex-col gap-4">
           <CloseDayHeading today={today} done={done} total={total} />
-          <HabitsStep
-            habits={day.habits}
-            onChange={(key, value) => rumbo.habits.setValue(key, value)}
-          />
+          <HabitsStep habits={day.habits} />
           <EnergyStep value={energy} onChange={setEnergy} />
           <WinsStep wins={wins} onChange={setWins} />
           <TomorrowStep

@@ -238,6 +238,17 @@ describe("sourceTasks", () => {
     expect(sourceCount(own)).toBe(2);
   });
 
+  it("gathers the tasks of the subareas under their parent", () => {
+    const nested = task({ text: "Nested", area: "Java" });
+    const own = sourceTasks(
+      [loose, nested],
+      { kind: "area", area: "Citalash", within: ["Java"] },
+      week,
+      today,
+    );
+    expect(own.undated).toEqual([loose, nested]);
+  });
+
   it("has no tasks for the routines", () => {
     expect(sourceTasks(tasks, { kind: "routines" }, week, today)).toEqual({
       undated: [],

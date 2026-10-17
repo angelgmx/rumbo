@@ -1,4 +1,4 @@
-import { minutesBetween, type DayPlanItem, type HabitValue, type RoutineStep } from "@rumbo/core";
+import { minutesBetween, type DayPlanItem, type RoutineStep } from "@rumbo/core";
 import { CalendarPlusIcon } from "lucide-react";
 import { AreaIcon } from "@/components/AreaIcon";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { HabitTasks } from "@/features/habits/HabitTasks";
-import { HabitValueControl } from "@/features/habits/HabitValueControl";
+import { HabitMark, tasksProgress } from "@/features/habits/HabitMark";
 import { useHabitLook } from "@/hooks/useHabitLook";
 import { formatMinutes } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,6 @@ interface DayPlanCardProps {
   time: string;
   current?: DayPlanItem;
   onToggleBlock: (item: Extract<DayPlanItem, { kind: "agenda" }>, done: boolean) => void;
-  onHabitChange: (key: string, value: HabitValue) => void;
   onCompleteStep: (group: RoutineGroup, step: RoutineStep) => void;
 }
 
@@ -35,7 +34,6 @@ export function DayPlanCard({
   time,
   current,
   onToggleBlock,
-  onHabitChange,
   onCompleteStep,
 }: DayPlanCardProps) {
   return (
@@ -72,7 +70,6 @@ export function DayPlanCard({
                 item={entry.item}
                 isCurrent={entry.item === current}
                 onToggleBlock={onToggleBlock}
-                onHabitChange={onHabitChange}
               />
             ),
           )
@@ -82,12 +79,12 @@ export function DayPlanCard({
   );
 }
 
-interface PlanRowProps extends Pick<DayPlanCardProps, "onToggleBlock" | "onHabitChange"> {
+interface PlanRowProps extends Pick<DayPlanCardProps, "onToggleBlock"> {
   item: DayPlanItem;
   isCurrent: boolean;
 }
 
-function PlanRow({ item, isCurrent, onToggleBlock, onHabitChange }: PlanRowProps) {
+function PlanRow({ item, isCurrent, onToggleBlock }: PlanRowProps) {
   const minutes = item.end ? minutesBetween(item.start, item.end) : undefined;
   const area = useHabitLook(item.kind === "habit" ? item.habit.habit : undefined);
   const habitTasks =
@@ -105,12 +102,11 @@ function PlanRow({ item, isCurrent, onToggleBlock, onHabitChange }: PlanRowProps
             aria-label={item.text}
           />
         ) : (
-          <HabitValueControl
-            habit={item.habit.habit}
-            value={item.habit.today}
-            todayTasks={habitTasks?.todayTasks}
-            color={area.color}
-            onChange={(value) => onHabitChange(item.habit.habit.key, value)}
+          <HabitMark
+            summary={item.habit}
+            done={item.done}
+            progress={tasksProgress(item.habit.todayTasks)}
+            className="size-5"
           />
         )
       }

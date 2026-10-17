@@ -7,7 +7,7 @@ import { useProjectTitle } from "@/features/tasks/useProjectTitle";
 import { useArea } from "@/hooks/useArea";
 import { formatMinutes, formatShortDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { ColorCheck } from "../ColorCheck";
+import { ColorCheck } from "@/components/ColorCheck";
 import { tint } from "../events/tint";
 
 /** Una tarea en el panel: se arrastra a la rejilla para darle día y hora, y se pulsa para abrirla. */

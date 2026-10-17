@@ -1,7 +1,7 @@
 import type { HabitSummary, IsoDate } from "@rumbo/core";
 import { useRumbo } from "@/app/RumboContext";
 import { useHabitLook } from "@/hooks/useHabitLook";
-import { ColorCheck } from "../ColorCheck";
+import { ColorCheck } from "@/components/ColorCheck";
 
 /** La casilla de un hábito en un día: hecho o no, sea del tipo que sea. */
 export function HabitCheck({
@@ -12,7 +12,8 @@ export function HabitCheck({
 }: {
   summary: HabitSummary;
   done: boolean;
-  date: IsoDate;
+  /** Hoy si no se dice. */
+  date?: IsoDate;
   className?: string;
 }) {
   const { habits } = useRumbo();

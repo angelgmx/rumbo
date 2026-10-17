@@ -1,36 +1,25 @@
-import type { HabitSummary, HabitValue } from "@rumbo/core";
+import type { HabitSummary } from "@rumbo/core";
 import { AreaIcon } from "@/components/AreaIcon";
-import { describeValue, HabitValueControl } from "@/features/habits/HabitValueControl";
+import { describeValue } from "@/features/habits/describeValue";
+import { HabitMark, tasksProgress } from "@/features/habits/HabitMark";
 import { useHabitLook } from "@/hooks/useHabitLook";
 import { StepCard } from "./StepCard";
 
 /** Paso 1: los hábitos de hoy, para apuntar lo que falte. */
-export function HabitsStep({
-  habits,
-  onChange,
-}: {
-  habits: HabitSummary[];
-  onChange: (key: string, value: HabitValue) => void;
-}) {
+export function HabitsStep({ habits }: { habits: HabitSummary[] }) {
   if (habits.length === 0) return null;
   return (
     <StepCard number={1} title="Marca tus hábitos" hint="lo que falte lo apuntas ahora">
       <div className="grid grid-cols-2 gap-3">
         {habits.map((summary) => (
-          <HabitTile key={summary.habit.key} summary={summary} onChange={onChange} />
+          <HabitTile key={summary.habit.key} summary={summary} />
         ))}
       </div>
     </StepCard>
   );
 }
 
-function HabitTile({
-  summary,
-  onChange,
-}: {
-  summary: HabitSummary;
-  onChange: (key: string, value: HabitValue) => void;
-}) {
+function HabitTile({ summary }: { summary: HabitSummary }) {
   const { habit, today } = summary;
   const area = useHabitLook(habit);
   const todayTasks = habit.kind === "tasks" ? summary.todayTasks : undefined;
@@ -43,12 +32,11 @@ function HabitTile({
         <p className="truncate">{habit.name}</p>
         {amount && <p className="font-mono text-xs text-muted-foreground">{amount}</p>}
       </div>
-      <HabitValueControl
-        habit={habit}
-        value={today}
-        todayTasks={todayTasks}
-        color={area.color}
-        onChange={(value) => onChange(habit.key, value)}
+      <HabitMark
+        summary={summary}
+        done={summary.doneToday}
+        progress={tasksProgress(summary.todayTasks)}
+        className="size-5"
       />
     </div>
   );

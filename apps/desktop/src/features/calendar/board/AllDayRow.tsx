@@ -5,7 +5,7 @@ import { useRumbo } from "@/app/RumboContext";
 import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { useArea } from "@/hooks/useArea";
 import { tint } from "../events/tint";
-import { ColorCheck } from "../ColorCheck";
+import { ColorCheck } from "@/components/ColorCheck";
 
 const DEADLINE_ICON: Record<Deadline["kind"], LucideIcon> = {
   goal: TargetIcon,

@@ -3,8 +3,8 @@ import { FlameIcon } from "lucide-react";
 import { useRumbo } from "@/app/RumboContext";
 import { useHabitLook } from "@/hooks/useHabitLook";
 import { cn } from "@/lib/utils";
-import { HabitCheck } from "../habits/HabitCheck";
-import { HabitIcon } from "../habits/HabitIcon";
+import { HabitCheck } from "@/features/habits/HabitCheck";
+import { HabitIcon } from "@/features/habits/HabitIcon";
 
 /** Un hábito de hoy con su racha; se marca ahí mismo con una casilla. */
 export function HabitRow({ summary, today }: { summary: HabitSummary; today: IsoDate }) {

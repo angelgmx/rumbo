@@ -29,7 +29,7 @@ export function ColorCheck({
       )}
       style={checked ? { backgroundColor: color, borderColor: color } : { borderColor: color }}
     >
-      {checked && <CheckIcon className="size-3 text-white" strokeWidth={3} />}
+      {checked && <CheckIcon className="size-3/4 text-white" strokeWidth={3} />}
     </button>
   );
 }

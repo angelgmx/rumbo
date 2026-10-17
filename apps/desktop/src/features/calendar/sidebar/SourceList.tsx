@@ -1,5 +1,5 @@
 import {
-  areaKey,
+  areaFamily,
   sourceCount,
   sourceKey,
   sourceTasks,
@@ -7,14 +7,10 @@ import {
   addDays,
   type CalendarSource,
   type IsoDate,
-  type Task,
 } from "@rumbo/core";
 import { HourglassIcon, InboxIcon, LayersIcon, RepeatIcon } from "lucide-react";
-import { DynamicIcon, type IconName } from "lucide-react/dynamic";
-import { CircleIcon } from "lucide-react";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
-import { useArea } from "@/hooks/useArea";
-import { useAreaNames } from "@/hooks/useAreaNames";
+import { AreaTree } from "./AreaTree";
 import { FoldSection } from "./FoldSection";
 import { SourceRow } from "./SourceRow";
 import { ROUTINES_COLOR, type Visibility } from "../visibility";
@@ -37,7 +33,7 @@ export function SourceList({
 }) {
   const tasks = useVaultQuery((r) => r.tasks.all()).data ?? [];
   const routines = useVaultQuery((r) => r.routines.list().length).data ?? 0;
-  const areas = useAreaNames();
+  const areas = useVaultQuery((r) => r.areas.tree()).data ?? [];
   const week = { from: startOfWeek(anchor), to: addDays(startOfWeek(anchor), 6) };
   const count = (source: CalendarSource) => sourceCount(sourceTasks(tasks, source, week, today));
   const isOpen = (source: CalendarSource) =>
@@ -57,7 +53,7 @@ export function SourceList({
         visibility={{
           color: NEUTRAL,
           shown: !visibility.isHidden(sourceKey(inbox)),
-          onToggle: () => visibility.toggle(sourceKey(inbox)),
+          onToggle: () => visibility.toggle([sourceKey(inbox)]),
         }}
         onOpen={() => onOpen(inbox)}
       />
@@ -71,20 +67,22 @@ export function SourceList({
       <Divider />
       {areas.length > 0 && (
         <>
-          <FoldSection id="areas" icon={<LayersIcon />} title="Áreas" summary={areas.length}>
+          <FoldSection
+            id="areas"
+            icon={<LayersIcon />}
+            title="Áreas"
+            summary={areas.flatMap(areaFamily).length}
+          >
             <div className="flex flex-col gap-1">
-              {areas.map((name) => (
-                <AreaRow
-                  key={name}
-                  name={name}
-                  tasks={tasks}
-                  week={week}
-                  today={today}
-                  open={open}
-                  visibility={visibility}
-                  onOpen={onOpen}
-                />
-              ))}
+              <AreaTree
+                nodes={areas}
+                tasks={tasks}
+                week={week}
+                today={today}
+                open={open}
+                visibility={visibility}
+                onOpen={onOpen}
+              />
             </div>
           </FoldSection>
           <Divider />
@@ -98,7 +96,7 @@ export function SourceList({
         visibility={{
           color: ROUTINES_COLOR,
           shown: !visibility.isHidden(sourceKey(routinesSource)),
-          onToggle: () => visibility.toggle(sourceKey(routinesSource)),
+          onToggle: () => visibility.toggle([sourceKey(routinesSource)]),
         }}
         onOpen={() => onOpen(routinesSource)}
       />
@@ -106,52 +104,6 @@ export function SourceList({
   );
 }
 
-function AreaRow({
-  name,
-  tasks,
-  week,
-  today,
-  open,
-  visibility,
-  onOpen,
-}: {
-  name: string;
-  tasks: Task[];
-  week: { from: IsoDate; to: IsoDate };
-  today: IsoDate;
-  open: CalendarSource | undefined;
-  visibility: Visibility;
-  onOpen: (source: CalendarSource) => void;
-}) {
-  const look = useArea(name);
-  const source: CalendarSource = { kind: "area", area: name };
-
-  return (
-    <SourceRow
-      icon={
-        look.icon ? (
-          <DynamicIcon name={look.icon as IconName} fallback={DefaultIcon} />
-        ) : (
-          <CircleIcon />
-        )
-      }
-      label={name}
-      count={sourceCount(sourceTasks(tasks, source, week, today))}
-      active={open?.kind === "area" && open.area === name}
-      visibility={{
-        color: look.color,
-        shown: !visibility.isHidden(areaKey(name)),
-        onToggle: () => visibility.toggle(areaKey(name)),
-      }}
-      onOpen={() => onOpen(source)}
-    />
-  );
-}
-
 function Divider() {
   return <div role="separator" className="my-1 h-px bg-border" />;
-}
-
-function DefaultIcon() {
-  return <CircleIcon />;
 }

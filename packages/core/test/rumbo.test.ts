@@ -628,6 +628,14 @@ describe("learning", () => {
     expect(coding.todayTasks.map((task) => task.text)).toEqual([text]);
   });
 
+  it("links the task of the day to its module and exercise", async () => {
+    const roadmap = rumbo.learning.roadmaps()[0]!;
+    const text = await rumbo.learning.planToday(roadmap);
+    const task = rumbo.tasks.all().find((candidate) => candidate.text === text);
+    expect(task!.module).toBe(roadmap.current!.name);
+    expect(task!.exercise).toBe(roadmap.nextExercise!.id);
+  });
+
   it("does not add the same step twice to today", async () => {
     const roadmap = rumbo.learning.roadmaps()[0]!;
     const text = await rumbo.learning.planToday(roadmap);

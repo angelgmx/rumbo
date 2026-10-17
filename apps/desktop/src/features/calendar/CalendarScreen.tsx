@@ -6,7 +6,9 @@ import {
   type HabitInput,
   type RoutineSummary,
 } from "@rumbo/core";
+import { RepeatIcon } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { useRumbo } from "@/app/RumboContext";
 import { HabitPanel } from "@/features/habits/panel/HabitPanel";
 import { RoutinePanel, type RoutineTarget } from "@/features/routines/panel/RoutinePanel";
@@ -20,6 +22,7 @@ import { CalendarHeader } from "./CalendarHeader";
 import { CalendarProvider } from "./CalendarContext";
 import { viewCrumb, viewSubtitle } from "./calendarLabels";
 import { useCalendarView, viewDays } from "./calendarView";
+import { OrganizeButton } from "./OrganizeButton";
 import { GestureGhost } from "./GestureGhost";
 import { GestureProvider } from "./gestures/Gestures";
 import { CalendarSidebar } from "./sidebar/CalendarSidebar";
@@ -70,6 +73,15 @@ export function CalendarScreen() {
         }}
       >
         <ScreenHeader
+          actions={
+            <>
+              <OrganizeButton tasks={undated} />
+              <Button variant="outline" onClick={() => setRoutine({})}>
+                <RepeatIcon data-icon="inline-start" />
+                Nueva rutina
+              </Button>
+            </>
+          }
           title={
             <Breadcrumb
               items={[{ label: "Calendario" }, { label: viewCrumb(view.mode, view.anchor) }]}
@@ -81,7 +93,6 @@ export function CalendarScreen() {
             anchor={view.anchor}
             today={today}
             source={source}
-            undated={undated}
             visibility={visibility}
             onPickDay={view.setAnchor}
             onOpenSource={openSource}

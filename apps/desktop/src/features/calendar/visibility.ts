@@ -3,7 +3,8 @@ import { useState } from "react";
 /** Lo que se ve en el calendario: cada fuente se muestra u oculta por su clave. */
 export interface Visibility {
   isHidden: (key: string) => boolean;
-  toggle: (key: string) => void;
+  /** Muestra u oculta varias claves a la vez según esté la primera: así una área arrastra a sus subáreas. */
+  toggle: (keys: string[]) => void;
 }
 
 const STORAGE_KEY = "rumbo.calendar.hidden";
@@ -17,9 +18,13 @@ export function useVisibility(): Visibility {
 
   return {
     isHidden: (key) => hidden.has(key),
-    toggle: (key) => {
+    toggle: (keys) => {
       const next = new Set(hidden);
-      if (!next.delete(key)) next.add(key);
+      const show = hidden.has(keys[0]!);
+      for (const key of keys) {
+        if (show) next.delete(key);
+        else next.add(key);
+      }
       setHidden(next);
       write(next);
     },

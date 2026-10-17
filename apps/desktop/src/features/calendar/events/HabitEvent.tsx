@@ -1,8 +1,8 @@
 import type { CalendarEvent, IsoDate } from "@rumbo/core";
 import { useRumbo } from "@/app/RumboContext";
 import { useHabitLook } from "@/hooks/useHabitLook";
-import { HabitIcon } from "../habits/HabitIcon";
-import { HabitCheck } from "../habits/HabitCheck";
+import { HabitIcon } from "@/features/habits/HabitIcon";
+import { HabitCheck } from "@/features/habits/HabitCheck";
 import { tint } from "./tint";
 import { TimePill } from "./TimePill";
 
