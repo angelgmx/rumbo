@@ -5,6 +5,8 @@ export interface Task {
   id: number;
   text: string;
   done: boolean;
+  /** Empezada y sin terminar: la columna «En curso» de un tablero. */
+  inProgress: boolean;
   due?: IsoDate;
   scheduled?: IsoDate;
   /** La hora «HH:MM» a la que toca el día programado. */
@@ -17,6 +19,8 @@ export interface Task {
   area?: string;
   /** El proyecto al que pertenece. */
   projectId?: number;
+  /** El hito de su proyecto con el que se cumple. */
+  milestoneId?: number;
   /** El objetivo que empuja directamente, sin pasar por un proyecto. */
   goalId?: number;
   /** Nombre de la nota del módulo de una ruta. */
@@ -43,6 +47,11 @@ export interface TaskStep {
 
 export type TaskView = "inbox" | "today" | "upcoming" | "someday" | "done";
 export type Priority = "high" | "medium" | "low";
+export type TaskStatus = "todo" | "doing" | "done";
+
+export function taskStatus(task: Pick<Task, "done" | "inProgress">): TaskStatus {
+  return task.done ? "done" : task.inProgress ? "doing" : "todo";
+}
 
 /** Lo que se rellena al crear una tarea. */
 export interface TaskDraft {
@@ -55,6 +64,7 @@ export interface TaskDraft {
   recurrence?: string;
   area?: string;
   projectId?: number;
+  milestoneId?: number;
   goalId?: number;
   module?: string;
   exercise?: string;
@@ -110,6 +120,7 @@ export function taskToDraft(task: Task): TaskDraft {
     recurrence: task.recurrence,
     area: task.area,
     projectId: task.projectId,
+    milestoneId: task.milestoneId,
     goalId: task.goalId,
     module: task.module,
     exercise: task.exercise,

@@ -2,6 +2,7 @@ import type { TaskDraft } from "@rumbo/core";
 import { BookOpenIcon, MapPinIcon } from "lucide-react";
 import { PanelSection } from "@/components/panel/PanelSection";
 import { ReadOnlyRow } from "@/components/panel/PropertyRow";
+import { projectHref } from "@/features/projects/projectLabels";
 import { TaskLinkButton } from "@/features/tasks/TaskLinkButton";
 import { useTaskLink } from "@/features/tasks/useTaskLink";
 import { AreaProperty } from "./AreaProperty";
@@ -47,6 +48,15 @@ export function WhereGroup({
           empty="Elegir proyecto"
           value={draft.projectId?.toString()}
           options={options.projects}
+          link={
+            draft.projectId === undefined
+              ? undefined
+              : {
+                  href: projectHref(draft.projectId),
+                  label: "Abrir proyecto",
+                  onNavigate: close,
+                }
+          }
           onChange={(project) => onChange({ projectId: project ? Number(project) : undefined })}
         />
       )}

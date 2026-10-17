@@ -90,6 +90,7 @@ describe("routine domain", () => {
       id,
       text: `Task ${id}`,
       done: false,
+      inProgress: false,
       tags: [],
       spent: 0,
       steps: [],

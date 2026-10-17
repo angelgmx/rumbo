@@ -8,6 +8,7 @@ import {
   type Task,
   type TaskChanges,
   type TaskDraft,
+  type TaskStatus,
   type TaskView,
 } from "../domain/tasks";
 import type { GoalRepository } from "../db/goalRepository";
@@ -131,13 +132,26 @@ export class TaskService {
   }
 
   setDone(task: Task, done: boolean): Promise<void> {
-    return this.tasks.setDone(task.id, done ? this.daily.today() : undefined);
+    return this.setStatus(task, done ? "done" : "todo");
   }
 
-  /** Cambia la tarea. Sin fecha no hay hora: quitar la fecha quita también la hora. */
+  /** Pasa la tarea a por hacer, en curso o hecha; al hacerla se apunta el día. */
+  setStatus(task: Task, status: TaskStatus): Promise<void> {
+    return this.tasks.setStatus(task.id, status, this.daily.today());
+  }
+
+  /**
+   * Cambia la tarea. Sin fecha no hay hora: quitar la fecha quita también la hora. Un hito es de
+   * un proyecto: al cambiar de proyecto la tarea deja el hito.
+   */
   update(task: Task, changes: TaskChanges): Promise<void> {
     const unscheduled = "scheduled" in changes && changes.scheduled === undefined;
-    return this.tasks.update(task.id, unscheduled ? { ...changes, time: undefined } : changes);
+    const moved = "projectId" in changes && changes.projectId !== task.projectId;
+    return this.tasks.update(task.id, {
+      ...(moved && { milestoneId: undefined }),
+      ...changes,
+      ...(unscheduled && { time: undefined }),
+    });
   }
 
   /** Apunta los minutos de una sesión de trabajo en la tarea. */
@@ -172,8 +186,8 @@ export class TaskService {
   }
 
   /** Crea una tarea. Sin fecha, área ni proyecto queda en el inbox para procesarla. */
-  async create(draft: TaskDraft): Promise<Task | undefined> {
-    return this.tasks.insert(draft, this.daily.today());
+  async create(draft: TaskDraft, status: TaskStatus = "todo"): Promise<Task | undefined> {
+    return this.tasks.insert(draft, this.daily.today(), { status });
   }
 
   /**
@@ -197,22 +211,26 @@ export class TaskService {
 
   /**
    * Crea una tarea con el título escrito en lenguaje natural («ejercicios hoy 45m !alta»),
-   * unida a lo que se diga. Sin área propia toma la del proyecto.
+   * unida a lo que se diga y en el estado que se pida. Sin área propia toma la del proyecto.
    */
   createFromTitle(
     input: string,
-    links: Pick<TaskDraft, "goalId" | "projectId" | "area">,
+    links: Pick<TaskDraft, "goalId" | "projectId" | "milestoneId" | "area">,
+    status: TaskStatus = "todo",
   ): Promise<Task | undefined> {
     const title = parseTaskTitle(input, this.daily.today());
-    return this.create({
-      text: title.text,
-      scheduled: title.date,
-      duration: title.duration,
-      priority: title.priority,
-      tags: title.tags,
-      ...links,
-      area: links.area ?? this.inheritedArea(links),
-    });
+    return this.create(
+      {
+        text: title.text,
+        scheduled: title.date,
+        duration: title.duration,
+        priority: title.priority,
+        tags: title.tags,
+        ...links,
+        area: links.area ?? this.inheritedArea(links),
+      },
+      status,
+    );
   }
 
   private named(name: string | undefined): Note | undefined {

@@ -1,5 +1,5 @@
 import type { IsoDate } from "../domain/dates";
-import type { Priority, Task, TaskDraft, TaskStep } from "../domain/tasks";
+import type { Priority, Task, TaskDraft, TaskStatus, TaskStep } from "../domain/tasks";
 import type { SqlValue } from "../ports";
 import type { AppDatabase } from "./appDatabase";
 import { PRIORITY_FROM_ROW, PRIORITY_TO_ROW, withoutUndefined } from "./rows";
@@ -21,6 +21,7 @@ interface TaskRow {
   minutos_trabajados: number;
   area: string | null;
   proyecto_id: number | null;
+  hito_id: number | null;
   objetivo_id: number | null;
   modulo: string | null;
   ejercicio: string | null;
@@ -29,6 +30,12 @@ interface TaskRow {
   creada: string;
   hecha_el: string | null;
 }
+
+const STATUS_TO_ROW: Record<TaskStatus, string> = {
+  todo: "pendiente",
+  doing: "en_curso",
+  done: "hecha",
+};
 
 // Columna de la tabla para cada campo del borrador.
 const COLUMNS = {
@@ -45,6 +52,7 @@ const COLUMNS = {
   spent: "minutos_trabajados",
   area: "area",
   projectId: "proyecto_id",
+  milestoneId: "hito_id",
   goalId: "objetivo_id",
   module: "modulo",
   exercise: "ejercicio",
@@ -76,24 +84,21 @@ export class TaskRepository {
     return this.cache.get(id);
   }
 
+  /** Crea la tarea en el estado dado; si nace hecha, `doneOn` es el día en que se hizo. */
   async insert(
     draft: TaskDraft,
     created: IsoDate,
-    done?: { on: IsoDate },
+    state: { status: TaskStatus; doneOn?: IsoDate } = { status: "todo" },
   ): Promise<Task | undefined> {
+    const doneOn = state.status === "done" ? (state.doneOn ?? created) : undefined;
     const values = toRow(draft);
     const columns = [...Object.keys(values), "creada", "estado", "hecha_el"];
-    const params = [
-      ...Object.values(values),
-      created,
-      done ? "hecha" : "pendiente",
-      done?.on ?? null,
-    ];
+    const params = [...Object.values(values), created, STATUS_TO_ROW[state.status], doneOn ?? null];
     const sql = `INSERT INTO tareas (${columns.join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`;
     let inserted: Task | undefined;
     await this.db.write(sql, params, (id) => {
       if (id === undefined) return;
-      inserted = fromDraft(id, draft, created, done?.on);
+      inserted = fromDraft(id, draft, created, state.status, doneOn);
       this.cache.set(id, inserted);
     });
     return inserted;
@@ -110,12 +115,15 @@ export class TaskRepository {
     );
   }
 
-  async setDone(id: number, doneOn: IsoDate | undefined): Promise<void> {
+  /** Cambia el estado de la tarea; `doneOn` solo cuenta si queda hecha. */
+  async setStatus(id: number, status: TaskStatus, doneOn: IsoDate | undefined): Promise<void> {
     if (!this.cache.has(id)) return;
+    const when = status === "done" ? doneOn : undefined;
     await this.db.write(
       "UPDATE tareas SET estado = ?, hecha_el = ? WHERE id = ?",
-      [doneOn ? "hecha" : "pendiente", doneOn ?? null, id],
-      () => this.patch(id, { done: doneOn !== undefined, doneOn }),
+      [STATUS_TO_ROW[status], when ?? null, id],
+      () =>
+        this.patch(id, { done: status === "done", inProgress: status === "doing", doneOn: when }),
     );
   }
 
@@ -170,6 +178,7 @@ function fromRow(row: TaskRow): Task {
     id: row.id,
     text: row.titulo,
     done: row.estado === "hecha",
+    inProgress: row.estado === "en_curso",
     doneOn: row.hecha_el ?? undefined,
     scheduled: row.programada ?? undefined,
     time: row.hora ?? undefined,
@@ -179,6 +188,7 @@ function fromRow(row: TaskRow): Task {
     tags: JSON.parse(row.etiquetas) as string[],
     area: row.area ?? undefined,
     projectId: row.proyecto_id ?? undefined,
+    milestoneId: row.hito_id ?? undefined,
     goalId: row.objetivo_id ?? undefined,
     module: row.modulo ?? undefined,
     exercise: row.ejercicio ?? undefined,
@@ -192,12 +202,19 @@ function fromRow(row: TaskRow): Task {
   };
 }
 
-function fromDraft(id: number, draft: TaskDraft, created: IsoDate, doneOn?: IsoDate): Task {
+function fromDraft(
+  id: number,
+  draft: TaskDraft,
+  created: IsoDate,
+  status: TaskStatus,
+  doneOn: IsoDate | undefined,
+): Task {
   return {
     ...withoutUndefined(draft),
     id,
     text: draft.text.trim(),
-    done: doneOn !== undefined,
+    done: status === "done",
+    inProgress: status === "doing",
     doneOn,
     tags: draft.tags ?? [],
     steps: draft.steps ?? [],

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { OptionList, type PropertyOption } from "@/components/panel/OptionList";
+import { PageLink } from "@/components/PageLink";
 import { PropertyRow } from "@/components/panel/PropertyRow";
 
 /** Una propiedad que se elige de una lista (proyecto, módulo, repetición…). */
@@ -10,6 +11,7 @@ export function OptionProperty({
   empty,
   value,
   options,
+  link,
   onChange,
 }: {
   /** Va delante del valor elegido. */
@@ -21,6 +23,8 @@ export function OptionProperty({
   empty?: string;
   value: string | undefined;
   options: PropertyOption[];
+  /** Si la opción elegida tiene página propia: adónde lleva y qué dice el enlace. */
+  link?: { href: string; label: string; onNavigate: () => void };
   onChange: (value: string | undefined) => void;
 }) {
   // Un valor que la lista no ofrece (de otra herramienta, o de una nota borrada) se enseña tal cual.
@@ -46,6 +50,10 @@ export function OptionProperty({
         )
       }
       width="w-64"
+      trailing={
+        selected &&
+        link && <PageLink href={link.href} label={link.label} onNavigate={link.onNavigate} />
+      }
     >
       {(close) => (
         <OptionList

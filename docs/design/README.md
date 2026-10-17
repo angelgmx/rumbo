@@ -18,7 +18,7 @@ Antes de diseñar o programar una pantalla, lee [flujo.md](flujo.md) (a qué pas
 | 03 | Calendario | ¿Cuándo lo hago? | [Semana con fuentes](03-calendario/01-semana.png) · [Rutina y crear al arrastrar](03-calendario/02-rutina.png) |
 | 05 | Hábitos | ¿Cómo van mis rachas? | [Hábitos con panel](05-habitos/01-habitos.png) |
 | 06 | Objetivos | ¿Qué quiero lograr? | [Objetivo (panel)](06-objetivos/01-objetivo.png) · [Objetivo sin plan](06-objetivos/04-objetivo-sin-plan.png) |
-| 07 | Proyectos | ¿Qué estoy construyendo? | [Proyectos con panel](07-proyectos/01-proyectos.png) |
+| 07 | Proyectos | ¿Qué estoy construyendo? | [Proyectos: tablero](07-proyectos/01-proyectos.png) · [Proyectos: lista](07-proyectos/05-proyectos-lista.png) · [Página de proyecto: tablero](07-proyectos/03-proyecto.png) · [Página de proyecto: lista](07-proyectos/04-proyecto-lista.png) |
 | 08 | Roadmaps | ¿Qué estoy aprendiendo? | [Roadmap por fases](08-roadmaps/02-roadmap.png) · [Módulo (panel)](08-roadmaps/03-modulo.png) |
 | 09 | Conocimiento | ¿Qué sé y qué he escrito? | [Árbol, lectura y lo importante](09-conocimiento/01-conocimiento.png) · [Modo lectura](09-conocimiento/02-modo-lectura.png) |
 | 10 | Métricas | ¿Cómo voy? | [Métricas en 5 bloques](10-metricas/01-metricas.png) |
@@ -44,7 +44,7 @@ Láminas de diseños anteriores, algunas con el raíl antiguo: sirven para las f
 | Tareas | [Inbox](02-tareas/01-inbox.png) · [Próximas](02-tareas/02-proximas.png) · [Nueva tarea](02-tareas/03-nueva-tarea.png) · [Detalle (sustituido)](02-tareas/04-detalle-tarea.png) · [Contadores (descartado)](02-tareas/05-contadores.png) · [Procesar inbox](02-tareas/06-procesar-inbox.png) |
 | Hábitos | [Crear hábito](05-habitos/02-crear-habito.png) |
 | Objetivos | [Visión (descartada)](06-objetivos/02-vision.png) · [Crear objetivo](06-objetivos/03-crear-objetivo.png) |
-| Proyectos | [Crear proyecto: gym](07-proyectos/02-crear-proyecto.png) · [Crear proyecto: marketing](07-proyectos/03-crear-proyecto-marketing.png) |
+| Proyectos | [Crear proyecto: gym](07-proyectos/02-crear-proyecto.png) |
 | Roadmaps | [Roadmaps](08-roadmaps/01-roadmaps.png) · [Repaso](08-roadmaps/04-repaso.png) · [Crear con IA](08-roadmaps/05-crear-ruta-ia.png) · [Ruta con vídeos](08-roadmaps/06-ruta-con-videos.png) · [Temario](08-roadmaps/07-temario.png) |
 | Conocimiento | [Nota](09-conocimiento/02-nota-anterior.png) · [Nota en claro](09-conocimiento/03-nota-clara-anterior.png) |
 | Ejercicios | [Ejercicio](11-ejercicios/02-ejercicio.png) · [Reto](11-ejercicios/03-reto.png) |
@@ -52,4 +52,4 @@ Láminas de diseños anteriores, algunas con el raíl antiguo: sirven para las f
 
 ## Cómo se generan
 
-Las láminas se generan con VectorCraft, fuera del repo, en `~/Documentos/Rumbo-diseño/generador/`. Las vigentes salen de `build14.py` (tanda 1), `build15.py` (tanda 2), `build16.py` (Conocimiento) y `build17.py` (tanda 3). Con `--docs`, cada script copia sus PNG a esta carpeta.
+Las láminas se generan con VectorCraft, fuera del repo, en `~/Documentos/Rumbo-diseño/generador/`. Las vigentes salen de `build14.py` (tanda 1), `build15.py` (tanda 2), `build16.py` (Conocimiento), `build17.py` (tanda 3) y `build18.py` (página de proyecto). Con `--docs`, cada script copia sus PNG a esta carpeta.

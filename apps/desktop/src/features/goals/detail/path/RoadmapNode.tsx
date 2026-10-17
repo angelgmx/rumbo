@@ -2,9 +2,9 @@ import type { GoalRoadmap, GoalSummary } from "@rumbo/core";
 import { BookOpenIcon, LibraryIcon } from "lucide-react";
 import { useRumbo } from "@/app/RumboContext";
 import { StepsMeter } from "./StepsMeter";
-import { TaskLeaf } from "./TaskLeaf";
 import { TreeNode } from "./TreeNode";
 import { useRoadmapHref } from "./useRoadmapHref";
+import { TaskLeaf } from "@/features/tasks/TaskLeaf";
 
 /** Una ruta del objetivo, con el módulo que toca y las tareas de hoy de ese módulo. */
 export function RoadmapNode({ goal, roadmap }: { goal: GoalSummary; roadmap: GoalRoadmap }) {

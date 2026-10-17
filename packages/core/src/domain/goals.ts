@@ -108,7 +108,7 @@ const AT_RISK_RATIO = 0.5;
 
 /** El ritmo real frente al necesario; solo para un objetivo en marcha, con fecha límite y sin terminar. */
 export function goalPace(
-  goal: Goal,
+  goal: Pick<Goal, "start" | "deadline"> & { status: string },
   progress: number | undefined,
   today: IsoDate,
 ): GoalPace | undefined {

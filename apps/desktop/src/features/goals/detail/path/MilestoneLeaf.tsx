@@ -7,11 +7,9 @@ import { cn } from "@/lib/utils";
 /** Un hito del proyecto: la bandera lo marca como hecho o lo reabre. */
 export function MilestoneLeaf({
   projectId,
-  index,
   milestone,
 }: {
   projectId: number;
-  index: number;
   milestone: Milestone;
 }) {
   const { projects } = useRumbo();
@@ -20,7 +18,7 @@ export function MilestoneLeaf({
     <button
       type="button"
       aria-pressed={milestone.done}
-      onClick={() => void projects.setMilestone(projectId, index, !milestone.done)}
+      onClick={() => void projects.setMilestone(projectId, milestone.id, !milestone.done)}
       className="flex min-h-10 items-center gap-3 pl-1.5 text-left text-sm"
     >
       <FlagIcon

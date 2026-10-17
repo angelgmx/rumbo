@@ -167,11 +167,10 @@ export class VaultImport {
     draft.projectId = this.projectIds.get(project ?? "");
     if (inFocus) draft.focusOn = day;
     const created = day ?? this.daily.today();
-    await this.repositories.tasks.insert(
-      draft,
-      created,
-      task.done ? { on: task.doneOn ?? created } : undefined,
-    );
+    await this.repositories.tasks.insert(draft, created, {
+      status: task.done ? "done" : "todo",
+      doneOn: task.doneOn ?? created,
+    });
   }
 
   private async once(key: string, run: () => Promise<void>): Promise<void> {

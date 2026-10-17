@@ -205,6 +205,61 @@ describe("editing tasks", () => {
     expect(rumbo.tasks.get(task!.id)!.time).toBeUndefined();
   });
 
+  it("moves a task between to do, doing and done, dating when it is done", async () => {
+    const database = memoryDatabase();
+    const open = () => createRumbo({ fs: memoryFileSystem(files), database, clock });
+    const first = await open();
+    const [task] = first.tasks.list("inbox");
+    const state = async (app: Rumbo) => {
+      const { done, inProgress, doneOn } = app.tasks.get(task!.id)!;
+      return { done, inProgress, doneOn };
+    };
+
+    await first.tasks.setStatus(task!, "doing");
+    expect(await state(first)).toEqual({ done: false, inProgress: true, doneOn: undefined });
+    expect(await state(await open())).toEqual({ done: false, inProgress: true, doneOn: undefined });
+
+    await first.tasks.setStatus(task!, "done");
+    expect(await state(first)).toEqual({ done: true, inProgress: false, doneOn: "2026-10-15" });
+
+    await first.tasks.setDone(task!, false);
+    expect(await state(await open())).toEqual({
+      done: false,
+      inProgress: false,
+      doneOn: undefined,
+    });
+  });
+
+  it("creates a task in the state it is asked for", async () => {
+    const doing = await rumbo.tasks.create({ text: "Empezada" }, "doing");
+    const done = await rumbo.tasks.create({ text: "Terminada" }, "done");
+    expect(doing).toMatchObject({ done: false, inProgress: true });
+    expect(done).toMatchObject({ done: true, inProgress: false, doneOn: "2026-10-15" });
+  });
+
+  it("leaves the milestone when the task changes project", async () => {
+    const first = await rumbo.projects.create({
+      title: "Web",
+      outcome: "Publicada",
+      status: "active",
+      links: [],
+      milestones: [{ title: "Landing" }],
+    });
+    const second = await rumbo.projects.create({
+      title: "App",
+      outcome: "Publicada",
+      status: "active",
+      links: [],
+      milestones: [],
+    });
+    const task = await rumbo.tasks.createFromTitle("Textos", { projectId: first, milestoneId: 1 });
+
+    await rumbo.tasks.update(task!, { priority: "high" });
+    expect(rumbo.tasks.get(task!.id)!.milestoneId).toBe(1);
+    await rumbo.tasks.update(task!, { projectId: second });
+    expect(rumbo.tasks.get(task!.id)!.milestoneId).toBeUndefined();
+  });
+
   it("survives closing and opening the app", async () => {
     const database = memoryDatabase();
     const open = () => createRumbo({ fs: memoryFileSystem(files), database, clock });

@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { useState, type KeyboardEvent } from "react";
+import { useState, type KeyboardEvent, type Ref } from "react";
 import type { PropertyOption } from "@/components/panel/OptionList";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,8 @@ export function AddField({
   options = [],
   onPick,
   onCreate,
+  hint,
+  inputRef,
 }: {
   icon: LucideIcon;
   label: string;
@@ -21,6 +23,9 @@ export function AddField({
   options?: PropertyOption[];
   onPick?: (value: string) => void;
   onCreate?: (text: string) => void;
+  /** Una nota al final del campo, p. ej. dónde se crea lo que se escribe. */
+  hint?: string;
+  inputRef?: Ref<HTMLInputElement>;
 }) {
   const [text, setText] = useState("");
   const [focused, setFocused] = useState(false);
@@ -62,6 +67,7 @@ export function AddField({
       <label className="flex h-9 items-center gap-3 rounded-lg px-2 text-sm transition-colors duration-(--dur-fast) focus-within:bg-muted hover:bg-muted/60">
         <Icon className="size-4 shrink-0 text-muted-foreground" />
         <input
+          ref={inputRef}
           aria-label={label}
           value={text}
           placeholder={placeholder}
@@ -74,6 +80,7 @@ export function AddField({
           onKeyDown={onKeyDown}
           className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
         />
+        {hint && <span className="shrink-0 text-xs text-muted-foreground">{hint}</span>}
       </label>
       {focused && matches.length > 0 && (
         <ul
