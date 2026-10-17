@@ -79,6 +79,7 @@ export function MiniMonth({
                 day={day}
                 outside={!day.startsWith(month)}
                 today={day === today}
+                selected={day === anchor}
                 marked={marked.has(day)}
                 onPick={onPick}
               />
@@ -94,12 +95,14 @@ function Day({
   day,
   outside,
   today,
+  selected,
   marked,
   onPick,
 }: {
   day: IsoDate;
   outside: boolean;
   today: boolean;
+  selected: boolean;
   marked: boolean;
   onPick: (date: IsoDate) => void;
 }) {
@@ -116,6 +119,7 @@ function Day({
           "flex size-6 items-center justify-center rounded-full transition-colors duration-(--dur-fast)",
           outside && "text-faint",
           today && "bg-primary font-medium text-primary-foreground",
+          !today && selected && "bg-card font-medium ring-1 ring-foreground/30",
         )}
       >
         {Number(day.slice(8))}

@@ -16,7 +16,7 @@ export function ProposalEvent({ suggestion }: { suggestion: OrganizeSuggestion }
     <div className="h-full overflow-hidden rounded-md border border-dashed border-primary bg-primary-soft px-2 py-1.5">
       <div className="flex items-center gap-1.5">
         <SparklesIcon className="size-3.5 shrink-0 text-primary-text" />
-        <span className="min-w-0 flex-1 truncate text-[13.5px] leading-5 font-medium">
+        <span className="min-w-0 flex-1 truncate text-[13px] leading-[18px] font-medium">
           {task.text}
         </span>
       </div>

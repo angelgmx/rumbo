@@ -18,7 +18,10 @@ export function AllDayRow({ days }: { days: CalendarDay[] }) {
   return (
     <>
       {days.map(({ date, deadlines, untimed }) => (
-        <div key={date} className="flex min-h-9 flex-col gap-0.5 border-l px-1 py-1">
+        <div
+          key={date}
+          className="flex min-h-9 flex-col gap-0.5 border-l border-border/60 px-1 py-1"
+        >
           {deadlines.map((deadline) => (
             <DeadlineChip key={`${deadline.kind}-${deadline.title}`} deadline={deadline} />
           ))}

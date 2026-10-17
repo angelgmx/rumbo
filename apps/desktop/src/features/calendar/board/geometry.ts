@@ -1,6 +1,6 @@
 import { minutesOf, type CalendarDay } from "@rumbo/core";
 
-export const HOUR_HEIGHT = 52;
+export const HOUR_HEIGHT = 56;
 export const GUTTER_WIDTH = 64;
 export const MIN_DAY_WIDTH = 150;
 export const MIN_EVENT_HEIGHT = 26;

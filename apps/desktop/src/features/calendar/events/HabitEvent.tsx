@@ -3,6 +3,8 @@ import { useRumbo } from "@/app/RumboContext";
 import { useHabitLook } from "@/hooks/useHabitLook";
 import { HabitIcon } from "@/features/habits/HabitIcon";
 import { HabitCheck } from "@/features/habits/HabitCheck";
+import { cn } from "@/lib/utils";
+import { EVENT_SURFACE } from "./eventSurface";
 import { tint } from "./tint";
 import { TimePill } from "./TimePill";
 
@@ -16,12 +18,12 @@ export function HabitEvent({ event, date }: { event: HabitCalendarEvent; date: I
 
   return (
     <div
-      className="h-full overflow-hidden rounded-md border-l-[3px] px-2 py-1"
+      className={cn(EVENT_SURFACE, "h-full overflow-hidden px-2 py-1")}
       style={{ backgroundColor: tint(look.color, 14), borderColor: look.color }}
     >
       <div className="flex items-center gap-1.5">
         <HabitIcon name={look.icon} color={look.color} />
-        <span className="min-w-0 flex-1 truncate text-[13.5px] leading-5 font-medium">
+        <span className="min-w-0 flex-1 truncate text-[13px] leading-[18px] font-medium">
           {habit.name}
         </span>
         {habit.kind !== "tasks" && (

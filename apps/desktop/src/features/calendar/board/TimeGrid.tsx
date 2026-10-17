@@ -21,13 +21,13 @@ export function TimeGrid({ days, range }: { days: CalendarDay[]; range: MinuteRa
 
   return (
     <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
-      <div className="sticky top-0 z-30 border-b bg-card">
+      <div className="sticky top-0 z-30 border-b border-border/70 bg-card">
         <div className="grid" style={{ gridTemplateColumns: columns }}>
           <span />
           <DayHeaders days={days} />
         </div>
         <div className="grid" style={{ gridTemplateColumns: columns }}>
-          <span className="pt-2 pr-2 text-right text-[11px] leading-[22px] text-faint">
+          <span className="pt-2 pr-3 text-right text-[12px] leading-[22px] text-muted-foreground">
             todo el día
           </span>
           <AllDayRow days={days} />
@@ -49,10 +49,10 @@ function Hours({ range, showsNow }: { range: MinuteRange; showsNow: boolean }) {
       {hoursOf(range).map((hour) => (
         <span
           key={hour}
-          className="absolute right-2 -translate-y-1/2 font-mono text-[11px] text-faint"
+          className="absolute right-3 -translate-y-1/2 font-mono text-[13px] leading-none text-muted-foreground"
           style={{ top: offsetOf(hour * 60, range) }}
         >
-          {String(hour).padStart(2, "0")}:00
+          {hour}
         </span>
       ))}
       {showsNow && <NowLabel range={range} />}

@@ -1,21 +1,22 @@
-import { type CalendarDay } from "@rumbo/core";
+import type { CalendarDay } from "@rumbo/core";
 import { FlagIcon } from "lucide-react";
-import { useCalendar } from "../CalendarContext";
+import type { ReactNode } from "react";
 import { useArea } from "@/hooks/useArea";
 import { capitalize, formatShortWeekday } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useCalendar } from "../CalendarContext";
 import { tint } from "../events/tint";
 
 // Lo que cabe en una casilla antes de pasar a «+N más».
 const MAX_ITEMS = 3;
 
-/** El mes sencillo: cada día con sus fechas límite y sus tareas; pulsar un día abre su vista. */
+/** El mes: cada día con su número, hasta tres eventos con su color y «+N más»; pulsar un día abre su vista. */
 export function MonthGrid({ days, month }: { days: CalendarDay[]; month: string }) {
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-card select-none">
-      <div className="grid shrink-0 grid-cols-7 border-b">
+      <div className="grid shrink-0 grid-cols-7 border-b border-border/70">
         {days.slice(0, 7).map(({ date }) => (
-          <span key={date} className="px-3 py-2 text-[13px] text-muted-foreground">
+          <span key={date} className="px-3 py-2.5 text-[13px] font-medium text-foreground/75">
             {capitalize(formatShortWeekday(date))}
           </span>
         ))}
@@ -30,8 +31,9 @@ export function MonthGrid({ days, month }: { days: CalendarDay[]; month: string 
 }
 
 function MonthDay({ day, outside }: { day: CalendarDay; outside: boolean }) {
-  const { today, openDay } = useCalendar();
+  const { today, anchor, openDay } = useCalendar();
   const isToday = day.date === today;
+  const isSelected = day.date === anchor;
   const tasks = [
     ...day.untimed,
     ...day.events.flatMap((event) => (event.kind === "task" ? [event.task] : [])),
@@ -49,14 +51,16 @@ function MonthDay({ day, outside }: { day: CalendarDay; outside: boolean }) {
       type="button"
       onClick={() => openDay(day.date)}
       className={cn(
-        "flex min-h-0 flex-col gap-0.5 overflow-hidden border-t border-l p-1.5 text-left transition-colors duration-(--dur-fast) hover:bg-muted/50",
-        outside && "text-faint",
+        "flex min-h-0 flex-col gap-0.5 overflow-hidden border-t border-l border-border/60 p-1.5 text-left transition-colors duration-(--dur-fast) hover:bg-muted/50",
+        isToday ? "bg-primary/[0.05]" : isSelected && "bg-foreground/[0.025]",
       )}
     >
       <span
         className={cn(
-          "mb-0.5 flex size-6 items-center justify-center self-start rounded-full text-[13px]",
-          isToday && "bg-primary font-medium text-primary-foreground",
+          "mb-0.5 flex size-7 items-center justify-center self-start rounded-full text-[13px] font-medium tabular-nums",
+          outside && "text-faint",
+          isToday && "bg-primary font-semibold text-primary-foreground shadow-sm",
+          !isToday && isSelected && "bg-muted ring-1 ring-foreground/25",
         )}
       >
         {Number(day.date.slice(8))}
@@ -65,18 +69,25 @@ function MonthDay({ day, outside }: { day: CalendarDay; outside: boolean }) {
         .slice(0, MAX_ITEMS)
         .map((item) =>
           "deadline" in item ? (
-            <MonthDeadline key={item.key} title={item.deadline.title} area={item.deadline.area} />
-          ) : (
-            <MonthTask
+            <MonthChip
               key={item.key}
-              text={item.task.text}
+              area={item.deadline.area}
+              muted={outside}
+              icon={<FlagIcon className="size-3 shrink-0" />}
+              text={item.deadline.title}
+            />
+          ) : (
+            <MonthChip
+              key={item.key}
               area={item.task.area}
+              muted={outside}
               done={item.task.done}
+              text={item.task.text}
             />
           ),
         )}
       {items.length > MAX_ITEMS && (
-        <span className="px-1 text-[12px] text-muted-foreground">
+        <span className="px-1 text-[12px] font-medium text-muted-foreground">
           +{items.length - MAX_ITEMS} más
         </span>
       )}
@@ -84,24 +95,29 @@ function MonthDay({ day, outside }: { day: CalendarDay; outside: boolean }) {
   );
 }
 
-function MonthDeadline({ title, area }: { title: string; area?: string }) {
+function MonthChip({
+  area,
+  text,
+  icon,
+  done,
+  muted,
+}: {
+  area?: string;
+  text: string;
+  icon?: ReactNode;
+  done?: boolean;
+  muted: boolean;
+}) {
   const { color } = useArea(area);
   return (
     <span
-      className="flex items-center gap-1 truncate rounded-[4px] px-1 text-[12px] leading-5"
-      style={{ backgroundColor: tint(color, 16) }}
+      className={cn(
+        "flex h-5 items-center gap-1 rounded-[4px] border-l-[3px] px-1.5 text-[12px] leading-5",
+        muted && "opacity-60",
+      )}
+      style={{ backgroundColor: tint(color, 15), borderColor: color }}
     >
-      <FlagIcon className="size-3 shrink-0" style={{ color }} />
-      <span className="truncate">{title}</span>
-    </span>
-  );
-}
-
-function MonthTask({ text, area, done }: { text: string; area?: string; done: boolean }) {
-  const { color } = useArea(area);
-  return (
-    <span className="flex items-center gap-1.5 truncate px-1 text-[12px] leading-5">
-      <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+      {icon && <span style={{ color }}>{icon}</span>}
       <span className={cn("truncate", done && "text-muted-foreground line-through")}>{text}</span>
     </span>
   );

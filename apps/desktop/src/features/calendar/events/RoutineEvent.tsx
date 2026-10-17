@@ -57,7 +57,7 @@ export function RoutineEvent({
             <RepeatIcon />
           )}
         </span>
-        <span className="min-w-0 flex-1 truncate text-[13.5px] leading-5 font-medium">
+        <span className="min-w-0 flex-1 truncate text-[13px] leading-[18px] font-medium">
           {summary.title}
         </span>
         {compact && steps.length > 0 && (

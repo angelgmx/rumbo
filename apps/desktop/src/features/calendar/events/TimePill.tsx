@@ -6,8 +6,8 @@ import { tint } from "./tint";
 export function TimePill({ start, end, color }: { start: string; end?: string; color: string }) {
   return (
     <span
-      className="w-fit rounded-full border px-2 font-mono text-[12px] leading-5 whitespace-nowrap"
-      style={{ backgroundColor: tint(color, 16), borderColor: tint(color, 40) }}
+      className="w-fit shrink-0 rounded-full border px-2 font-mono text-[12px] leading-[18px] whitespace-nowrap"
+      style={{ backgroundColor: tint(color, 18), borderColor: tint(color, 40) }}
     >
       {start}
       {end && ` · ${formatMinutes(minutesBetween(start, end))}`}

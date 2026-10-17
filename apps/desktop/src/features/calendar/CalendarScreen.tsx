@@ -21,6 +21,7 @@ import { MonthGrid } from "./board/MonthGrid";
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarProvider } from "./CalendarContext";
 import { viewCrumb, viewSubtitle } from "./calendarLabels";
+import { ViewSwitcher } from "./ViewSwitcher";
 import { useCalendarView, viewDays } from "./calendarView";
 import { OrganizeButton } from "./OrganizeButton";
 import { GestureGhost } from "./GestureGhost";
@@ -62,6 +63,7 @@ export function CalendarScreen() {
       <CalendarProvider
         value={{
           today,
+          anchor: view.anchor,
           proposals,
           openRoutine: (summary) => setRoutine({ summary }),
           draftRoutine: (draft) => setRoutine({ draft }),
@@ -114,11 +116,13 @@ export function CalendarScreen() {
                 }
               />
               <main className="flex min-w-0 flex-1 flex-col py-2 pr-4 pl-2">
-                {view.mode === "month" ? (
-                  <MonthGrid days={shownDays} month={view.anchor.slice(0, 7)} />
-                ) : (
-                  <DayGrid key={view.mode} days={days} visibility={visibility} />
-                )}
+                <ViewSwitcher mode={view.mode}>
+                  {view.mode === "month" ? (
+                    <MonthGrid days={shownDays} month={view.anchor.slice(0, 7)} />
+                  ) : (
+                    <DayGrid days={days} visibility={visibility} />
+                  )}
+                </ViewSwitcher>
               </main>
             </div>
           </div>

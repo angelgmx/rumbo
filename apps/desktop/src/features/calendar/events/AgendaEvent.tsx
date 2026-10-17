@@ -1,6 +1,8 @@
 import type { CalendarEvent, IsoDate } from "@rumbo/core";
 import { useRumbo } from "@/app/RumboContext";
 import { ColorCheck } from "@/components/ColorCheck";
+import { cn } from "@/lib/utils";
+import { EVENT_SURFACE } from "./eventSurface";
 import { tint } from "./tint";
 
 type AgendaCalendarEvent = Extract<CalendarEvent, { kind: "agenda" }>;
@@ -14,7 +16,7 @@ export function AgendaEvent({ event, date }: { event: AgendaCalendarEvent; date:
 
   return (
     <div
-      className="h-full overflow-hidden rounded-md border-l-[3px] px-2 py-1.5"
+      className={cn(EVENT_SURFACE, "h-full overflow-hidden px-2 py-1.5")}
       style={{ backgroundColor: tint(COLOR, 14), borderColor: COLOR }}
     >
       <div className="flex items-center gap-1.5">
@@ -24,7 +26,7 @@ export function AgendaEvent({ event, date }: { event: AgendaCalendarEvent; date:
           label={block.text}
           onToggle={() => void agenda.setDone(date, block, !block.done)}
         />
-        <span className="truncate text-[13.5px] leading-5 font-medium">{block.text}</span>
+        <span className="truncate text-[13px] leading-[18px] font-medium">{block.text}</span>
       </div>
     </div>
   );

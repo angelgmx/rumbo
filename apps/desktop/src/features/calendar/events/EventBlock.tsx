@@ -55,7 +55,7 @@ export function EventBlock({
         width: `${100 / lanes}%`,
       }}
     >
-      {event.kind === "task" && <TaskEvent event={{ ...event, end }} height={height} />}
+      {event.kind === "task" && <TaskEvent event={{ ...event, end }} date={date} height={height} />}
       {event.kind === "habit" && <HabitEvent event={event} date={date} />}
       {event.kind === "agenda" && <AgendaEvent event={event} date={date} />}
       {event.kind === "routine" && (

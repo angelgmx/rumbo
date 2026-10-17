@@ -4,6 +4,8 @@ import type { RoutineDraft } from "@/features/routines/panel/useRoutineDraft";
 
 interface CalendarContextValue {
   today: IsoDate;
+  /** El día elegido: el que se pulsó en el mes o al que se movió el calendario. */
+  anchor: IsoDate;
   /** Lo que la IA propone colocar en la rejilla. */
   proposals: OrganizeSuggestion[];
   openRoutine: (summary: RoutineSummary) => void;

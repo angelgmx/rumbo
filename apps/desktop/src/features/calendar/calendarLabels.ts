@@ -1,18 +1,30 @@
 import {
+  addDays,
   freeMinutes,
   isoWeek,
+  startOfWeek,
   type CalendarDay,
   type CalendarSource,
   type IsoDate,
 } from "@rumbo/core";
 import { formatMonthTitle } from "@/lib/calendar";
-import { capitalize, formatDay, formatDayMonth, formatMinutes } from "@/lib/format";
+import { capitalize, formatDay, formatDayMonth, formatDayRange, formatMinutes } from "@/lib/format";
 import type { CalendarMode } from "./calendarView";
 import { sourceName } from "./source/sourceInfo";
 
-/** El título grande de la vista: «Octubre 2026» o el día. */
+/** El título grande de la vista: el día, el rango de la semana («12 – 18 oct 2026») o el mes. */
 export function viewTitle(mode: CalendarMode, anchor: IsoDate): string {
-  return mode === "day" ? capitalize(formatDay(anchor)) : formatMonthTitle(anchor.slice(0, 7));
+  if (mode === "day") return capitalize(formatDay(anchor));
+  if (mode === "week") return weekTitle(startOfWeek(anchor));
+  return formatMonthTitle(anchor.slice(0, 7));
+}
+
+function weekTitle(first: IsoDate): string {
+  const last = addDays(first, 6);
+  if (first.slice(0, 4) !== last.slice(0, 4)) {
+    return `${formatDayMonth(first)} ${first.slice(0, 4)} – ${formatDayMonth(last)} ${last.slice(0, 4)}`;
+  }
+  return `${formatDayRange(first, last)} ${last.slice(0, 4)}`;
 }
 
 /** Dónde estás, para la miga de arriba: «Semana 42». */
