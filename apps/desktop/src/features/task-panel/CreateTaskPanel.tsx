@@ -1,5 +1,5 @@
 import { useState, type KeyboardEvent } from "react";
-import { useLocation } from "wouter";
+import { useHashLocation } from "wouter/use-hash-location";
 import { useRumbo } from "@/app/RumboContext";
 import { CreateTaskFooter } from "./CreateTaskFooter";
 import { TaskPanelBody } from "./TaskPanelBody";
@@ -69,11 +69,17 @@ function NewTaskForm({
 }
 
 // Lo que se crea desde Foco o desde Tareas › Hoy es para hoy: si no, se perdería en el inbox.
+// Lo que se crea desde la página de un proyecto es de ese proyecto.
 const TODAY_SCREENS = ["/", "/tareas/hoy"];
+
+// El panel vive fuera del router de la app, que va por «#»: la pantalla se lee de ahí.
+const PROJECT_PAGE = /^\/proyectos\/(\d+)$/;
 
 function useStartingDraft() {
   const rumbo = useRumbo();
-  const [location] = useLocation();
+  const [location] = useHashLocation();
+  const project = PROJECT_PAGE.exec(location)?.[1];
+  if (project) return { ...EMPTY_DRAFT, projectId: Number(project) };
   return TODAY_SCREENS.includes(location)
     ? { ...EMPTY_DRAFT, scheduled: rumbo.daily.today() }
     : EMPTY_DRAFT;

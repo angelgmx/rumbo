@@ -13,6 +13,7 @@ export function PropertyRow({
   value,
   empty = "—",
   width,
+  trailing,
   children,
 }: {
   icon?: LucideIcon;
@@ -20,6 +21,8 @@ export function PropertyRow({
   value: ReactNode | undefined;
   empty?: string;
   width?: string;
+  /** Algo que acompaña al valor y no abre su selector, como un enlace a su página. */
+  trailing?: ReactNode;
   children: (close: () => void) => ReactNode;
 }) {
   return (
@@ -39,6 +42,7 @@ export function PropertyRow({
       >
         {children}
       </PropertyPopover>
+      {trailing}
     </div>
   );
 }

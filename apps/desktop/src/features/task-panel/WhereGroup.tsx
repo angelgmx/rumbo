@@ -1,9 +1,11 @@
 import type { TaskDraft } from "@rumbo/core";
 import { BookOpenIcon, MapPinIcon } from "lucide-react";
 import { PanelSection } from "@/components/panel/PanelSection";
+import { projectHref } from "@/features/projects/projectLabels";
 import { AreaProperty } from "./AreaProperty";
 import { GoalProperty } from "./GoalProperty";
 import { OptionProperty } from "./OptionProperty";
+import { useTaskPanel } from "./TaskPanelProvider";
 import { TagsProperty } from "./TagsProperty";
 import type { Inheritance } from "./useInheritance";
 import type { TaskContext } from "./useTaskContext";
@@ -23,6 +25,8 @@ export function WhereGroup({
   options: TaskOptions;
   onChange: (changes: Partial<TaskDraft>) => void;
 }) {
+  const panel = useTaskPanel();
+
   return (
     <PanelSection title="Dónde" icon={MapPinIcon}>
       {options.areas.length > 0 && (
@@ -40,6 +44,15 @@ export function WhereGroup({
           empty="Elegir proyecto"
           value={draft.projectId?.toString()}
           options={options.projects}
+          link={
+            draft.projectId === undefined
+              ? undefined
+              : {
+                  href: projectHref(draft.projectId),
+                  label: "Abrir proyecto",
+                  onNavigate: panel.close,
+                }
+          }
           onChange={(project) => onChange({ projectId: project ? Number(project) : undefined })}
         />
       )}
