@@ -9,6 +9,7 @@ import { ExerciseScreen } from "@/features/exercises/ExerciseScreen";
 import { ExercisesScreen } from "@/features/exercises/ExercisesScreen";
 import { GoalsScreen } from "@/features/goals/GoalsScreen";
 import { HabitsScreen } from "@/features/habits/HabitsScreen";
+import { ProjectScreen } from "@/features/projects/page/ProjectScreen";
 import { ProjectsScreen } from "@/features/projects/ProjectsScreen";
 import { RoadmapsScreen } from "@/features/roadmaps/RoadmapsScreen";
 import { RoutinesScreen } from "@/features/routines/RoutinesScreen";
@@ -55,7 +56,8 @@ export function App() {
                         <Route path="/areas/:topic" component={TopicScreen} />
                         <Route path="/habitos" component={HabitsScreen} />
                         <Route path="/objetivos/:id?" component={GoalsScreen} />
-                        <Route path="/proyectos/:id?" component={ProjectsScreen} />
+                        <Route path="/proyectos" component={ProjectsScreen} />
+                        <Route path="/proyectos/:id" component={ProjectScreen} />
                         <Route path="/ajustes/ia" component={SettingsScreen} />
                       </Switch>
                     </AppShell>
