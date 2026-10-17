@@ -16,17 +16,15 @@ import { inDaysLabel } from "../projectLabels";
  */
 export function MilestoneRow({
   projectId,
-  index,
   milestone,
   next,
 }: {
   projectId: number;
-  index: number;
   milestone: Milestone;
   next: boolean;
 }) {
   const { projects, daily } = useRumbo();
-  const { title, date, done } = milestone;
+  const { id, title, date, done } = milestone;
 
   return (
     <li className="group relative flex min-h-8 items-center gap-3 text-sm">
@@ -34,7 +32,7 @@ export function MilestoneRow({
         type="button"
         aria-pressed={done}
         aria-label={title}
-        onClick={() => void projects.setMilestone(projectId, index, !done)}
+        onClick={() => void projects.setMilestone(projectId, id, !done)}
         className={cn(
           "relative z-10 flex size-4 shrink-0 items-center justify-center rounded-full border-2 bg-card outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
           done && "border-success bg-success text-card",
@@ -61,7 +59,7 @@ export function MilestoneRow({
           size="icon-xs"
           aria-label={`Quitar ${title}`}
           className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-          onClick={() => void projects.removeMilestone(projectId, index)}
+          onClick={() => void projects.removeMilestone(projectId, id)}
         >
           <XIcon />
         </Button>
@@ -74,7 +72,7 @@ export function MilestoneRow({
           {(close) => (
             <DayPicker
               date={date}
-              onChange={(value) => void projects.setMilestoneDate(projectId, index, value)}
+              onChange={(value) => void projects.setMilestoneDate(projectId, id, value)}
               onDone={close}
             />
           )}

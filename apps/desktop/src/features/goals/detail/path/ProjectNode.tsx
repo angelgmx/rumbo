@@ -22,8 +22,8 @@ export function ProjectNode({ goal, summary }: { goal: GoalSummary; summary: Pro
       removeLabel={`Quitar ${project.title}`}
       onRemove={() => void goals.disconnect(goal.id, { kind: "project", id })}
     >
-      {project.milestones.map((milestone, index) => (
-        <MilestoneLeaf key={index} projectId={id} index={index} milestone={milestone} />
+      {project.milestones.map((milestone) => (
+        <MilestoneLeaf key={milestone.id} projectId={id} milestone={milestone} />
       ))}
       {nextTasks.map((task) => (
         <TaskLeaf key={task.id} task={task} />

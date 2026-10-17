@@ -1,7 +1,7 @@
 import {
   sortMilestones,
   type IsoDate,
-  type Milestone,
+  type NewMilestone,
   type ProjectInput,
   type ProjectStatus,
 } from "@rumbo/core";
@@ -14,7 +14,7 @@ export interface ProjectDraft {
   goalId?: number;
   deadline?: IsoDate;
   status: ProjectStatus;
-  milestones: Milestone[];
+  milestones: NewMilestone[];
   tasks: string[];
 }
 
@@ -57,7 +57,7 @@ export function useProjectDraft() {
       patch({
         milestones: sortMilestones([
           ...draft.milestones,
-          { title: title.trim(), ...(date && { date }), done: false },
+          { title: title.trim(), ...(date && { date }) },
         ]),
       }),
     removeMilestone: (index: number) =>

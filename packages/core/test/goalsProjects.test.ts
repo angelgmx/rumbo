@@ -11,12 +11,19 @@ import {
 } from "../src/domain/goals";
 import {
   nextMilestone,
+  parseProjectLink,
   projectPace,
   projectProgress,
   projectSteps,
+  sameLink,
   sortMilestones,
+  timeElapsed,
+  todayOnTimeline,
+  upcomingEntries,
+  type Milestone,
   type Project,
 } from "../src/domain/projects";
+import type { Task } from "../src/domain/tasks";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
 import { memoryDatabase } from "./memoryDatabase";
 
@@ -128,8 +135,8 @@ describe("projectProgress", () => {
     const withMilestones = {
       ...project,
       milestones: [
-        { title: "A", done: true },
-        { title: "B", done: false },
+        { id: 1, title: "A", done: true },
+        { id: 2, title: "B", done: false },
       ],
     };
     expect(projectProgress(withMilestones, [{ done: false }])).toBe(0.5);
@@ -142,19 +149,85 @@ describe("projectProgress", () => {
   it("gives the steps done out of the steps there are", () => {
     const tasks = [{ done: true }, { done: false }, { done: false }];
     expect(projectSteps(project, tasks)).toEqual({ done: 1, total: 3 });
-    expect(projectSteps({ ...project, milestones: [{ title: "A", done: true }] }, tasks)).toEqual({
-      done: 1,
-      total: 1,
+    expect(
+      projectSteps({ ...project, milestones: [{ id: 1, title: "A", done: true }] }, tasks),
+    ).toEqual({ done: 1, total: 1 });
+  });
+});
+
+describe("upcomingEntries", () => {
+  const task = (id: number, fields: Partial<Task>): Task => ({
+    id,
+    text: `Task ${id}`,
+    done: false,
+    inProgress: false,
+    tags: [],
+    spent: 0,
+    steps: [],
+    notes: "",
+    created: "2026-10-01",
+    ...fields,
+  });
+
+  it("mixes dated tasks and milestones left, nearest first, with the timed ones first of a day", () => {
+    const entries = upcomingEntries(
+      [
+        task(1, { scheduled: "2026-10-21" }),
+        task(2, { scheduled: "2026-10-16", time: "18:00" }),
+        task(3, { due: "2026-10-25" }),
+        task(4, { scheduled: "2026-10-16", done: true }),
+        task(5, {}),
+      ],
+      [
+        { id: 1, title: "Demo", date: "2026-10-25", done: false },
+        { id: 2, title: "Hecho", date: "2026-10-10", done: true },
+        { id: 3, title: "Sin fecha", done: false },
+      ],
+      10,
+    );
+    expect(
+      entries.map((entry) => (entry.kind === "task" ? entry.task.text : entry.milestone.title)),
+    ).toEqual(["Task 2", "Task 1", "Task 3", "Demo"]);
+    expect(upcomingEntries([task(1, { scheduled: "2026-10-21" })], [], 0)).toEqual([]);
+  });
+});
+
+describe("project links", () => {
+  it("tells a repository from a web and completes the address", () => {
+    expect(parseProjectLink(" github.com/angel/citalash ")).toEqual({
+      kind: "repo",
+      title: "Repositorio",
+      url: "https://github.com/angel/citalash",
     });
+    expect(parseProjectLink("http://www.gitlab.com/x/y")).toMatchObject({ kind: "repo" });
+    expect(parseProjectLink("citalash.app")).toEqual({
+      kind: "web",
+      title: "Web",
+      url: "https://citalash.app",
+    });
+  });
+
+  it("rejects what is not an address", () => {
+    for (const text of ["", "   ", "citalash", "ftp://citalash.app", "mailto:a@b.es"]) {
+      expect(parseProjectLink(text)).toBeUndefined();
+    }
+  });
+
+  it("compares notes by name and addresses by their url", () => {
+    const web = parseProjectLink("citalash.app")!;
+    expect(sameLink(web, parseProjectLink("https://citalash.app")!)).toBe(true);
+    expect(sameLink(web, parseProjectLink("https://citalash.app/x")!)).toBe(false);
+    expect(sameLink({ kind: "note", name: "Plan" }, { kind: "note", name: "Plan" })).toBe(true);
+    expect(sameLink({ kind: "note", name: "Plan" }, web)).toBe(false);
   });
 });
 
 describe("milestones", () => {
-  const milestones = [
-    { title: "Lanzamiento", date: "2027-02-01", done: false },
-    { title: "Sin fecha", done: false },
-    { title: "Marca", date: "2026-09-02", done: true },
-    { title: "Landing", date: "2026-10-22", done: false },
+  const milestones: Milestone[] = [
+    { id: 1, title: "Lanzamiento", date: "2027-02-01", done: false },
+    { id: 2, title: "Sin fecha", done: false },
+    { id: 3, title: "Marca", date: "2026-09-02", done: true },
+    { id: 4, title: "Landing", date: "2026-10-22", done: false },
   ];
 
   it("sorts by date, leaving the undated last", () => {
@@ -168,11 +241,28 @@ describe("milestones", () => {
 
   it("finds the first one left to do", () => {
     const sorted = sortMilestones(milestones);
-    expect(nextMilestone({ ...project, milestones: sorted })).toEqual({
-      index: 1,
-      milestone: sorted[1],
-    });
-    expect(nextMilestone({ ...project, milestones: [{ title: "A", done: true }] })).toBeUndefined();
+    expect(nextMilestone({ milestones: sorted })).toBe(sorted[1]);
+    expect(nextMilestone({ milestones: [{ id: 1, title: "A", done: true }] })).toBeUndefined();
+  });
+
+  it("places today between the two dated milestones around it", () => {
+    const line = (...dates: (string | undefined)[]) => dates.map((date) => ({ date }));
+    expect(
+      todayOnTimeline(line("2026-10-10", "2026-10-25", "2026-11-15"), "2026-10-16"),
+    ).toBeCloseTo(0.2);
+    expect(todayOnTimeline(line("2026-10-10", "2026-10-25", "2026-11-15"), "2026-11-15")).toBe(1);
+    expect(todayOnTimeline(line("2026-10-10", "2026-10-25"), "2026-10-01")).toBeUndefined();
+    expect(todayOnTimeline(line("2026-10-10", "2026-10-25"), "2026-12-01")).toBeUndefined();
+    expect(todayOnTimeline(line("2026-10-10", undefined), "2026-10-12")).toBeUndefined();
+    expect(todayOnTimeline(line("2026-10-10"), "2026-10-10")).toBeUndefined();
+  });
+
+  it("measures how much of the time to the deadline has gone", () => {
+    const dated = { start: "2026-10-01", deadline: "2026-10-31" };
+    expect(timeElapsed(dated, "2026-10-16")).toBe(0.5);
+    expect(timeElapsed(dated, "2026-09-01")).toBe(0);
+    expect(timeElapsed(dated, "2026-12-01")).toBe(1);
+    expect(timeElapsed({ deadline: "2026-10-31" }, "2026-10-16")).toBeUndefined();
   });
 
   it("measures the pace of a project like the one of a goal", () => {
@@ -416,7 +506,7 @@ describe("goals", () => {
 describe("projects", () => {
   it("creates a project with its first tasks and follows its progress", async () => {
     const id = await rumbo.projects.create(
-      { ...project, area: "Python", milestones: [{ title: "Landing", done: false }] },
+      { ...project, area: "Python", milestones: [{ title: "Landing" }] },
       ["Dominio", "Logo"],
     );
     const summary = rumbo.projects.get(id!)!;
@@ -426,7 +516,7 @@ describe("projects", () => {
     ]);
     expect(summary.progress).toBe(0);
 
-    await rumbo.projects.setMilestone(id!, 0, true);
+    await rumbo.projects.setMilestone(id!, 1, true);
     expect(rumbo.projects.get(id!)!.progress).toBe(1);
   });
 
@@ -442,9 +532,28 @@ describe("projects", () => {
     expect(rumbo.projects.get(id!)).toBeUndefined();
   });
 
-  it("adds milestones in date order, changes their date and removes them", async () => {
+  it("gives each milestone its own id, and keeps it when the order changes", async () => {
+    const id = await rumbo.projects.create({
+      ...project,
+      milestones: [{ title: "Lanzamiento", date: "2027-02-01" }, { title: "Landing" }],
+    });
+    const milestones = () => rumbo.projects.get(id!)!.project.milestones;
+    expect(milestones().map((milestone) => [milestone.id, milestone.title])).toEqual([
+      [1, "Lanzamiento"],
+      [2, "Landing"],
+    ]);
+
+    await rumbo.projects.addMilestone(id!, " Marca ", "2026-10-01");
+    expect(milestones().map((milestone) => [milestone.id, milestone.title])).toEqual([
+      [3, "Marca"],
+      [1, "Lanzamiento"],
+      [2, "Landing"],
+    ]);
+  });
+
+  it("changes the name, date and state of a milestone by its id and removes it", async () => {
     const id = await rumbo.projects.create(project);
-    await rumbo.projects.addMilestone(id!, " Lanzamiento ", "2027-02-01");
+    await rumbo.projects.addMilestone(id!, "Lanzamiento", "2027-02-01");
     await rumbo.projects.addMilestone(id!, "Sin fecha");
     await rumbo.projects.addMilestone(id!, "Landing", "2026-10-22");
     const titles = () =>
@@ -453,38 +562,38 @@ describe("projects", () => {
 
     await rumbo.projects.setMilestoneDate(id!, 2, "2026-10-01");
     expect(titles()).toEqual(["Sin fecha", "Landing", "Lanzamiento"]);
-    await rumbo.projects.setMilestoneDate(id!, 0, undefined);
+    await rumbo.projects.setMilestoneDate(id!, 2, undefined);
     expect(rumbo.projects.get(id!)!.project.milestones[2]).toEqual({
+      id: 2,
       title: "Sin fecha",
       done: false,
     });
 
-    await rumbo.projects.setMilestone(id!, 0, true);
-    expect(rumbo.projects.get(id!)!.nextMilestone?.milestone.title).toBe("Lanzamiento");
-    await rumbo.projects.removeMilestone(id!, 0);
-    expect(titles()).toEqual(["Lanzamiento", "Sin fecha"]);
+    await rumbo.projects.renameMilestone(id!, 1, " Demo ");
+    await rumbo.projects.setMilestone(id!, 3, true);
+    expect(rumbo.projects.get(id!)!.nextMilestone?.title).toBe("Demo");
+    await rumbo.projects.removeMilestone(id!, 3);
+    expect(titles()).toEqual(["Demo", "Sin fecha"]);
   });
 
   it("lists the dated milestones left across open projects, nearest first", async () => {
     const web = await rumbo.projects.create({
       ...project,
       milestones: [
-        { title: "Landing", date: "2026-10-22", done: false },
-        { title: "Hecho", date: "2026-10-16", done: true },
+        { title: "Landing", date: "2026-10-22" },
+        { title: "Hecho", date: "2026-10-16" },
       ],
     });
+    await rumbo.projects.setMilestone(web!, 1, true);
     await rumbo.projects.create({
       ...project,
       title: "Mudanza",
-      milestones: [
-        { title: "Contrato", date: "2026-10-25", done: false },
-        { title: "Sin fecha", done: false },
-      ],
+      milestones: [{ title: "Contrato", date: "2026-10-25" }, { title: "Sin fecha" }],
     });
     const closed = await rumbo.projects.create({
       ...project,
       title: "Cerrado",
-      milestones: [{ title: "Pasado", date: "2026-10-17", done: false }],
+      milestones: [{ title: "Pasado", date: "2026-10-17" }],
     });
     await rumbo.projects.setStatus(closed!, "done");
 
@@ -495,6 +604,60 @@ describe("projects", () => {
     ]);
     expect(upcoming[0]!.projectId).toBe(web);
     expect(rumbo.projects.upcomingMilestones(1)).toHaveLength(1);
+  });
+
+  it("links tasks to a milestone, counts them and frees them when it goes", async () => {
+    const id = await rumbo.projects.create({
+      ...project,
+      milestones: [{ title: "Landing" }, { title: "Demo" }],
+    });
+    const task = await rumbo.tasks.createFromTitle("Textos", { projectId: id, milestoneId: 1 });
+    await rumbo.tasks.createFromTitle("Hero", { projectId: id, milestoneId: 1 }, "done");
+    await rumbo.tasks.createFromTitle("Guion", { projectId: id, milestoneId: 2 });
+    await rumbo.tasks.createFromTitle("Suelta", { projectId: id });
+    expect(rumbo.projects.get(id!)!.milestoneTasks).toEqual({
+      1: { done: 1, total: 2 },
+      2: { done: 0, total: 1 },
+    });
+
+    await rumbo.projects.removeMilestone(id!, 1);
+    expect(rumbo.tasks.get(task!.id)!.milestoneId).toBeUndefined();
+    expect(rumbo.projects.get(id!)!.milestoneTasks).toEqual({ 2: { done: 0, total: 1 } });
+  });
+
+  it("adds each link once and removes it by position", async () => {
+    const id = await rumbo.projects.create(project);
+    const repo = parseProjectLink("github.com/angel/citalash")!;
+    await rumbo.projects.addLink(id!, repo);
+    await rumbo.projects.addLink(id!, repo);
+    await rumbo.projects.addLink(id!, { kind: "note", name: "Plan de lanzamiento" });
+    await rumbo.projects.addLink(id!, { kind: "note", name: "Plan de lanzamiento" });
+    expect(rumbo.projects.get(id!)!.project.links).toEqual([
+      repo,
+      { kind: "note", name: "Plan de lanzamiento" },
+    ]);
+
+    await rumbo.projects.removeLink(id!, 0);
+    expect(rumbo.projects.get(id!)!.project.links).toEqual([
+      { kind: "note", name: "Plan de lanzamiento" },
+    ]);
+  });
+
+  it("keeps the priority and gives what comes next with a date", async () => {
+    const id = await rumbo.projects.create(
+      { ...project, priority: "high", milestones: [{ title: "Demo", date: "2026-10-25" }] },
+      ["Guion hoy", "Textos"],
+    );
+    await rumbo.projects.update(id!, { start: "2026-10-01", deadline: "2026-10-31" });
+    const summary = rumbo.projects.get(id!)!;
+    expect(summary.project.priority).toBe("high");
+    expect(summary.timeElapsed).toBeCloseTo(14 / 30);
+    expect(
+      summary.upcoming.map((entry) => (entry.kind === "task" ? entry.task.text : "Demo")),
+    ).toEqual(["Guion", "Demo"]);
+
+    await rumbo.projects.update(id!, { priority: undefined });
+    expect(rumbo.projects.get(id!)!.project.priority).toBeUndefined();
   });
 
   it("changes only what it is given and gives the finished tasks", async () => {

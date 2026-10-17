@@ -15,7 +15,7 @@ async function databaseAt(version: number) {
 
 describe("migrations", () => {
   it("turns saved free and task blocks into activities", async () => {
-    const database = await databaseAt(MIGRATIONS.length - 2);
+    const database = await databaseAt(MIGRATIONS.length - 3);
     const blocks = [
       { tipo: "habito", habito: "ingles", minutos: 15 },
       { tipo: "libre", titulo: "Café", minutos: 10 },
@@ -43,7 +43,7 @@ describe("migrations", () => {
   });
 
   it("gives saved goals an empty priority", async () => {
-    const database = await databaseAt(MIGRATIONS.length - 1);
+    const database = await databaseAt(MIGRATIONS.length - 2);
     await database.execute("INSERT INTO objetivos (titulo, creado) VALUES (?, ?)", [
       "Inglés",
       "2026-10-01",
@@ -55,5 +55,42 @@ describe("migrations", () => {
       "SELECT prioridad FROM objetivos",
     );
     expect(rows).toEqual([{ prioridad: null }]);
+  });
+
+  it("gives saved milestones an id and saved links a type", async () => {
+    const database = await databaseAt(MIGRATIONS.length - 1);
+    const milestones = [
+      { titulo: "Landing", fecha: "2026-10-10", hecho: true },
+      { titulo: "Demo", hecho: false },
+    ];
+    const links = [
+      { titulo: "Código", url: "https://github.com/angel/citalash" },
+      { titulo: "Web", url: "https://citalash.app" },
+    ];
+    const insert = "INSERT INTO proyectos (titulo, hitos, enlaces, creado) VALUES (?, ?, ?, ?)";
+    await database.execute(insert, [
+      "Citalash",
+      JSON.stringify(milestones),
+      JSON.stringify(links),
+      "2026-10-01",
+    ]);
+    await database.execute(insert, ["Vacío", "[]", "[]", "2026-10-01"]);
+
+    await AppDatabase.open(database, new ChangeFeed());
+
+    const rows = await database.select<{
+      hitos: string;
+      enlaces: string;
+      prioridad: string | null;
+    }>("SELECT hitos, enlaces, prioridad FROM proyectos ORDER BY id");
+    expect(JSON.parse(rows[0]!.hitos)).toEqual([
+      { id: 1, titulo: "Landing", fecha: "2026-10-10", hecho: true },
+      { id: 2, titulo: "Demo", hecho: false },
+    ]);
+    expect(JSON.parse(rows[0]!.enlaces)).toEqual([
+      { tipo: "repo", titulo: "Código", url: "https://github.com/angel/citalash" },
+      { tipo: "web", titulo: "Web", url: "https://citalash.app" },
+    ]);
+    expect([rows[1]!.hitos, rows[1]!.enlaces, rows[0]!.prioridad]).toEqual(["[]", "[]", null]);
   });
 });

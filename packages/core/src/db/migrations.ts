@@ -200,4 +200,32 @@ export const MIGRATIONS: string[][] = [
     // La prioridad de un objetivo, como la de una tarea.
     "ALTER TABLE objetivos ADD COLUMN prioridad TEXT CHECK (prioridad IN ('alta', 'media', 'baja'))",
   ],
+  [
+    // Los hitos de un proyecto reciben un id propio, por el que los señalan las tareas
+    // (`tareas.hito_id`): una posición cambiaría al reordenarlos o quitar uno.
+    //   hitos: [{"id": 1, "titulo": "Landing", "fecha": "2026-11-30", "hecho": false}]
+    `UPDATE proyectos SET hitos = (
+      SELECT json_group_array(json(json_insert(value, '$.id', key + 1)))
+      FROM (SELECT key, value FROM json_each(proyectos.hitos) ORDER BY key)
+    )
+    WHERE json_array_length(hitos) > 0`,
+    // Un enlace del proyecto dice qué es: repositorio, web o nota del vault.
+    //   enlaces: [{"tipo": "repo", "titulo": "Repositorio", "url": "https://github.com/…"},
+    //             {"tipo": "nota", "nota": "Plan de lanzamiento"}]
+    `UPDATE proyectos SET enlaces = (
+      SELECT json_group_array(json_object(
+        'tipo', CASE
+          WHEN json_extract(value, '$.url') LIKE '%github.com%'
+            OR json_extract(value, '$.url') LIKE '%gitlab.com%'
+            OR json_extract(value, '$.url') LIKE '%bitbucket.org%'
+            OR json_extract(value, '$.url') LIKE '%codeberg.org%'
+          THEN 'repo' ELSE 'web' END,
+        'titulo', json_extract(value, '$.titulo'),
+        'url', json_extract(value, '$.url')))
+      FROM (SELECT key, value FROM json_each(proyectos.enlaces) ORDER BY key)
+    )
+    WHERE json_array_length(enlaces) > 0`,
+    "ALTER TABLE proyectos ADD COLUMN prioridad TEXT CHECK (prioridad IN ('alta', 'media', 'baja'))",
+    "ALTER TABLE tareas ADD COLUMN hito_id INTEGER",
+  ],
 ];

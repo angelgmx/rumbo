@@ -4,7 +4,7 @@ import { formatDayMonth } from "@/lib/format";
 
 /** El siguiente hito sin hacer con su fecha; sin hitos o con todos hechos, lo dice. */
 export function NextMilestone({ summary }: { summary: ProjectSummary }) {
-  const next = summary.nextMilestone?.milestone;
+  const next = summary.nextMilestone;
   const empty = summary.project.milestones.length === 0 ? "Sin hitos" : "Todos hechos";
 
   return (

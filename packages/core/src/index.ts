@@ -101,11 +101,13 @@ export { weekProgress } from "./domain/habits";
 export {
   isInView,
   isRecentlyDone,
+  taskStatus,
   taskToDraft,
   type Priority,
   type Task,
   type TaskChanges,
   type TaskDraft,
+  type TaskStatus,
   type TaskStep,
   type TaskView,
 } from "./domain/tasks";
@@ -130,7 +132,7 @@ export {
   type TimedBlock,
 } from "./domain/routines";
 export type { GoalDriverRefs, GoalLink, GoalRoadmap, GoalSummary } from "./app/goalService";
-export type { ProjectSummary, UpcomingMilestone } from "./app/projectService";
+export type { ProjectSummary, StepCount, UpcomingMilestone } from "./app/projectService";
 export {
   GOAL_STATUSES,
   keyResultProgress,
@@ -146,11 +148,15 @@ export {
   type IfThen,
 } from "./domain/goals";
 export {
+  parseProjectLink,
   PROJECT_STATUSES,
   sortMilestones,
+  todayOnTimeline,
   type Milestone,
+  type NewMilestone,
   type Project,
   type ProjectInput,
   type ProjectLink,
   type ProjectStatus,
+  type UpcomingEntry,
 } from "./domain/projects";

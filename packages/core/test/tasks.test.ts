@@ -7,6 +7,7 @@ function task(fields: Partial<Task>): Task {
     id: nextId++,
     text: "x",
     done: false,
+    inProgress: false,
     tags: [],
     spent: 0,
     steps: [],

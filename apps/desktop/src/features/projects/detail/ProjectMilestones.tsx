@@ -40,13 +40,12 @@ export function ProjectMilestones({
     >
       {milestones.length > 0 && (
         <ol className="relative flex flex-col gap-1 before:absolute before:inset-y-3 before:left-2 before:w-px before:bg-border">
-          {milestones.map((milestone, index) => (
+          {milestones.map((milestone) => (
             <MilestoneRow
-              key={`${index}:${milestone.title}`}
+              key={milestone.id}
               projectId={id}
-              index={index}
               milestone={milestone}
-              next={nextMilestone?.index === index}
+              next={nextMilestone?.id === milestone.id}
             />
           ))}
         </ol>

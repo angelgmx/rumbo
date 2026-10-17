@@ -21,6 +21,7 @@ function task(fields: Partial<Task> = {}): Task {
     id: nextId++,
     text: "Preparar la declaración",
     done: false,
+    inProgress: false,
     tags: [],
     spent: 0,
     steps: [],

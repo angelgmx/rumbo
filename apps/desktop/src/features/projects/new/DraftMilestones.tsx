@@ -1,4 +1,4 @@
-import type { IsoDate, Milestone } from "@rumbo/core";
+import type { IsoDate, NewMilestone } from "@rumbo/core";
 import { FlagIcon, PlusIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ export function DraftMilestones({
   onAdd,
   onRemove,
 }: {
-  milestones: Milestone[];
+  milestones: NewMilestone[];
   onAdd: (title: string, date: IsoDate | undefined) => void;
   onRemove: (index: number) => void;
 }) {
