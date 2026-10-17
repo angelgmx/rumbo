@@ -2,12 +2,12 @@ import type { GoalSummary } from "@rumbo/core";
 import { BookOpenIcon, CompassIcon, FlameIcon, FolderKanbanIcon } from "lucide-react";
 import { useRumbo } from "@/app/RumboContext";
 import { PanelSection } from "@/components/panel/PanelSection";
-import { AddField } from "./AddField";
 import { HabitNode } from "./HabitNode";
 import { LooseTasks } from "./LooseTasks";
 import { ProjectNode } from "./ProjectNode";
 import { RoadmapNode } from "./RoadmapNode";
 import { useConnections } from "./useConnections";
+import { AddField } from "@/components/AddField";
 
 /**
  * «Cómo llegas»: lo que empuja el objetivo como un árbol. Cada parte termina en su campo

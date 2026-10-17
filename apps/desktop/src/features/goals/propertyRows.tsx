@@ -16,7 +16,7 @@ export function AreaRow({
 }: {
   icon?: LucideIcon;
   area: string | undefined;
-  onChange: Change;
+  onChange: (changes: { area: string | undefined }) => void;
 }) {
   const areas = useAreaNames();
 

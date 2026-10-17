@@ -77,7 +77,14 @@ export { addMinutesToTime, blocksAround, minutesBetween } from "./domain/agenda"
 export { parseDuration } from "./domain/duration";
 export { endTime, type BusySlot } from "./domain/taskClash";
 export type { TaskSlot } from "./app/taskClashService";
-export { addDays, startOfWeek, WEEKDAYS, type IsoDate, type Weekday } from "./domain/dates";
+export {
+  addDays,
+  daysBetween,
+  startOfWeek,
+  WEEKDAYS,
+  type IsoDate,
+  type Weekday,
+} from "./domain/dates";
 export {
   completionRate,
   habitProgress,
@@ -123,7 +130,7 @@ export {
   type TimedBlock,
 } from "./domain/routines";
 export type { GoalDriverRefs, GoalLink, GoalRoadmap, GoalSummary } from "./app/goalService";
-export type { ProjectSummary } from "./app/projectService";
+export type { ProjectSummary, UpcomingMilestone } from "./app/projectService";
 export {
   GOAL_STATUSES,
   keyResultProgress,
@@ -140,6 +147,7 @@ export {
 } from "./domain/goals";
 export {
   PROJECT_STATUSES,
+  sortMilestones,
   type Milestone,
   type Project,
   type ProjectInput,

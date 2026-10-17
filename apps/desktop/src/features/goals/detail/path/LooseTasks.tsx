@@ -1,9 +1,9 @@
 import type { GoalSummary } from "@rumbo/core";
 import { CheckIcon, InboxIcon } from "lucide-react";
 import { useRumbo } from "@/app/RumboContext";
-import { AddField } from "./AddField";
-import { TaskLeaf } from "./TaskLeaf";
 import { TreeNode } from "./TreeNode";
+import { AddField } from "@/components/AddField";
+import { TaskLeaf } from "@/features/tasks/TaskLeaf";
 
 /** Las tareas del objetivo sin proyecto, plegadas; sin ninguna, solo el campo para escribir la primera. */
 export function LooseTasks({ summary }: { summary: GoalSummary }) {

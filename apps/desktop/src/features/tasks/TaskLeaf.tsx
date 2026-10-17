@@ -1,11 +1,13 @@
 import type { Task } from "@rumbo/core";
+import { FlagIcon } from "lucide-react";
 import { useRumbo } from "@/app/RumboContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { formatRelativeDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { FLAG_COLOR } from "./taskLabels";
 
-/** Una tarea del árbol: se marca con su casilla y al pulsarla se abre su panel. */
+/** Una tarea dentro de otra vista (objetivo, proyecto): casilla, título, fecha y prioridad; al pulsarla se abre su panel. */
 export function TaskLeaf({ task }: { task: Task }) {
   const rumbo = useRumbo();
   const panel = useTaskPanel();
@@ -22,7 +24,10 @@ export function TaskLeaf({ task }: { task: Task }) {
       <button
         type="button"
         onClick={() => panel.edit(task)}
-        className="min-w-0 flex-1 truncate text-left hover:underline"
+        className={cn(
+          "min-w-0 flex-1 truncate text-left hover:underline",
+          task.done && "text-muted-foreground line-through",
+        )}
       >
         {task.text}
       </button>
@@ -32,6 +37,12 @@ export function TaskLeaf({ task }: { task: Task }) {
         >
           {formatRelativeDay(date, today)}
         </span>
+      )}
+      {task.priority && (
+        <FlagIcon
+          aria-label="Prioridad"
+          className={cn("size-4 shrink-0 fill-current", FLAG_COLOR[task.priority])}
+        />
       )}
     </div>
   );

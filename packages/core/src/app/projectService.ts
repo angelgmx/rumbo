@@ -1,8 +1,14 @@
 import type { GoalRepository } from "../db/goalRepository";
 import type { ProjectRepository } from "../db/projectRepository";
+import { daysBetween, type IsoDate } from "../domain/dates";
+import type { GoalPace } from "../domain/goals";
 import {
+  nextMilestone,
+  projectPace,
   projectProgress,
   projectSteps,
+  sortMilestones,
+  type Milestone,
   type Project,
   type ProjectInput,
   type ProjectStatus,
@@ -18,10 +24,23 @@ export interface ProjectSummary {
   progress: number;
   /** Sus tareas sin terminar, las que tienen fecha primero. */
   nextTasks: Task[];
-  doneTasks: number;
+  doneTasks: Task[];
+  /** El primer hito sin hacer, con su posición en `project.milestones`. */
+  nextMilestone?: { index: number; milestone: Milestone };
+  /** Su ritmo frente a la fecha límite; sin pasos que medir, nada. */
+  pace?: GoalPace;
+  /** Días hasta la fecha límite; negativo si ya pasó. */
+  daysLeft?: number;
   /** Los hitos hechos y los que hay; sin hitos, las tareas. */
   steps: { done: number; total: number };
   goal?: { id: number; title: string };
+}
+
+export interface UpcomingMilestone {
+  projectId: number;
+  project: Project;
+  milestone: Milestone;
+  daysLeft: number;
 }
 
 /** Proyectos: lo que construyes, con su resultado, hitos, enlaces y tareas. */
@@ -47,21 +66,55 @@ export class ProjectService {
     return project && this.summarize(id, project);
   }
 
+  /** Los hitos con fecha que quedan por hacer en los proyectos abiertos, los más cercanos primero. */
+  upcomingMilestones(limit: number): UpcomingMilestone[] {
+    const today = this.daily.today();
+    return this.projects
+      .all()
+      .filter(({ project }) => !project.archived && project.status !== "done")
+      .flatMap(({ id, project }) =>
+        project.milestones.flatMap((milestone) =>
+          !milestone.done && milestone.date
+            ? [
+                {
+                  projectId: id,
+                  project,
+                  milestone,
+                  daysLeft: daysBetween(today, milestone.date),
+                },
+              ]
+            : [],
+        ),
+      )
+      .sort((a, b) => a.milestone.date!.localeCompare(b.milestone.date!))
+      .slice(0, limit);
+  }
+
   /** Crea el proyecto con sus primeras tareas. Devuelve su id. */
   async create(input: ProjectInput, firstTasks: string[] = []): Promise<number | undefined> {
     const id = await this.projects.insert(
-      { ...input, start: input.start ?? this.daily.today(), archived: false },
+      {
+        ...input,
+        milestones: sortMilestones(input.milestones),
+        start: input.start ?? this.daily.today(),
+        archived: false,
+      },
       this.daily.today(),
     );
     if (id === undefined) return undefined;
     for (const text of firstTasks.filter((task) => task.trim())) {
-      await this.tasks.create({ text, projectId: id, area: input.area });
+      await this.tasks.createFromTitle(text, { projectId: id, area: input.area });
     }
     return id;
   }
 
-  update(id: number, input: ProjectInput): Promise<void> {
-    return this.change(id, (project) => ({ ...project, ...input }));
+  /** Cambia solo lo que se da; el estado va por `setStatus`, que apunta cuándo se termina. */
+  update(id: number, changes: Partial<Omit<ProjectInput, "status">>): Promise<void> {
+    return this.change(id, (project) => ({
+      ...project,
+      ...changes,
+      milestones: sortMilestones(changes.milestones ?? project.milestones),
+    }));
   }
 
   /** Al terminarlo se apunta el día; si vuelve a abrirse, se quita. */
@@ -83,6 +136,37 @@ export class ProjectService {
     }));
   }
 
+  /** Suma un hito; queda en su sitio según su fecha. */
+  addMilestone(id: number, title: string, date?: IsoDate): Promise<void> {
+    return this.change(id, (project) => ({
+      ...project,
+      milestones: sortMilestones([
+        ...project.milestones,
+        { title: title.trim(), ...(date && { date }), done: false },
+      ]),
+    }));
+  }
+
+  setMilestoneDate(id: number, index: number, date: IsoDate | undefined): Promise<void> {
+    return this.change(id, (project) => ({
+      ...project,
+      milestones: sortMilestones(
+        project.milestones.map((milestone, i) =>
+          i === index
+            ? { title: milestone.title, done: milestone.done, ...(date && { date }) }
+            : milestone,
+        ),
+      ),
+    }));
+  }
+
+  removeMilestone(id: number, index: number): Promise<void> {
+    return this.change(id, (project) => ({
+      ...project,
+      milestones: project.milestones.filter((_, i) => i !== index),
+    }));
+  }
+
   /** Lo quita de la vista sin borrar nada. */
   archive(id: number): Promise<void> {
     return this.change(id, (project) => ({ ...project, archived: true }));
@@ -101,13 +185,19 @@ export class ProjectService {
   private summarize(id: number, project: Project): ProjectSummary {
     const tasks = this.tasks.forProject(id);
     const goal = this.goals.get(project.goalId);
+    const today = this.daily.today();
+    const progress = projectProgress(project, tasks);
+    const steps = projectSteps(project, tasks);
     return {
       id,
       project,
-      progress: projectProgress(project, tasks),
+      progress,
       nextTasks: tasks.filter((task) => !task.done).sort(byDate),
-      doneTasks: tasks.filter((task) => task.done).length,
-      steps: projectSteps(project, tasks),
+      doneTasks: tasks.filter((task) => task.done),
+      nextMilestone: nextMilestone(project),
+      pace: steps.total > 0 ? projectPace(project, progress, today) : undefined,
+      daysLeft: project.deadline ? daysBetween(today, project.deadline) : undefined,
+      steps,
       goal: goal && { id: goal.id, title: goal.goal.title },
     };
   }

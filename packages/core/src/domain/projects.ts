@@ -1,6 +1,7 @@
 // Proyectos: algo con un final. Se terminan y se archivan; si no acaban nunca, son un área o
 // un hábito. Su progreso se calcula al leer: por sus hitos o, si no tiene, por sus tareas.
 import type { IsoDate } from "./dates";
+import { goalPace, type GoalPace } from "./goals";
 
 export const PROJECT_STATUSES = ["idea", "active", "blocked", "done"] as const;
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
@@ -48,4 +49,32 @@ export function projectProgress(project: Project, tasks: { done: boolean }[]): n
   if (project.status === "done") return 1;
   const { done, total } = projectSteps(project, tasks);
   return total === 0 ? 0 : done / total;
+}
+
+/** Los hitos por fecha, los que no la tienen al final; a igual fecha, en el orden en que se crearon. */
+export function sortMilestones(milestones: Milestone[]): Milestone[] {
+  return milestones
+    .map((milestone, index) => ({ milestone, index }))
+    .sort(
+      (a, b) =>
+        (a.milestone.date ?? "9999").localeCompare(b.milestone.date ?? "9999") || a.index - b.index,
+    )
+    .map(({ milestone }) => milestone);
+}
+
+/** El primer hito sin hacer según el orden por fecha. */
+export function nextMilestone(
+  project: Project,
+): { index: number; milestone: Milestone } | undefined {
+  const index = project.milestones.findIndex((milestone) => !milestone.done);
+  return index < 0 ? undefined : { index, milestone: project.milestones[index]! };
+}
+
+/** El ritmo del proyecto frente a su fecha límite, con la misma regla que el de un objetivo. */
+export function projectPace(
+  project: Project,
+  progress: number,
+  today: IsoDate,
+): GoalPace | undefined {
+  return goalPace(project, progress, today);
 }

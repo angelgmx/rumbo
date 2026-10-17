@@ -14,6 +14,7 @@ export function AddField({
   options = [],
   onPick,
   onCreate,
+  hint,
 }: {
   icon: LucideIcon;
   label: string;
@@ -21,6 +22,8 @@ export function AddField({
   options?: PropertyOption[];
   onPick?: (value: string) => void;
   onCreate?: (text: string) => void;
+  /** Una nota al final del campo, p. ej. dónde se crea lo que se escribe. */
+  hint?: string;
 }) {
   const [text, setText] = useState("");
   const [focused, setFocused] = useState(false);
@@ -74,6 +77,7 @@ export function AddField({
           onKeyDown={onKeyDown}
           className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
         />
+        {hint && <span className="shrink-0 text-xs text-muted-foreground">{hint}</span>}
       </label>
       {focused && matches.length > 0 && (
         <ul

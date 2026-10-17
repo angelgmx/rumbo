@@ -5,6 +5,7 @@ import {
   FlameIcon,
   InboxIcon,
   TargetIcon,
+  SquareKanbanIcon,
   SunIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const SCREENS: { href: string; match: string; label: string; icon: LucideIcon }[
   { href: "/rutinas", match: "/rutinas", label: "Rutinas", icon: ArrowRightLeftIcon },
   { href: "/habitos", match: "/habitos", label: "Hábitos", icon: FlameIcon },
   { href: "/objetivos", match: "/objetivos/*?", label: "Objetivos", icon: TargetIcon },
+  { href: "/proyectos", match: "/proyectos/*?", label: "Proyectos", icon: SquareKanbanIcon },
   { href: "/roadmaps", match: "/roadmaps/*?", label: "Roadmaps", icon: BookOpenIcon },
   { href: "/ejercicios", match: "/ejercicios/*?", label: "Ejercicios", icon: CodeIcon },
 ];

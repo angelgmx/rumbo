@@ -1,11 +1,12 @@
 import type { GoalSummary, ProjectSummary } from "@rumbo/core";
 import { CheckIcon, FolderKanbanIcon } from "lucide-react";
+import { projectHref } from "@/features/projects/projectLabels";
 import { useRumbo } from "@/app/RumboContext";
-import { AddField } from "./AddField";
 import { MilestoneLeaf } from "./MilestoneLeaf";
 import { StepsMeter } from "./StepsMeter";
-import { TaskLeaf } from "./TaskLeaf";
 import { TreeNode } from "./TreeNode";
+import { AddField } from "@/components/AddField";
+import { TaskLeaf } from "@/features/tasks/TaskLeaf";
 
 /** Un proyecto del objetivo con sus hitos y tareas pendientes, y un campo para sumar tareas. */
 export function ProjectNode({ goal, summary }: { goal: GoalSummary; summary: ProjectSummary }) {
@@ -16,6 +17,7 @@ export function ProjectNode({ goal, summary }: { goal: GoalSummary; summary: Pro
     <TreeNode
       icon={FolderKanbanIcon}
       title={project.title}
+      href={projectHref(id)}
       aside={<StepsMeter {...steps} label={project.title} />}
       removeLabel={`Quitar ${project.title}`}
       onRemove={() => void goals.disconnect(goal.id, { kind: "project", id })}
