@@ -12,6 +12,7 @@ import {
   sourceCount,
   sourceKey,
   sourceTasks,
+  visibleWindow,
 } from "../src/domain/calendar";
 import { freeIntervals } from "../src/domain/freeTime";
 import { habitStep } from "../src/domain/habits";
@@ -248,6 +249,27 @@ describe("sourceTasks", () => {
   it("keys what has no area under the inbox", () => {
     expect(sourceKey({ kind: "area", area: "Gym" })).toBe(areaKey("Gym"));
     expect(areaKey(undefined)).toBe(sourceKey({ kind: "inbox" }));
+  });
+});
+
+describe("visibleWindow", () => {
+  const week = ["12", "13", "14", "15", "16", "17", "18"].map((day) => ({
+    date: `2026-10-${day}`,
+  }));
+  const dates = (days: { date: string }[]) => days.map(({ date }) => date.slice(8));
+
+  it("keeps everything when there is room for it", () => {
+    expect(dates(visibleWindow(week, 7, "2026-10-16"))).toEqual(dates(week));
+  });
+
+  it("centers on today when there is not", () => {
+    expect(dates(visibleWindow(week, 5, "2026-10-16"))).toEqual(["14", "15", "16", "17", "18"]);
+    expect(dates(visibleWindow(week, 3, "2026-10-15"))).toEqual(["14", "15", "16"]);
+  });
+
+  it("stays inside the week and starts at the first day when today is elsewhere", () => {
+    expect(dates(visibleWindow(week, 5, "2026-10-12"))).toEqual(["12", "13", "14", "15", "16"]);
+    expect(dates(visibleWindow(week, 4, "2026-11-02"))).toEqual(["12", "13", "14", "15"]);
   });
 });
 

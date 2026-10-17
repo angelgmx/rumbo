@@ -189,3 +189,19 @@ export function sourceTasks(
 export function sourceCount({ undated, scheduled }: SourceTasks): number {
   return undated.length + scheduled.filter((task) => !task.done).length;
 }
+
+/**
+ * Los días que caben cuando no hay sitio para todos: `count` seguidos que incluyen hoy, con hoy
+ * hacia el centro. Si hoy no está, desde el primero.
+ */
+export function visibleWindow<T extends { date: IsoDate }>(
+  days: readonly T[],
+  count: number,
+  today: IsoDate,
+): T[] {
+  if (count >= days.length) return [...days];
+  const todayIndex = days.findIndex((day) => day.date === today);
+  const centered = todayIndex < 0 ? 0 : todayIndex - Math.floor(count / 2);
+  const start = Math.min(Math.max(centered, 0), days.length - count);
+  return days.slice(start, start + count);
+}
