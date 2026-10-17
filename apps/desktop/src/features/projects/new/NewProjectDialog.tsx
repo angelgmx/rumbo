@@ -1,4 +1,5 @@
 import type { KeyboardEvent } from "react";
+import type { ProjectStatus } from "@rumbo/core";
 import { CalendarIcon, CheckIcon, CircleDotIcon, LayoutGridIcon, TargetIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -27,23 +28,38 @@ import { ProjectConnections } from "./ProjectConnections";
 import { ProjectPreview } from "./ProjectPreview";
 import { useProjectDraft } from "./useProjectDraft";
 
-/** Crear un proyecto desde cero: lo básico, sus hitos y sus primeras tareas, con una vista de cómo quedará. */
-export function NewProjectDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+/**
+ * Crear un proyecto desde cero: lo básico, sus hitos y sus primeras tareas, con una vista de
+ * cómo quedará. Se abre con el estado con el que empieza; sin él, está cerrado.
+ */
+export function NewProjectDialog({
+  status,
+  onClose,
+}: {
+  status: ProjectStatus | undefined;
+  onClose: () => void;
+}) {
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+    <Dialog open={status !== undefined} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="max-h-[90vh] gap-0 p-0 sm:max-w-5xl" showCloseButton={false}>
-        {open && <NewProjectForm onClose={onClose} />}
+        {status && <NewProjectForm initialStatus={status} onClose={onClose} />}
       </DialogContent>
     </Dialog>
   );
 }
 
-function NewProjectForm({ onClose }: { onClose: () => void }) {
+function NewProjectForm({
+  initialStatus,
+  onClose,
+}: {
+  initialStatus: ProjectStatus;
+  onClose: () => void;
+}) {
   const rumbo = useRumbo();
   const [, navigate] = useLocation();
   const areas = useAreaNames();
   const goals = useVaultQuery((r) => r.goals.list()).data ?? [];
-  const { draft, input, tasks, problem, patch, ...lists } = useProjectDraft();
+  const { draft, input, tasks, problem, patch, ...lists } = useProjectDraft(initialStatus);
   const goal = goals.find(({ id }) => id === draft.goalId);
 
   async function save() {

@@ -56,13 +56,6 @@ export interface ProjectSummary {
   goal?: { id: number; title: string };
 }
 
-export interface UpcomingMilestone {
-  projectId: number;
-  project: Project;
-  milestone: Milestone;
-  daysLeft: number;
-}
-
 /** Proyectos: lo que construyes, con su resultado, hitos, enlaces y tareas. */
 export class ProjectService {
   constructor(
@@ -84,30 +77,6 @@ export class ProjectService {
   get(id: number): ProjectSummary | undefined {
     const project = this.projects.get(id);
     return project && this.summarize(id, project);
-  }
-
-  /** Los hitos con fecha que quedan por hacer en los proyectos abiertos, los más cercanos primero. */
-  upcomingMilestones(limit: number): UpcomingMilestone[] {
-    const today = this.daily.today();
-    return this.projects
-      .all()
-      .filter(({ project }) => !project.archived && project.status !== "done")
-      .flatMap(({ id, project }) =>
-        project.milestones.flatMap((milestone) =>
-          !milestone.done && milestone.date
-            ? [
-                {
-                  projectId: id,
-                  project,
-                  milestone,
-                  daysLeft: daysBetween(today, milestone.date),
-                },
-              ]
-            : [],
-        ),
-      )
-      .sort((a, b) => a.milestone.date!.localeCompare(b.milestone.date!))
-      .slice(0, limit);
   }
 
   /** Crea el proyecto con sus primeras tareas. Devuelve su id. */

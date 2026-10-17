@@ -132,7 +132,7 @@ export {
   type TimedBlock,
 } from "./domain/routines";
 export type { GoalDriverRefs, GoalLink, GoalRoadmap, GoalSummary } from "./app/goalService";
-export type { ProjectSummary, StepCount, UpcomingMilestone } from "./app/projectService";
+export type { ProjectSummary, StepCount } from "./app/projectService";
 export {
   GOAL_STATUSES,
   keyResultProgress,

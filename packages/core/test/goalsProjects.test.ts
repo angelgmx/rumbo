@@ -576,36 +576,6 @@ describe("projects", () => {
     expect(titles()).toEqual(["Demo", "Sin fecha"]);
   });
 
-  it("lists the dated milestones left across open projects, nearest first", async () => {
-    const web = await rumbo.projects.create({
-      ...project,
-      milestones: [
-        { title: "Landing", date: "2026-10-22" },
-        { title: "Hecho", date: "2026-10-16" },
-      ],
-    });
-    await rumbo.projects.setMilestone(web!, 1, true);
-    await rumbo.projects.create({
-      ...project,
-      title: "Mudanza",
-      milestones: [{ title: "Contrato", date: "2026-10-25" }, { title: "Sin fecha" }],
-    });
-    const closed = await rumbo.projects.create({
-      ...project,
-      title: "Cerrado",
-      milestones: [{ title: "Pasado", date: "2026-10-17" }],
-    });
-    await rumbo.projects.setStatus(closed!, "done");
-
-    const upcoming = rumbo.projects.upcomingMilestones(5);
-    expect(upcoming.map((item) => [item.milestone.title, item.daysLeft])).toEqual([
-      ["Landing", 7],
-      ["Contrato", 10],
-    ]);
-    expect(upcoming[0]!.projectId).toBe(web);
-    expect(rumbo.projects.upcomingMilestones(1)).toHaveLength(1);
-  });
-
   it("links tasks to a milestone, counts them and frees them when it goes", async () => {
     const id = await rumbo.projects.create({
       ...project,

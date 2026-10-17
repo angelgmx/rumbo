@@ -18,17 +18,16 @@ export interface ProjectDraft {
   tasks: string[];
 }
 
-const BLANK: ProjectDraft = {
+const BLANK: Omit<ProjectDraft, "status"> = {
   title: "",
   outcome: "",
-  status: "idea",
   milestones: [],
   tasks: [],
 };
 
 /** Lo que se rellena en el modal, con lo que impide guardarlo (si algo lo impide). */
-export function useProjectDraft() {
-  const [draft, setDraft] = useState<ProjectDraft>(BLANK);
+export function useProjectDraft(status: ProjectStatus) {
+  const [draft, setDraft] = useState<ProjectDraft>({ ...BLANK, status });
   const patch = (changes: Partial<ProjectDraft>) =>
     setDraft((current) => ({ ...current, ...changes }));
 

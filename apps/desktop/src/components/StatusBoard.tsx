@@ -13,24 +13,31 @@ import {
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+export interface BoardColumn<S extends string> {
+  status: S;
+  heading: ReactNode;
+  /** Va al final de la columna, tras sus tarjetas, dentro de lo que se desplaza. */
+  footer?: ReactNode;
+  /** Una columna plegada enseña esto en vez de sus tarjetas y sigue aceptando las que se arrastran. */
+  folded?: ReactNode;
+}
+
 /** Un tablero con una columna por estado: arrastrar una tarjeta a otra columna le cambia el estado. */
 export function StatusBoard<S extends string, T extends { id: number }>({
+  columns,
   items,
   statusOf,
-  statuses,
-  label,
-  dotStyle,
   onMove,
   renderCard,
+  columnClassName = "w-72 shrink-0",
 }: {
+  columns: BoardColumn<S>[];
   items: T[];
   statusOf: (item: T) => S;
-  statuses: readonly S[];
-  label: Record<S, string>;
-  /** Color del punto de cada columna, como clase de texto. */
-  dotStyle: Record<S, string>;
   onMove: (item: T, status: S) => void;
   renderCard: (item: T, className?: string) => ReactNode;
+  /** El ancho de las columnas abiertas. */
+  columnClassName?: string;
 }) {
   const [dragging, setDragging] = useState<T>();
   const sensors = useSensors(
@@ -57,8 +64,15 @@ export function StatusBoard<S extends string, T extends { id: number }>({
       onDragCancel={() => setDragging(undefined)}
     >
       <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto pb-2">
-        {statuses.map((status) => (
-          <Column key={status} status={status} title={label[status]} dotStyle={dotStyle[status]}>
+        {columns.map(({ status, heading, footer, folded }) => (
+          <Column
+            key={status}
+            status={status}
+            heading={heading}
+            footer={footer}
+            folded={folded}
+            className={columnClassName}
+          >
             {items
               .filter((item) => statusOf(item) === status)
               .map((item) => (
@@ -74,15 +88,46 @@ export function StatusBoard<S extends string, T extends { id: number }>({
   );
 }
 
+/** El título de una columna: su icono, su nombre, cuántas tarjetas tiene y una acción al final. */
+export function ColumnHeading({
+  icon,
+  title,
+  count,
+  action,
+}: {
+  icon: ReactNode;
+  title: string;
+  count: number;
+  action?: ReactNode;
+}) {
+  return (
+    <h2 className="flex min-h-7 items-center gap-2 px-1 text-sm">
+      {icon}
+      <span className="font-medium">{title}</span>
+      <span className="font-mono text-xs text-muted-foreground">{count}</span>
+      {action && <span className="ml-auto flex items-center">{action}</span>}
+    </h2>
+  );
+}
+
+/** El punto de color de una columna, en el color de texto que se le dé. */
+export function StatusDot({ className }: { className: string }) {
+  return <span className={cn("size-2 rounded-full bg-current", className)} />;
+}
+
 function Column({
   status,
-  title,
-  dotStyle,
+  heading,
+  footer,
+  folded,
+  className,
   children,
 }: {
   status: string;
-  title: string;
-  dotStyle: string;
+  heading: ReactNode;
+  footer: ReactNode;
+  folded: ReactNode;
+  className: string;
   children: ReactNode[];
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
@@ -90,18 +135,23 @@ function Column({
   return (
     <section
       ref={setNodeRef}
-      aria-label={title}
       className={cn(
-        "flex w-72 shrink-0 flex-col gap-3 rounded-xl bg-muted/30 p-3 transition-colors duration-(--dur-fast)",
+        "flex flex-col gap-3 rounded-xl bg-muted/30 p-3 transition-colors duration-(--dur-fast)",
+        folded ? "w-52 shrink-0" : className,
         isOver && "bg-primary-soft/40",
       )}
     >
-      <h2 className="flex items-center gap-2 px-1 text-sm">
-        <span className={cn("size-2 rounded-full bg-current", dotStyle)} />
-        <span className="font-medium">{title}</span>
-        <span className="font-mono text-xs text-muted-foreground">{children.length}</span>
-      </h2>
-      <div className="flex min-h-16 flex-col gap-3 overflow-y-auto">{children}</div>
+      {heading}
+      {folded ? (
+        folded
+      ) : (
+        <>
+          <div className="flex min-h-16 flex-col gap-3 overflow-y-auto">
+            {children}
+            {footer}
+          </div>
+        </>
+      )}
     </section>
   );
 }

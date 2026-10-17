@@ -1,7 +1,9 @@
-import { SquareKanbanIcon } from "lucide-react";
+import type { ProjectStatus } from "@rumbo/core";
+import { PlusIcon, SquareKanbanIcon } from "lucide-react";
 import { useState } from "react";
-import { useLocation, useParams } from "wouter";
+import { useLocation } from "wouter";
 import { SegmentedControl } from "@/components/SegmentedControl";
+import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyDescription,
@@ -11,57 +13,51 @@ import {
 } from "@/components/ui/empty";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { ScreenHeader } from "@/layout/ScreenHeader";
-import { ProjectDetailDock } from "./detail/ProjectDetailDock";
-import { NewProjectButton } from "./new/NewProjectButton";
-import { ProjectBoard } from "./ProjectBoard";
-import { ProjectList } from "./ProjectList";
-import { GROUPS } from "./projectLabels";
-import { UpcomingMilestones } from "./UpcomingMilestones";
-
-type View = "board" | "list";
+import { NewProjectDialog } from "./new/NewProjectDialog";
+import { ProjectPeekDock } from "./peek/ProjectPeekDock";
+import { ProjectFilterBar } from "./ProjectFilterBar";
+import { matchingProjects, NO_FILTERS, type ProjectFilters } from "./projectFilters";
+import { projectHref } from "./projectLabels";
+import { projectsSummary } from "./projectsSummary";
+import { ProjectViews, type View } from "./ProjectViews";
 
 const VIEWS: { value: View; label: string }[] = [
   { value: "board", label: "Tablero" },
   { value: "list", label: "Lista" },
+  { value: "gallery", label: "Galería" },
 ];
 
-/** Los proyectos en lista o tablero; al abrir uno, su panel entra a la derecha. */
+/**
+ * Los proyectos en tablero, lista o galería. Un clic en uno abre su vista previa a la derecha;
+ * un doble clic, o «Abrir proyecto», va a su página.
+ */
 export function ProjectsScreen() {
   const projects = useVaultQuery((r) => r.projects.list()).data ?? [];
-  const [view, setView] = useState<View>("list");
+  const [view, setView] = useState<View>("board");
+  const [filters, setFilters] = useState<ProjectFilters>(NO_FILTERS);
+  const [previewId, setPreviewId] = useState<number>();
+  const [creating, setCreating] = useState<ProjectStatus>();
   const [, navigate] = useLocation();
-  const { id } = useParams<{ id?: string }>();
-  const selected = projects.find((summary) => summary.id === Number(id));
-
-  const counts = GROUPS.map(({ status, one, many }) => {
-    const count = projects.filter(({ project }) => project.status === status).length;
-    return count > 0 ? `${count} ${count === 1 ? one : many}` : undefined;
-  }).filter(Boolean);
 
   return (
     <>
       <ScreenHeader
-        title={
-          selected ? (
-            <span className="flex items-center gap-2">
-              <span className="text-muted-foreground">Proyectos</span>
-              <span className="text-muted-foreground">›</span>
-              {selected.project.title}
-            </span>
-          ) : (
-            "Proyectos"
-          )
-        }
+        title="Proyectos"
         newTask={false}
-        actions={<NewProjectButton />}
+        actions={
+          <Button onClick={() => setCreating("idea")}>
+            <PlusIcon data-icon="inline-start" />
+            Nuevo proyecto
+          </Button>
+        }
       />
       <div className="flex min-h-0 flex-1">
-        <main className="flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto p-6">
+        <main className="flex min-w-0 flex-1 flex-col gap-5 overflow-y-auto p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-3xl font-semibold tracking-tight">Proyectos</h1>
               <p className="mt-1 text-muted-foreground">
-                {counts.length === 0 ? "Lo que construyes, con un final" : counts.join(" · ")}
+                {projectsSummary(projects) || "Lo que construyes, con un final"}
               </p>
             </div>
             {projects.length > 0 && (
@@ -79,15 +75,31 @@ export function ProjectsScreen() {
                 <EmptyDescription>Crea el primero con «Nuevo proyecto».</EmptyDescription>
               </EmptyHeader>
             </Empty>
-          ) : view === "board" ? (
-            <ProjectBoard projects={projects} />
           ) : (
-            <ProjectList projects={projects} selectedId={selected?.id} />
+            <>
+              <ProjectFilterBar
+                projects={projects}
+                filters={filters}
+                onChange={(changes) => setFilters({ ...filters, ...changes })}
+              />
+              <ProjectViews
+                view={view}
+                status={filters.status}
+                projects={matchingProjects(projects, filters)}
+                selectedId={previewId}
+                onSelect={setPreviewId}
+                onOpen={(id) => navigate(projectHref(id))}
+                onCreate={setCreating}
+              />
+            </>
           )}
-          {view === "list" && <UpcomingMilestones />}
         </main>
-        <ProjectDetailDock summary={selected} onClose={() => navigate("/proyectos")} />
+        <ProjectPeekDock
+          summary={projects.find(({ id }) => id === previewId)}
+          onClose={() => setPreviewId(undefined)}
+        />
       </div>
+      <NewProjectDialog status={creating} onClose={() => setCreating(undefined)} />
     </>
   );
 }

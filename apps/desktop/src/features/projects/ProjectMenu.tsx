@@ -1,5 +1,5 @@
 import type { ProjectSummary } from "@rumbo/core";
-import { ArchiveIcon, EllipsisIcon, SquareKanbanIcon, Trash2Icon, XIcon } from "lucide-react";
+import { ArchiveIcon, EllipsisIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRumbo } from "@/app/RumboContext";
@@ -12,38 +12,42 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-/** Qué es el panel, su menú «…» (archivar, eliminar con confirmación) y cerrarlo. */
-export function ProjectDetailHeader({
+/** El menú «…» del proyecto: archivarlo o eliminarlo (con confirmación). `onGone` avisa de que ya no está. */
+export function ProjectMenu({
   summary: { id, project },
-  onClose,
+  size = "icon",
+  onGone,
 }: {
   summary: ProjectSummary;
-  onClose: () => void;
+  size?: "icon" | "icon-xs";
+  onGone?: () => void;
 }) {
-  const rumbo = useRumbo();
+  const { projects } = useRumbo();
   const [confirming, setConfirming] = useState(false);
 
   async function archive() {
-    await rumbo.projects.archive(id);
+    await projects.archive(id);
     toast.success(`«${project.title}» archivado`);
-    onClose();
+    onGone?.();
   }
 
   async function remove() {
-    await rumbo.projects.remove(id);
+    await projects.remove(id);
     toast.success(`«${project.title}» eliminado`);
-    onClose();
+    onGone?.();
   }
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 px-6">
-      <span className="mr-auto flex items-center gap-2 text-sm text-muted-foreground">
-        <SquareKanbanIcon className="size-4" />
-        Proyecto
-      </span>
+    <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={<Button variant="outline" size="icon" aria-label="Más acciones" />}
+          render={
+            <Button
+              variant={size === "icon" ? "outline" : "ghost"}
+              size={size}
+              aria-label="Más acciones"
+            />
+          }
         >
           <EllipsisIcon />
         </DropdownMenuTrigger>
@@ -58,9 +62,6 @@ export function ProjectDetailHeader({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Button variant="outline" size="icon" aria-label="Cerrar" onClick={onClose}>
-        <XIcon />
-      </Button>
       <ConfirmDialog
         open={confirming}
         onOpenChange={setConfirming}
@@ -68,6 +69,6 @@ export function ProjectDetailHeader({
         description="Sus tareas se quedan, sin proyecto. Si ya lo terminaste, mejor márcalo como «Terminado»."
         onConfirm={() => void remove()}
       />
-    </header>
+    </>
   );
 }
