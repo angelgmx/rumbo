@@ -9,12 +9,13 @@ import {
   type IsoDate,
   type Task,
 } from "@rumbo/core";
-import { HourglassIcon, InboxIcon, RepeatIcon } from "lucide-react";
+import { HourglassIcon, InboxIcon, LayersIcon, RepeatIcon } from "lucide-react";
 import { DynamicIcon, type IconName } from "lucide-react/dynamic";
 import { CircleIcon } from "lucide-react";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { useArea } from "@/hooks/useArea";
 import { useAreaNames } from "@/hooks/useAreaNames";
+import { FoldSection } from "./FoldSection";
 import { SourceRow } from "./SourceRow";
 import { ROUTINES_COLOR, ROUTINES_KEY, type Visibility } from "../visibility";
 
@@ -68,19 +69,27 @@ export function SourceList({
         onOpen={() => onOpen(undated)}
       />
       <Divider />
-      {areas.map((name) => (
-        <AreaRow
-          key={name}
-          name={name}
-          tasks={tasks}
-          week={week}
-          today={today}
-          open={open}
-          visibility={visibility}
-          onOpen={onOpen}
-        />
-      ))}
-      {areas.length > 0 && <Divider />}
+      {areas.length > 0 && (
+        <>
+          <FoldSection id="areas" icon={<LayersIcon />} title="Áreas" summary={areas.length}>
+            <div className="flex flex-col gap-1">
+              {areas.map((name) => (
+                <AreaRow
+                  key={name}
+                  name={name}
+                  tasks={tasks}
+                  week={week}
+                  today={today}
+                  open={open}
+                  visibility={visibility}
+                  onOpen={onOpen}
+                />
+              ))}
+            </div>
+          </FoldSection>
+          <Divider />
+        </>
+      )}
       <SourceRow
         icon={<RepeatIcon />}
         label="Rutinas"
