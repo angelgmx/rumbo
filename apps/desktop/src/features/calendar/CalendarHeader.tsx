@@ -2,8 +2,10 @@ import type { IsoDate } from "@rumbo/core";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { Button } from "@/components/ui/button";
+import { AreasMenu } from "./areas/AreasMenu";
 import { viewTitle } from "./calendarLabels";
 import type { CalendarMode, CalendarView } from "./calendarView";
+import type { Visibility } from "./visibility";
 
 const MODES: { value: CalendarMode; label: string }[] = [
   { value: "day", label: "Día" },
@@ -11,15 +13,17 @@ const MODES: { value: CalendarMode; label: string }[] = [
   { value: "month", label: "Mes" },
 ];
 
-/** El título de la vista, su resumen y los controles para moverse: flechas, Hoy y Día · Semana · Mes. */
+/** El título de la vista, su resumen y los controles: flechas, Hoy, Áreas y Día · Semana · Mes. */
 export function CalendarHeader({
   view,
   today,
   subtitle,
+  visibility,
 }: {
   view: CalendarView;
   today: IsoDate;
   subtitle: string;
+  visibility: Visibility;
 }) {
   return (
     <div className="flex items-start justify-between gap-4 pt-6 pr-4 pb-4 pl-2">
@@ -39,6 +43,7 @@ export function CalendarHeader({
         <Button variant="outline" onClick={() => view.setAnchor(today)}>
           Hoy
         </Button>
+        <AreasMenu visibility={visibility} />
         <SegmentedControl label="Vista" options={MODES} value={view.mode} onChange={view.setMode} />
       </div>
     </div>

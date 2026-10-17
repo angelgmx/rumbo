@@ -14,6 +14,12 @@ const NEUTRAL = "var(--muted-foreground)";
 /** Cómo se llama una fuente, su icono y qué hereda lo que se crea desde su panel. */
 export function sourceInfo(source: CalendarSource, area: AreaLook): SourceInfo {
   switch (source.kind) {
+    case "all":
+      return {
+        name: "Todas",
+        look: { color: NEUTRAL, icon: "layers" },
+        newLabel: "Nueva tarea",
+      };
     case "inbox":
       return {
         name: "Inbox",
@@ -33,12 +39,6 @@ export function sourceInfo(source: CalendarSource, area: AreaLook): SourceInfo {
         look: area,
         newLabel: `Nueva tarea en ${source.area}`,
         where: "ya lleva el área",
-      };
-    case "routines":
-      return {
-        name: "Rutinas",
-        look: { color: NEUTRAL, icon: "repeat" },
-        newLabel: "Nueva rutina",
       };
   }
 }

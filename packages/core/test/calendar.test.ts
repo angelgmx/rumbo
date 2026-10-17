@@ -249,11 +249,10 @@ describe("sourceTasks", () => {
     expect(own.undated).toEqual([loose, nested]);
   });
 
-  it("has no tasks for the routines", () => {
-    expect(sourceTasks(tasks, { kind: "routines" }, week, today)).toEqual({
-      undated: [],
-      scheduled: [],
-    });
+  it("offers every pending task and the week's ones for «todas»", () => {
+    const all = sourceTasks(tasks, { kind: "all" }, week, today);
+    expect(all.undated).toEqual([inbox, loose, looseElsewhere]);
+    expect(all.scheduled).toEqual([placed, finished]);
   });
 
   it("treats a wikilink and a plain name as the same area", () => {

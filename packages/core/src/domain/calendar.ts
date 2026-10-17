@@ -134,11 +134,14 @@ export function deadlinesBetween(
 
 /** De dónde salen las tareas que se ofrecen para colocar. */
 export type CalendarSource =
+  | { kind: "all" }
   | { kind: "inbox" }
   | { kind: "undated" }
   /** `within` son las subáreas: sus tareas cuentan también en el área madre. */
-  | { kind: "area"; area: string; within?: string[] }
-  | { kind: "routines" };
+  | { kind: "area"; area: string; within?: string[] };
+
+/** La clave con la que se ocultan las rutinas, que no son de ninguna área. */
+export const ROUTINES_KEY = "routines";
 
 /** Lo que se ve u oculta en el calendario: lo que no tiene área se agrupa bajo el Inbox. */
 export function sourceKey(source: CalendarSource): string {
@@ -173,25 +176,34 @@ export function sourceTasks(
   week: DayRange,
   today: IsoDate,
 ): SourceTasks {
-  const isUndated = (task: Task) => !task.done && !task.scheduled;
   switch (source.kind) {
+    case "all":
+      return placeable(tasks, week);
     case "inbox":
       return { undated: tasks.filter((task) => isInView(task, "inbox", today)), scheduled: [] };
     case "undated":
       return { undated: tasks.filter(isUndated), scheduled: [] };
-    case "routines":
-      return { undated: [], scheduled: [] };
     case "area": {
       const areaKeys = [source.area, ...(source.within ?? [])].map(areaKey);
-      const own = tasks.filter((task) => areaKeys.includes(areaKey(task.area)));
-      return {
-        undated: own.filter(isUndated),
-        scheduled: own.filter(
-          (task) => task.scheduled && task.scheduled >= week.from && task.scheduled <= week.to,
-        ),
-      };
+      return placeable(
+        tasks.filter((task) => areaKeys.includes(areaKey(task.area))),
+        week,
+      );
     }
   }
+}
+
+function isUndated(task: Task): boolean {
+  return !task.done && !task.scheduled;
+}
+
+function placeable(tasks: readonly Task[], week: DayRange): SourceTasks {
+  return {
+    undated: tasks.filter(isUndated),
+    scheduled: tasks.filter(
+      (task) => task.scheduled && task.scheduled >= week.from && task.scheduled <= week.to,
+    ),
+  };
 }
 
 /** Cuántas quedan por hacer entre las dos listas. */

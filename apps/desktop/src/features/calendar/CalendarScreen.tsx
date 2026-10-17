@@ -1,11 +1,4 @@
-import {
-  areaKey,
-  shownDay,
-  sourceKey,
-  type CalendarSource,
-  type HabitInput,
-  type RoutineSummary,
-} from "@rumbo/core";
+import { areaKey, shownDay, type CalendarSource, type HabitInput } from "@rumbo/core";
 import { RepeatIcon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -55,8 +48,7 @@ export function CalendarScreen() {
     .filter(({ proposal }) => proposal.date && proposal.time)
     .filter(({ task }) => !visibility.isHidden(areaKey(task.area)));
 
-  const openSource = (next: CalendarSource) =>
-    setSource((current) => (current && sourceKey(current) === sourceKey(next) ? undefined : next));
+  const togglePlacing = () => setSource((current) => (current ? undefined : { kind: "all" }));
 
   return (
     <GestureProvider>
@@ -94,26 +86,24 @@ export function CalendarScreen() {
           <CalendarSidebar
             anchor={view.anchor}
             today={today}
-            source={source}
-            visibility={visibility}
+            placing={source !== undefined}
             onPickDay={view.setAnchor}
-            onOpenSource={openSource}
+            onTogglePlacing={togglePlacing}
           />
           <div className="flex min-w-0 flex-1 flex-col">
             <CalendarHeader
               view={view}
               today={today}
-              subtitle={viewSubtitle(view.mode, view.anchor, shownDays, source)}
+              subtitle={viewSubtitle(view.mode, view.anchor, shownDays)}
+              visibility={visibility}
             />
             <div className="flex min-h-0 flex-1">
               <SourcePanel
                 source={source}
                 anchor={view.anchor}
                 today={today}
+                onChange={setSource}
                 onClose={() => setSource(undefined)}
-                onEditRoutine={(summary: RoutineSummary | undefined) =>
-                  setRoutine(summary ? { summary } : {})
-                }
               />
               <main className="flex min-w-0 flex-1 flex-col py-2 pr-4 pl-2">
                 <ViewSwitcher mode={view.mode}>

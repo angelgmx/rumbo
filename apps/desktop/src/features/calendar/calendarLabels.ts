@@ -4,13 +4,11 @@ import {
   isoWeek,
   startOfWeek,
   type CalendarDay,
-  type CalendarSource,
   type IsoDate,
 } from "@rumbo/core";
 import { formatMonthTitle } from "@/lib/calendar";
 import { capitalize, formatDay, formatDayMonth, formatDayRange, formatMinutes } from "@/lib/format";
 import type { CalendarMode } from "./calendarView";
-import { sourceName } from "./source/sourceInfo";
 
 /** El título grande de la vista: el día, el rango de la semana («12 – 18 oct 2026») o el mes. */
 export function viewTitle(mode: CalendarMode, anchor: IsoDate): string {
@@ -33,16 +31,10 @@ export function viewCrumb(mode: CalendarMode, anchor: IsoDate): string {
   return mode === "day" ? `Día ${formatDayMonth(anchor)}` : `Semana ${isoWeek(anchor)}`;
 }
 
-/** El resumen bajo el título: la semana y lo que queda libre, o lo que trae el mes; y la fuente abierta. */
-export function viewSubtitle(
-  mode: CalendarMode,
-  anchor: IsoDate,
-  days: CalendarDay[],
-  source: CalendarSource | undefined,
-): string {
+/** El resumen bajo el título: la semana y lo que queda libre, o lo que trae el mes. */
+export function viewSubtitle(mode: CalendarMode, anchor: IsoDate, days: CalendarDay[]): string {
   const parts =
     mode === "month" ? monthSummary(days, anchor.slice(0, 7)) : weekSummary(days, anchor);
-  if (source) parts.push(`${sourceName(source)} abierto`);
   return parts.join(" · ");
 }
 

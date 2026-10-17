@@ -50,3 +50,14 @@ export function areaFamily(node: AreaNode): string[] {
 export function mergeOrder(saved: readonly string[], level: readonly string[]): string[] {
   return [...level, ...saved.filter((name) => !level.includes(name))];
 }
+
+/** Las áreas cuyo nombre contiene el texto, con la madre que las lleva; si la madre coincide, con todas sus hijas. */
+export function filterAreas(nodes: readonly AreaNode[], query: string): AreaNode[] {
+  const text = query.trim().toLowerCase();
+  if (!text) return [...nodes];
+  return nodes.flatMap((node) => {
+    if (node.name.toLowerCase().includes(text)) return [node];
+    const children = filterAreas(node.children, text);
+    return children.length > 0 ? [{ ...node, children }] : [];
+  });
+}

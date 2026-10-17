@@ -1,42 +1,26 @@
-import type { CalendarSource, IsoDate } from "@rumbo/core";
-import { CalendarIcon } from "lucide-react";
-import type { Visibility } from "../visibility";
+import type { IsoDate } from "@rumbo/core";
 import { HabitsToday } from "./HabitsToday";
 import { MiniMonth } from "./MiniMonth";
-import { SourceList } from "./SourceList";
+import { PlaceTasksEntry } from "./PlaceTasksEntry";
 
-/** La barra de la izquierda: el mes, las fuentes del calendario y los hábitos de hoy. */
+/** La barra de la izquierda: el mes, las tareas por colocar y los hábitos de hoy. */
 export function CalendarSidebar({
   anchor,
   today,
-  source,
-  visibility,
+  placing,
   onPickDay,
-  onOpenSource,
+  onTogglePlacing,
 }: {
   anchor: IsoDate;
   today: IsoDate;
-  source: CalendarSource | undefined;
-  visibility: Visibility;
+  placing: boolean;
   onPickDay: (date: IsoDate) => void;
-  onOpenSource: (source: CalendarSource) => void;
+  onTogglePlacing: () => void;
 }) {
   return (
     <aside className="flex w-60 shrink-0 flex-col gap-5 overflow-y-auto p-4 pr-3">
       <MiniMonth anchor={anchor} today={today} onPick={onPickDay} />
-      <section className="flex flex-col gap-2">
-        <h2 className="flex items-center gap-2.5 px-2.5 text-[15px] font-semibold">
-          <CalendarIcon className="size-4 text-muted-foreground" />
-          En el calendario
-        </h2>
-        <SourceList
-          anchor={anchor}
-          today={today}
-          open={source}
-          visibility={visibility}
-          onOpen={onOpenSource}
-        />
-      </section>
+      <PlaceTasksEntry today={today} active={placing} onToggle={onTogglePlacing} />
       <HabitsToday today={today} />
     </aside>
   );

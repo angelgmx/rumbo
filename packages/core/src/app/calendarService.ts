@@ -1,6 +1,12 @@
 import { blockEnd, taskInterval } from "../domain/taskOrganizing";
 import type { AgendaBlock } from "../domain/agenda";
-import { areaKey, dayGaps, deadlinesBetween, sourceKey, type Deadline } from "../domain/calendar";
+import {
+  areaKey,
+  dayGaps,
+  deadlinesBetween,
+  ROUTINES_KEY,
+  type Deadline,
+} from "../domain/calendar";
 import { addDays, toTime, type IsoDate } from "../domain/dates";
 import type { Interval } from "../domain/freeTime";
 import { isDone, isScheduledOn } from "../domain/habits";
@@ -43,7 +49,7 @@ function eventKey(event: CalendarEvent): string | undefined {
     case "habit":
       return areaKey(event.habit.habit.area);
     case "routine":
-      return sourceKey({ kind: "routines" });
+      return ROUTINES_KEY;
     case "agenda":
       return undefined;
   }

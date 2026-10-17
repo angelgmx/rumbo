@@ -5,16 +5,21 @@ export interface Visibility {
   isHidden: (key: string) => boolean;
   /** Muestra u oculta varias claves a la vez según esté la primera: así una área arrastra a sus subáreas. */
   toggle: (keys: string[]) => void;
+  /** Deja visibles solo `keys` de entre todas las `among`. */
+  showOnly: (keys: string[], among: string[]) => void;
+  showAll: () => void;
 }
 
 const STORAGE_KEY = "rumbo.calendar.hidden";
 
-// El azul de las láminas para la casilla de las rutinas, que no tienen un color propio.
-export const ROUTINES_COLOR = "#5b8def";
-
 /** Lo oculto se recuerda entre sesiones: es una preferencia de la ventana, no del vault. */
 export function useVisibility(): Visibility {
   const [hidden, setHidden] = useState<ReadonlySet<string>>(read);
+
+  const commit = (next: ReadonlySet<string>) => {
+    setHidden(next);
+    write(next);
+  };
 
   return {
     isHidden: (key) => hidden.has(key),
@@ -25,9 +30,10 @@ export function useVisibility(): Visibility {
         if (show) next.delete(key);
         else next.add(key);
       }
-      setHidden(next);
-      write(next);
+      commit(next);
     },
+    showOnly: (keys, among) => commit(new Set(among.filter((key) => !keys.includes(key)))),
+    showAll: () => commit(new Set()),
   };
 }
 

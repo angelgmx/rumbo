@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createRumbo } from "../src";
-import { areaFamily, areaTree, mergeOrder, orderAreas } from "../src/domain/areas";
+import { areaFamily, areaTree, filterAreas, mergeOrder, orderAreas } from "../src/domain/areas";
 import { memoryDatabase } from "./memoryDatabase";
 import { memoryFileSystem } from "./memoryFileSystem";
 
@@ -19,6 +19,33 @@ describe("areaTree", () => {
     const development = tree.find(({ name }) => name === "Desarrollo")!;
     expect(development.children.map(({ name }) => name)).toEqual(["Programación"]);
     expect(areaFamily(development).sort()).toEqual(["Desarrollo", "Java", "Programación"]);
+  });
+});
+
+describe("filterAreas", () => {
+  const tree = [
+    {
+      name: "Desarrollo",
+      children: [
+        { name: "Java", children: [] },
+        { name: "Web", children: [] },
+      ],
+    },
+    { name: "Gym", children: [] },
+  ];
+
+  it("keeps everything without a query", () => {
+    expect(filterAreas(tree, "  ")).toEqual(tree);
+  });
+
+  it("keeps a matching subarea under its parent only", () => {
+    expect(filterAreas(tree, "java")).toEqual([
+      { name: "Desarrollo", children: [{ name: "Java", children: [] }] },
+    ]);
+  });
+
+  it("keeps all the subareas of a matching parent", () => {
+    expect(filterAreas(tree, "desa")).toEqual([tree[0]]);
   });
 });
 

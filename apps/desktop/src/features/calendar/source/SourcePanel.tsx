@@ -1,14 +1,6 @@
-import {
-  addDays,
-  sourceTasks,
-  startOfWeek,
-  type CalendarSource,
-  type IsoDate,
-  type RoutineSummary,
-} from "@rumbo/core";
+import { addDays, sourceTasks, startOfWeek, type CalendarSource, type IsoDate } from "@rumbo/core";
 import { PlusIcon, SearchIcon, XIcon } from "lucide-react";
 import { useState } from "react";
-import { AreaIcon } from "@/components/AreaIcon";
 import { DockedPanel } from "@/components/panel/DockedPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,25 +8,25 @@ import { useTaskPanel } from "@/features/task-panel/TaskPanelProvider";
 import { useArea } from "@/hooks/useArea";
 import { useVaultQuery } from "@/hooks/useVaultQuery";
 import { useGestures } from "../gestures/Gestures";
-import { RoutineSourceCard } from "./RoutineSourceCard";
 import { sourceInfo } from "./sourceInfo";
+import { SourcePicker } from "./SourcePicker";
 import { TaskGroup } from "./TaskGroup";
 
 const PANEL_WIDTH = 332;
 
-/** El panel pegado a la barra con lo que ofrece una fuente: tareas para arrastrar a la rejilla o rutinas. */
+/** El panel pegado a la barra con las tareas por colocar de una fuente, para arrastrarlas a la rejilla. */
 export function SourcePanel({
   source,
   anchor,
   today,
+  onChange,
   onClose,
-  onEditRoutine,
 }: {
   source: CalendarSource | undefined;
   anchor: IsoDate;
   today: IsoDate;
+  onChange: (source: CalendarSource) => void;
   onClose: () => void;
-  onEditRoutine: (summary: RoutineSummary | undefined) => void;
 }) {
   // Mientras se cierra sigue enseñando la última fuente en vez de vaciarse.
   const [shown, setShown] = useState(source);
@@ -47,8 +39,8 @@ export function SourcePanel({
           source={shown}
           anchor={anchor}
           today={today}
+          onChange={onChange}
           onClose={onClose}
-          onEditRoutine={onEditRoutine}
         />
       )}
     </DockedPanel>
@@ -59,14 +51,14 @@ function SourceContent({
   source,
   anchor,
   today,
+  onChange,
   onClose,
-  onEditRoutine,
 }: {
   source: CalendarSource;
   anchor: IsoDate;
   today: IsoDate;
+  onChange: (source: CalendarSource) => void;
   onClose: () => void;
-  onEditRoutine: (summary: RoutineSummary | undefined) => void;
 }) {
   const taskPanel = useTaskPanel();
   const gestures = useGestures();
@@ -78,25 +70,18 @@ function SourceContent({
     (r) => sourceTasks(r.tasks.all(), source, week, today),
     [source, week.from],
   ).data;
-  const routines =
-    useVaultQuery((r) => (source.kind === "routines" ? r.routines.list() : [])).data ?? [];
+  const areas = useVaultQuery((r) => r.areas.tree()).data ?? [];
 
   const matches = (text: string) => text.toLowerCase().includes(query.trim().toLowerCase());
   const undated = tasks?.undated.filter((task) => matches(task.text)) ?? [];
   const scheduled = tasks?.scheduled.filter((task) => matches(task.text)) ?? [];
-  const count =
-    source.kind === "routines"
-      ? routines.length
-      : undated.length + scheduled.filter((t) => !t.done).length;
+  const count = undated.length + scheduled.filter((task) => !task.done).length;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="flex items-center gap-3 p-4 pb-3">
-        <AreaIcon area={info.look} />
-        <h2 className="text-base font-semibold">{info.name}</h2>
-        <span className="text-[13px] text-muted-foreground">
-          {count} {source.kind === "routines" ? "rutinas" : "tareas"}
-        </span>
+        <h2 className="text-base font-semibold">Tareas para colocar</h2>
+        <span className="text-[13px] text-muted-foreground">{count}</span>
         <Button
           variant="outline"
           size="icon-sm"
@@ -107,9 +92,10 @@ function SourceContent({
           <XIcon />
         </Button>
       </header>
-      {source.kind !== "routines" && (
-        <div className="relative px-4 pb-3">
-          <SearchIcon className="absolute top-1/2 left-7 size-4 -translate-y-[60%] text-muted-foreground" />
+      <div className="flex flex-col gap-2 px-4 pb-3">
+        <SourcePicker source={source} areas={areas} onChange={onChange} />
+        <div className="relative">
+          <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -118,27 +104,11 @@ function SourceContent({
             className="h-9 pl-9"
           />
         </div>
-      )}
+      </div>
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
-        {source.kind === "routines" ? (
-          <ul className="flex flex-col gap-2">
-            {routines.map((summary) => (
-              <RoutineSourceCard
-                key={summary.id}
-                summary={summary}
-                onEdit={() => onEditRoutine(summary)}
-              />
-            ))}
-          </ul>
-        ) : (
-          <>
-            <TaskGroup
-              title="Sin fecha"
-              tasks={undated}
-              placeholder={gestures.ghost && <DropHint />}
-            />
-            {source.kind === "area" && <TaskGroup title="Esta semana" tasks={scheduled} />}
-          </>
+        <TaskGroup title="Sin fecha" tasks={undated} placeholder={gestures.ghost && <DropHint />} />
+        {(source.kind === "area" || source.kind === "all") && (
+          <TaskGroup title="Esta semana" tasks={scheduled} />
         )}
       </div>
       <footer className="flex flex-col gap-0.5 border-t p-4">
@@ -146,13 +116,11 @@ function SourceContent({
           type="button"
           className="flex items-center gap-2 self-start text-[14px] font-medium text-primary-text"
           onClick={() =>
-            source.kind === "routines"
-              ? onEditRoutine(undefined)
-              : taskPanel.create({
-                  text: "",
-                  steps: [],
-                  area: source.kind === "area" ? source.area : undefined,
-                })
+            taskPanel.create({
+              text: "",
+              steps: [],
+              area: source.kind === "area" ? source.area : undefined,
+            })
           }
         >
           <PlusIcon className="size-4" />

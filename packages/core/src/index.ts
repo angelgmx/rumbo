@@ -25,7 +25,7 @@ export { type Energy } from "./domain/closeDay";
 export type { TriageKind } from "./domain/inboxTriage";
 export type { SavedView } from "./app/savedViewService";
 export type { DayPlanItem } from "./app/dayPlanService";
-export { areaFamily, type AreaNode } from "./domain/areas";
+export { areaFamily, filterAreas, type AreaNode } from "./domain/areas";
 export { shownDay, type CalendarDay, type CalendarEvent } from "./app/calendarService";
 export {
   areaKey,
@@ -35,6 +35,7 @@ export {
   layoutLanes,
   placeTask,
   resizeTask,
+  ROUTINES_KEY,
   SNAP_MINUTES,
   snapMinutes,
   sourceCount,
