@@ -12,7 +12,7 @@ const MAX_ITEMS = 3;
 /** El mes sencillo: cada día con sus fechas límite y sus tareas; pulsar un día abre su vista. */
 export function MonthGrid({ days, month }: { days: CalendarDay[]; month: string }) {
   return (
-    <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-card">
+    <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-card select-none">
       <div className="grid shrink-0 grid-cols-7 border-b">
         {days.slice(0, 7).map(({ date }) => (
           <span key={date} className="px-3 py-2 text-[13px] text-muted-foreground">

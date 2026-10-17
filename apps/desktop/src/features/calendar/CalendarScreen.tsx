@@ -1,4 +1,11 @@
-import { sourceKey, type CalendarSource, type HabitInput, type RoutineSummary } from "@rumbo/core";
+import {
+  areaKey,
+  shownDay,
+  sourceKey,
+  type CalendarSource,
+  type HabitInput,
+  type RoutineSummary,
+} from "@rumbo/core";
 import { useState } from "react";
 import { useRumbo } from "@/app/RumboContext";
 import { HabitPanel } from "@/features/habits/panel/HabitPanel";
@@ -17,7 +24,7 @@ import { GestureGhost } from "./GestureGhost";
 import { GestureProvider } from "./gestures/Gestures";
 import { CalendarSidebar } from "./sidebar/CalendarSidebar";
 import { SourcePanel } from "./source/SourcePanel";
-import { shownDay, useVisibility } from "./visibility";
+import { useVisibility } from "./visibility";
 
 /** El calendario: tareas, hábitos con hora y rutinas en el día o la semana, y las fuentes para colocar lo que falta. */
 export function CalendarScreen() {
@@ -31,17 +38,18 @@ export function CalendarScreen() {
   const [habit, setHabit] = useState<Partial<HabitInput>>();
 
   const range = viewDays(view.mode, view.anchor);
-  const days = (
+  const days =
     useVaultQuery((r) => r.calendar.days(range.from, range.count), [range.from, range.count])
-      .data ?? []
-  ).map((day) => shownDay(day, visibility));
+      .data ?? [];
+  const shownDays = days.map((day) => shownDay(day, visibility.isHidden));
   const undated =
     useVaultQuery((r) =>
       r.organizer.pending(r.tasks.all().filter((task) => !task.done && !task.scheduled)),
     ).data ?? [];
   const proposals = undated
     .flatMap((task) => organizer.suggestionFor(task) ?? [])
-    .filter(({ proposal }) => proposal.date && proposal.time);
+    .filter(({ proposal }) => proposal.date && proposal.time)
+    .filter(({ task }) => !visibility.isHidden(areaKey(task.area)));
 
   const openSource = (next: CalendarSource) =>
     setSource((current) => (current && sourceKey(current) === sourceKey(next) ? undefined : next));
@@ -82,7 +90,7 @@ export function CalendarScreen() {
             <CalendarHeader
               view={view}
               today={today}
-              subtitle={viewSubtitle(view.mode, view.anchor, days, source)}
+              subtitle={viewSubtitle(view.mode, view.anchor, shownDays, source)}
             />
             <div className="flex min-h-0 flex-1">
               <SourcePanel
@@ -96,9 +104,9 @@ export function CalendarScreen() {
               />
               <main className="flex min-w-0 flex-1 flex-col py-2 pr-4 pl-2">
                 {view.mode === "month" ? (
-                  <MonthGrid days={days} month={view.anchor.slice(0, 7)} />
+                  <MonthGrid days={shownDays} month={view.anchor.slice(0, 7)} />
                 ) : (
-                  <DayGrid key={view.mode} days={days} />
+                  <DayGrid key={view.mode} days={days} visibility={visibility} />
                 )}
               </main>
             </div>

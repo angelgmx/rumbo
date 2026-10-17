@@ -17,7 +17,7 @@ import { useArea } from "@/hooks/useArea";
 import { useAreaNames } from "@/hooks/useAreaNames";
 import { FoldSection } from "./FoldSection";
 import { SourceRow } from "./SourceRow";
-import { ROUTINES_COLOR, ROUTINES_KEY, type Visibility } from "../visibility";
+import { ROUTINES_COLOR, type Visibility } from "../visibility";
 
 const NEUTRAL = "var(--muted-foreground)";
 
@@ -97,8 +97,8 @@ export function SourceList({
         active={isOpen(routinesSource)}
         visibility={{
           color: ROUTINES_COLOR,
-          shown: !visibility.isHidden(ROUTINES_KEY),
-          onToggle: () => visibility.toggle(ROUTINES_KEY),
+          shown: !visibility.isHidden(sourceKey(routinesSource)),
+          onToggle: () => visibility.toggle(sourceKey(routinesSource)),
         }}
         onOpen={() => onOpen(routinesSource)}
       />

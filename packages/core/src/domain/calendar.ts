@@ -5,6 +5,7 @@ import type { IsoDate } from "./dates";
 import { freeIntervals, minutesOf, timeOf, type Interval } from "./freeTime";
 import type { Goal } from "./goals";
 import type { Project } from "./projects";
+import { linkTarget } from "./links";
 import { isInView, type Task, type TaskChanges } from "./tasks";
 
 /** Lo que dura una tarea con hora si no dice otra cosa. */
@@ -143,8 +144,14 @@ export function sourceKey(source: CalendarSource): string {
   return source.kind === "area" ? areaKey(source.area) : source.kind;
 }
 
+/** El área sin importar si viene como nombre o como wikilink: "Gym" y "[[Gym]]" son la misma. */
+export function areaName(area: string | undefined): string | undefined {
+  return (linkTarget(area) ?? area)?.trim() || undefined;
+}
+
 export function areaKey(area: string | undefined): string {
-  return area ? `area:${area}` : "inbox";
+  const name = areaName(area);
+  return name ? `area:${name}` : "inbox";
 }
 
 export interface SourceTasks {
@@ -174,7 +181,7 @@ export function sourceTasks(
     case "routines":
       return { undated: [], scheduled: [] };
     case "area": {
-      const own = tasks.filter((task) => task.area === source.area);
+      const own = tasks.filter((task) => areaKey(task.area) === sourceKey(source));
       return {
         undated: own.filter(isUndated),
         scheduled: own.filter(

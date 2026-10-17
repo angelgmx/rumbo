@@ -25,9 +25,10 @@ export { type Energy } from "./domain/closeDay";
 export type { TriageKind } from "./domain/inboxTriage";
 export type { SavedView } from "./app/savedViewService";
 export type { DayPlanItem } from "./app/dayPlanService";
-export type { CalendarDay, CalendarEvent } from "./app/calendarService";
+export { shownDay, type CalendarDay, type CalendarEvent } from "./app/calendarService";
 export {
   areaKey,
+  areaName,
   DEFAULT_TASK_MINUTES,
   freeMinutes,
   layoutLanes,

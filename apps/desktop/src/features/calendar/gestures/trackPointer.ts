@@ -20,8 +20,7 @@ const DRAG_THRESHOLD = 4;
  */
 export function trackPointer(down: Point, handlers: PointerHandlers): void {
   let moved = false;
-  const previousSelect = document.body.style.userSelect;
-  document.body.style.userSelect = "none";
+  const restoreSelection = blockSelection();
 
   const pointOf = (event: PointerEvent): Point => ({ x: event.clientX, y: event.clientY });
 
@@ -43,7 +42,7 @@ export function trackPointer(down: Point, handlers: PointerHandlers): void {
     if (event.key === "Escape") onCancel();
   }
   function stop() {
-    document.body.style.userSelect = previousSelect;
+    restoreSelection();
     window.removeEventListener("pointermove", onMove);
     window.removeEventListener("pointerup", onUp);
     window.removeEventListener("pointercancel", onCancel);
@@ -54,4 +53,18 @@ export function trackPointer(down: Point, handlers: PointerHandlers): void {
   window.addEventListener("pointerup", onUp);
   window.addEventListener("pointercancel", onCancel);
   window.addEventListener("keydown", onKeyDown);
+}
+
+/** WebKitGTK solo respeta `user-select` con su prefijo; se quita lo ya seleccionado y se devuelve al soltar. */
+function blockSelection(): () => void {
+  const { style } = document.body;
+  const previous = [style.userSelect, style.getPropertyValue("-webkit-user-select")] as const;
+  style.userSelect = "none";
+  style.setProperty("-webkit-user-select", "none");
+  window.getSelection()?.removeAllRanges();
+
+  return () => {
+    style.userSelect = previous[0];
+    style.setProperty("-webkit-user-select", previous[1]);
+  };
 }

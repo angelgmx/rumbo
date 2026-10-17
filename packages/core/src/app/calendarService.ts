@@ -1,6 +1,6 @@
 import { blockEnd, taskInterval } from "../domain/taskOrganizing";
 import type { AgendaBlock } from "../domain/agenda";
-import { dayGaps, deadlinesBetween, type Deadline } from "../domain/calendar";
+import { areaKey, dayGaps, deadlinesBetween, sourceKey, type Deadline } from "../domain/calendar";
 import { addDays, toTime, type IsoDate } from "../domain/dates";
 import type { Interval } from "../domain/freeTime";
 import { isDone, isScheduledOn } from "../domain/habits";
@@ -34,6 +34,35 @@ export interface CalendarDay {
   events: CalendarEvent[];
   /** Huecos largos que quedan libres. */
   gaps: Interval[];
+}
+
+function eventKey(event: CalendarEvent): string | undefined {
+  switch (event.kind) {
+    case "task":
+      return areaKey(event.task.area);
+    case "habit":
+      return areaKey(event.habit.habit.area);
+    case "routine":
+      return sourceKey({ kind: "routines" });
+    case "agenda":
+      return undefined;
+  }
+}
+
+/**
+ * El día sin lo que pertenece a una fuente oculta. Los huecos no cambian (lo oculto sigue
+ * ocupando) y la agenda de la daily no es de ninguna fuente: siempre se ve.
+ */
+export function shownDay(day: CalendarDay, isHidden: (key: string) => boolean): CalendarDay {
+  return {
+    ...day,
+    events: day.events.filter((event) => {
+      const key = eventKey(event);
+      return key === undefined || !isHidden(key);
+    }),
+    untimed: day.untimed.filter((task) => !isHidden(areaKey(task.area))),
+    deadlines: day.deadlines.filter((deadline) => !isHidden(areaKey(deadline.area))),
+  };
 }
 
 /**

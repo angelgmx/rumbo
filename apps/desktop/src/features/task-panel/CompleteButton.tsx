@@ -2,7 +2,7 @@ import { LoaderCircleIcon, SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAiProvider } from "@/features/ai/useAiProvider";
 
-/** «Completar con IA», discreto en la cabecera: solo sale con la IA configurada. */
+/** «Completar con IA», discreto bajo la cabecera: solo sale con la IA configurada. */
 export function CompleteButton({ thinking, onClick }: { thinking: boolean; onClick: () => void }) {
   if (useAiProvider() === undefined) return null;
 

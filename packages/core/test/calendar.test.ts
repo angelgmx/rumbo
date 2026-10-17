@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { createRumbo, isoWeek, type Rumbo, type Task } from "../src";
+import { createRumbo, isoWeek, shownDay, type Rumbo, type Task } from "../src";
 import {
   areaKey,
+  areaName,
   dayGaps,
   deadlinesBetween,
   freeMinutes,
@@ -244,6 +245,15 @@ describe("sourceTasks", () => {
     });
   });
 
+  it("treats a wikilink and a plain name as the same area", () => {
+    const linked = task({ text: "Linked", area: "[[Citalash|la app]]" });
+    expect(areaName("[[Citalash|la app]]")).toBe("Citalash");
+    expect(areaKey(linked.area)).toBe(areaKey("Citalash"));
+    expect(sourceTasks([linked], { kind: "area", area: "Citalash" }, week, today).undated).toEqual([
+      linked,
+    ]);
+  });
+
   it("keys what has no area under the inbox", () => {
     expect(sourceKey({ kind: "area", area: "Gym" })).toBe(areaKey("Gym"));
     expect(areaKey(undefined)).toBe(sourceKey({ kind: "inbox" }));
@@ -391,5 +401,32 @@ describe("CalendarService", () => {
 
     expect(days.has("2026-10-20")).toBe(true);
     expect(days.has("2026-10-19")).toBe(false);
+  });
+
+  it("hides an area's tasks whatever way they name it, and nothing else", async () => {
+    await rumbo.tasks.create({
+      text: "Plain",
+      area: "Gym",
+      scheduled: "2026-10-16",
+      time: "10:00",
+    });
+    await rumbo.tasks.create({ text: "Linked", area: "[[Gym]]", scheduled: "2026-10-16" });
+    await rumbo.tasks.create({
+      text: "Other",
+      area: "Citalash",
+      scheduled: "2026-10-16",
+      time: "11:00",
+    });
+    const [day] = await rumbo.calendar.days("2026-10-16", 1);
+    const agenda = day!.events.filter(({ kind }) => kind === "agenda");
+
+    const shown = shownDay(day!, (key) => key === areaKey("Gym") || key === "inbox");
+
+    expect(shown.untimed).toEqual([]);
+    expect(shown.events.filter(({ kind }) => kind === "task").map(({ key }) => key)).toHaveLength(
+      1,
+    );
+    expect(shown.events.filter(({ kind }) => kind === "agenda")).toEqual(agenda);
+    expect(shown.gaps).toEqual(day!.gaps);
   });
 });
