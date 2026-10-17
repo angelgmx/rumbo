@@ -80,12 +80,16 @@ export class HabitService {
     return this.habits.record(key, date, value);
   }
 
-  /** Marca el hábito como hecho un día, o lo deja sin hacer si ya lo estaba. Cantidad y tiempo cuentan como su objetivo. */
+  /**
+   * Marca el hábito como hecho un día, o quita la marca manual si ya la había. Cantidad y tiempo
+   * cuentan como su objetivo; en uno de tareas la marca manual se suma a sus tareas hechas.
+   */
   toggleDone(key: string, date = this.daily.today()): Promise<void> {
     const habit = this.habits.get(key);
-    if (!habit || habit.kind === "tasks") return Promise.resolve();
+    if (!habit) return Promise.resolve();
     if (isDone(habit, this.habits.history(key).get(date))) return this.setValue(key, false, date);
-    return this.setValue(key, habit.kind === "check" ? true : (habit.target ?? 1), date);
+    const counted = habit.kind === "count" || habit.kind === "duration";
+    return this.setValue(key, counted ? (habit.target ?? 1) : true, date);
   }
 
   /** Crea el hábito y devuelve su clave. */
@@ -145,11 +149,7 @@ export class HabitService {
   }
 
   private summarize(habit: Habit, today: IsoDate, badDays: ReadonlySet<IsoDate>): HabitSummary {
-    // Los de tareas no se apuntan: su historial sale de si se terminaron las tareas de cada día.
-    const history =
-      habit.kind === "tasks"
-        ? habitHistoryFromTasks(this.tasks.all(), habit.key)
-        : this.habits.history(habit.key);
+    const history = this.historyOf(habit);
     return {
       habit,
       today: history.get(today),
@@ -162,5 +162,16 @@ export class HabitService {
       history,
       todayTasks: habit.kind === "tasks" ? this.tasks.forHabit(habit.key, today) : [],
     };
+  }
+
+  /** En los de tareas, un día cuenta si se marcó a mano o si estaban terminadas todas sus tareas. */
+  private historyOf(habit: Habit): Map<IsoDate, HabitValue> {
+    const manual = this.habits.history(habit.key);
+    if (habit.kind !== "tasks") return manual;
+    const history = new Map<IsoDate, HabitValue>(
+      habitHistoryFromTasks(this.tasks.all(), habit.key),
+    );
+    for (const [day, value] of manual) if (isDone(habit, value)) history.set(day, true);
+    return history;
   }
 }

@@ -2,7 +2,7 @@ import type { CalendarEvent, IsoDate } from "@rumbo/core";
 import { useRumbo } from "@/app/RumboContext";
 import { useHabitLook } from "@/hooks/useHabitLook";
 import { HabitIcon } from "@/features/habits/HabitIcon";
-import { HabitCheck } from "@/features/habits/HabitCheck";
+import { HabitCheck, tasksProgress } from "@/features/habits/HabitCheck";
 import { cn } from "@/lib/utils";
 import { EVENT_SURFACE } from "./eventSurface";
 import { tint } from "./tint";
@@ -26,9 +26,12 @@ export function HabitEvent({ event, date }: { event: HabitCalendarEvent; date: I
         <span className="min-w-0 flex-1 truncate text-[13px] leading-[18px] font-medium">
           {habit.name}
         </span>
-        {habit.kind !== "tasks" && (
-          <HabitCheck summary={event.habit} done={event.done} date={date} />
-        )}
+        <HabitCheck
+          summary={event.habit}
+          done={event.done}
+          date={date}
+          progress={tasksProgress(tasks)}
+        />
       </div>
       <div className="mt-1">
         <TimePill start={event.start} end={event.end} color={look.color} />

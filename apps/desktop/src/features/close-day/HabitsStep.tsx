@@ -1,7 +1,7 @@
 import type { HabitSummary } from "@rumbo/core";
 import { AreaIcon } from "@/components/AreaIcon";
 import { describeValue } from "@/features/habits/describeValue";
-import { HabitMark, tasksProgress } from "@/features/habits/HabitMark";
+import { HabitCheck, tasksProgress } from "@/features/habits/HabitCheck";
 import { useHabitLook } from "@/hooks/useHabitLook";
 import { StepCard } from "./StepCard";
 
@@ -32,7 +32,7 @@ function HabitTile({ summary }: { summary: HabitSummary }) {
         <p className="truncate">{habit.name}</p>
         {amount && <p className="font-mono text-xs text-muted-foreground">{amount}</p>}
       </div>
-      <HabitMark
+      <HabitCheck
         summary={summary}
         done={summary.doneToday}
         progress={tasksProgress(summary.todayTasks)}

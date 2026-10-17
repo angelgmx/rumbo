@@ -3,7 +3,7 @@ import { FlameIcon } from "lucide-react";
 import { useRumbo } from "@/app/RumboContext";
 import { useHabitLook } from "@/hooks/useHabitLook";
 import { cn } from "@/lib/utils";
-import { HabitCheck } from "@/features/habits/HabitCheck";
+import { HabitCheck, tasksProgress } from "@/features/habits/HabitCheck";
 import { HabitIcon } from "@/features/habits/HabitIcon";
 
 /** Un hábito de hoy con su racha; se marca ahí mismo con una casilla. */
@@ -28,19 +28,18 @@ export function HabitRow({ summary, today }: { summary: HabitSummary; today: Iso
           {streak.count} {streak.unit === "days" ? "d" : "sem"}
         </p>
       </div>
-      {habit.kind !== "tasks" && (
-        <HabitCheck
-          summary={summary}
-          done={summary.doneToday}
-          date={today}
-          className="size-[18px]"
-        />
-      )}
       {habit.kind === "tasks" && (
         <span className="font-mono text-[13px] text-muted-foreground">
           {tasks.filter((task) => task.done).length}/{tasks.length}
         </span>
       )}
+      <HabitCheck
+        summary={summary}
+        done={summary.doneToday}
+        date={today}
+        progress={tasksProgress(tasks)}
+        className="size-[18px]"
+      />
     </li>
   );
 }

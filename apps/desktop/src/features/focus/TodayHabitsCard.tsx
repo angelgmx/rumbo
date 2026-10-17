@@ -3,7 +3,7 @@ import { FlameIcon } from "lucide-react";
 import { AreaIcon } from "@/components/AreaIcon";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { describeValue } from "@/features/habits/describeValue";
-import { HabitMark, tasksProgress } from "@/features/habits/HabitMark";
+import { HabitCheck, tasksProgress } from "@/features/habits/HabitCheck";
 import { useHabitLook } from "@/hooks/useHabitLook";
 import { cn } from "@/lib/utils";
 
@@ -56,7 +56,7 @@ function HabitLine({ summary, routine }: { summary: HabitSummary; routine?: stri
         {routine && <p className="text-xs text-muted-foreground">en {routine}</p>}
       </div>
       {amount && <span className="font-mono text-sm text-muted-foreground">{amount}</span>}
-      <HabitMark
+      <HabitCheck
         summary={summary}
         done={summary.doneToday}
         progress={tasksProgress(summary.todayTasks)}

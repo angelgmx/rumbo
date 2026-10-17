@@ -17,7 +17,7 @@ import { useHabitLook } from "@/hooks/useHabitLook";
 import { capitalize, formatDayMonth, formatShortDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { HabitMenu } from "./HabitDialogs";
-import { HabitMark, tasksProgress } from "./HabitMark";
+import { HabitCheck, tasksProgress } from "./HabitCheck";
 
 interface WeekTrackerProps {
   habits: HabitSummary[];
@@ -121,7 +121,7 @@ function TrackerRow({ summary, days, today }: TrackerRowProps) {
             {day > today ? (
               <FutureDay />
             ) : isScheduledOn(habit.schedule, day) ? (
-              <HabitMark
+              <HabitCheck
                 summary={summary}
                 done={isDone(habit, history.get(day))}
                 date={day}

@@ -533,6 +533,28 @@ describe("habits with tasks", () => {
     expect(done.streak.count).toBe(1);
   });
 
+  it("can be ticked by hand and unticked again", async () => {
+    const key = await rumbo.habits.create({ name: "Inglés", kind: "tasks", schedule: "daily" });
+    const doneToday = () =>
+      rumbo.habits.list().find((summary) => summary.habit.key === key)!.doneToday;
+
+    await rumbo.habits.toggleDone(key);
+    expect(doneToday()).toBe(true);
+    await rumbo.habits.toggleDone(key);
+    expect(doneToday()).toBe(false);
+  });
+
+  it("stays done through its tasks when the manual tick is removed", async () => {
+    const key = await rumbo.habits.create({ name: "Inglés", kind: "tasks", schedule: "daily" });
+    await rumbo.tasks.create({ text: "Unit 4", scheduled: "2026-10-15", habit: key });
+    const summary = () => rumbo.habits.list().find((h) => h.habit.key === key)!;
+    await rumbo.tasks.setDone(summary().todayTasks[0]!, true);
+
+    await rumbo.habits.toggleDone(key);
+    await rumbo.habits.toggleDone(key);
+    expect(summary().doneToday).toBe(true);
+  });
+
   it("doesn't count as done a day without tasks", async () => {
     const key = await rumbo.habits.create({ name: "Inglés", kind: "tasks", schedule: "daily" });
     expect(rumbo.habits.list().find((summary) => summary.habit.key === key)!.doneToday).toBe(false);

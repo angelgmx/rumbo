@@ -11,7 +11,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { HabitTasks } from "@/features/habits/HabitTasks";
-import { HabitMark, tasksProgress } from "@/features/habits/HabitMark";
+import { HabitCheck, tasksProgress } from "@/features/habits/HabitCheck";
 import { useHabitLook } from "@/hooks/useHabitLook";
 import { formatMinutes } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -102,7 +102,7 @@ function PlanRow({ item, isCurrent, onToggleBlock }: PlanRowProps) {
             aria-label={item.text}
           />
         ) : (
-          <HabitMark
+          <HabitCheck
             summary={item.habit}
             done={item.done}
             progress={tasksProgress(item.habit.todayTasks)}
