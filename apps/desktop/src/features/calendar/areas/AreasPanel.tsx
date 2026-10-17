@@ -1,5 +1,5 @@
 import { filterAreas, ROUTINES_KEY, type AreaNode } from "@rumbo/core";
-import { InboxIcon, RepeatIcon, SearchIcon } from "lucide-react";
+import { InboxIcon, RepeatIcon, SearchIcon, StarIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -14,10 +14,12 @@ const ROUTINES_COLOR = "#5b8def";
 export function AreasPanel({
   areas,
   keys,
+  starred,
   visibility,
 }: {
   areas: AreaNode[];
   keys: string[];
+  starred: readonly string[];
   visibility: Visibility;
 }) {
   const [query, setQuery] = useState("");
@@ -57,6 +59,7 @@ export function AreasPanel({
           nodes={shown}
           visibility={visibility}
           keys={keys}
+          starred={starred}
           folded={folded}
           onFold={fold}
           searching={query.trim() !== ""}
@@ -82,6 +85,12 @@ export function AreasPanel({
           </div>
         )}
       </motion.div>
+      {starred.length === 0 && (
+        <p className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
+          <StarIcon className="size-3.5 shrink-0" />
+          Destaca un área con la estrella y saldrá en la barra.
+        </p>
+      )}
     </>
   );
 }

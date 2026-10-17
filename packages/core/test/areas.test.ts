@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { createRumbo } from "../src";
-import { areaFamily, areaTree, filterAreas, mergeOrder, orderAreas } from "../src/domain/areas";
+import {
+  areaFamily,
+  areaTree,
+  filterAreas,
+  mergeOrder,
+  orderAreas,
+  starredAreas,
+} from "../src/domain/areas";
 import { memoryDatabase } from "./memoryDatabase";
 import { memoryFileSystem } from "./memoryFileSystem";
 
@@ -60,7 +67,31 @@ describe("orderAreas", () => {
   });
 });
 
+describe("starredAreas", () => {
+  it("lists the starred ones in tree order, parents first", () => {
+    const tree = orderAreas(areaTree(areas), []);
+    const names = starredAreas(tree, ["Gym", "Java", "Desarrollo", "Gone"]).map(({ name }) => name);
+    expect(names).toEqual(["Desarrollo", "Java", "Gym"]);
+  });
+});
+
 describe("AreaService", () => {
+  it("remembers the starred areas between sessions and ignores missing ones", async () => {
+    const files = new Map([
+      ["Areas/Gym/Gym.md", "---\ntype: area\n---\n"],
+      ["Areas/Arte/Arte.md", "---\ntype: area\n---\n"],
+    ]);
+    const database = memoryDatabase();
+    const first = await createRumbo({ fs: memoryFileSystem(files), database });
+    await first.areas.toggleStar("Gym");
+    await first.areas.toggleStar("Arte");
+    await first.areas.toggleStar("Arte");
+    await first.areas.toggleStar("Gone");
+
+    const second = await createRumbo({ fs: memoryFileSystem(files), database });
+    expect(second.areas.starredNodes().map(({ name }) => name)).toEqual(["Gym"]);
+  });
+
   it("remembers the order between sessions", async () => {
     const files = new Map([
       ["Areas/Gym/Gym.md", "---\ntype: area\n---\n"],

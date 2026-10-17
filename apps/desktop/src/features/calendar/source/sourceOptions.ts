@@ -18,14 +18,14 @@ export function sourceOptions(areas: readonly AreaNode[]): SourceOption[] {
   ];
 }
 
+/** La fuente de un área: ella y todas las que cuelgan de ella. */
+export function areaSource(node: AreaNode): CalendarSource {
+  return { kind: "area", area: node.name, within: areaFamily(node).slice(1) };
+}
+
 function areaOptions(node: AreaNode, depth: number): SourceOption[] {
-  const source: CalendarSource = {
-    kind: "area",
-    area: node.name,
-    within: areaFamily(node).slice(1),
-  };
   return [
-    option(source, depth),
+    option(areaSource(node), depth),
     ...node.children.flatMap((child) => areaOptions(child, depth + 1)),
   ];
 }

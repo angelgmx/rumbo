@@ -9,6 +9,7 @@ import { AreasPanel } from "./AreasPanel";
 /** «Áreas ▾»: qué áreas (y subáreas) se ven en el calendario; enseña cuántas están ocultas. */
 export function AreasMenu({ visibility }: { visibility: Visibility }) {
   const areas = useVaultQuery((r) => r.areas.tree()).data ?? [];
+  const starred = (useVaultQuery((r) => r.areas.starredNodes()).data ?? []).map(({ name }) => name);
   const keys = ["inbox", ROUTINES_KEY, ...areas.flatMap(areaFamily).map(areaKey)];
   const hidden = keys.filter(visibility.isHidden).length;
 
@@ -24,7 +25,7 @@ export function AreasMenu({ visibility }: { visibility: Visibility }) {
         <ChevronDownIcon data-icon="inline-end" />
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80">
-        <AreasPanel areas={areas} keys={keys} visibility={visibility} />
+        <AreasPanel areas={areas} keys={keys} starred={starred} visibility={visibility} />
       </PopoverContent>
     </Popover>
   );

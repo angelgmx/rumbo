@@ -1,4 +1,4 @@
-import { areaKey, shownDay, type CalendarSource, type HabitInput } from "@rumbo/core";
+import { areaKey, shownDay, sourceKey, type CalendarSource, type HabitInput } from "@rumbo/core";
 import { RepeatIcon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -48,7 +48,9 @@ export function CalendarScreen() {
     .filter(({ proposal }) => proposal.date && proposal.time)
     .filter(({ task }) => !visibility.isHidden(areaKey(task.area)));
 
-  const togglePlacing = () => setSource((current) => (current ? undefined : { kind: "all" }));
+  const toggleSource = () => setSource((current) => (current ? undefined : { kind: "all" }));
+  const pickSource = (next: CalendarSource) =>
+    setSource((current) => (current && sourceKey(current) === sourceKey(next) ? undefined : next));
 
   return (
     <GestureProvider>
@@ -86,9 +88,10 @@ export function CalendarScreen() {
           <CalendarSidebar
             anchor={view.anchor}
             today={today}
-            placing={source !== undefined}
+            source={source}
             onPickDay={view.setAnchor}
-            onTogglePlacing={togglePlacing}
+            onToggleSource={toggleSource}
+            onPickSource={pickSource}
           />
           <div className="flex min-w-0 flex-1 flex-col">
             <CalendarHeader

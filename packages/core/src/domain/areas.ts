@@ -46,6 +46,14 @@ export function areaFamily(node: AreaNode): string[] {
   return [node.name, ...node.children.flatMap(areaFamily)];
 }
 
+/** Las áreas destacadas que existen, en el orden del árbol (cada madre antes que sus hijas). */
+export function starredAreas(nodes: readonly AreaNode[], starred: readonly string[]): AreaNode[] {
+  return nodes.flatMap((node) => [
+    ...(starred.includes(node.name) ? [node] : []),
+    ...starredAreas(node.children, starred),
+  ]);
+}
+
 /** El orden guardado tras ordenar un nivel: lo nuevo delante, el resto de niveles como estaba. */
 export function mergeOrder(saved: readonly string[], level: readonly string[]): string[] {
   return [...level, ...saved.filter((name) => !level.includes(name))];

@@ -9,6 +9,8 @@ export interface AreaTreeShared {
   visibility: Visibility;
   /** Todas las claves que se pueden ocultar. */
   keys: string[];
+  /** Los nombres de las áreas destacadas. */
+  starred: readonly string[];
   folded: ReadonlySet<string>;
   onFold: (name: string) => void;
   /** Buscando no se reordena: lo que se ve es solo una parte del nivel. */

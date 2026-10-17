@@ -1,10 +1,12 @@
 import { areaFamily, areaKey, type AreaNode } from "@rumbo/core";
 import { ChevronDownIcon, GripVerticalIcon } from "lucide-react";
 import { Reorder, useDragControls } from "motion/react";
+import { useRumbo } from "@/app/RumboContext";
 import { AreaIcon } from "@/components/AreaIcon";
 import { useArea } from "@/hooks/useArea";
 import { cn } from "@/lib/utils";
 import { AreaLevel, type AreaTreeShared } from "./AreaLevel";
+import { StarButton } from "./StarButton";
 import { VisibilityRow } from "./VisibilityRow";
 
 export function AreaItem({
@@ -12,7 +14,8 @@ export function AreaItem({
   onDrop,
   ...shared
 }: { node: AreaNode; onDrop: () => void } & AreaTreeShared) {
-  const { visibility, keys, folded, onFold, searching } = shared;
+  const { visibility, keys, folded, onFold, searching, starred } = shared;
+  const { areas } = useRumbo();
   const controls = useDragControls();
   const look = useArea(node.name);
   const family = areaFamily(node).map(areaKey);
@@ -58,6 +61,13 @@ export function AreaItem({
               <span aria-hidden className="size-4 shrink-0" />
             )}
           </>
+        }
+        trailing={
+          <StarButton
+            starred={starred.includes(node.name)}
+            area={node.name}
+            onToggle={() => void areas.toggleStar(node.name)}
+          />
         }
         icon={<AreaIcon area={look} className="size-6 rounded-md" />}
         label={node.name}

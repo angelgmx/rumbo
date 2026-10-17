@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 /** Una fila con casilla de color para mostrar u ocultar algo; «Solo esta» sale al pasar el ratón. */
 export function VisibilityRow({
   leading,
+  trailing,
   icon,
   label,
   color,
@@ -14,6 +15,8 @@ export function VisibilityRow({
 }: {
   /** Lo que va antes de la casilla: el asa de arrastre y el pliegue. */
   leading?: ReactNode;
+  /** Lo que va después del nombre: la estrella. */
+  trailing?: ReactNode;
   icon: ReactNode;
   label: string;
   color: string;
@@ -39,6 +42,7 @@ export function VisibilityRow({
         {icon}
         <span className="truncate">{label}</span>
       </span>
+      {trailing}
       <button
         type="button"
         onClick={onOnly}
