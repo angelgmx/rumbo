@@ -6,7 +6,6 @@ import {
   isRoutineOn,
   moduleBlockTasks,
   moveBlock,
-  nextRoutineDay,
   removeBlock,
   routineClashes,
   routineEnd,
@@ -14,12 +13,10 @@ import {
   taskClashes,
   timedBlocks,
   updateBlock,
-  weeklyCompliance,
 } from "../src/domain/routines";
 import { parseNoteRoutine } from "../src/domain/noteRoutines";
 import { loadDemoVault, memoryFileSystem } from "./memoryFileSystem";
 import { memoryDatabase } from "./memoryDatabase";
-import { makeHabit } from "./makeHabit";
 
 const routine = routineSchema.parse({
   start: "18:00",
@@ -47,7 +44,6 @@ describe("routine domain", () => {
     expect(isRoutineOn(limited, "2026-10-19")).toBe(true);
     expect(isRoutineOn(limited, "2026-10-21")).toBe(true);
     expect(isRoutineOn(limited, "2026-10-22")).toBe(false);
-    expect(nextRoutineDay(limited, "2026-10-21")).toBeUndefined();
   });
 
   it("runs on its days only while active", () => {
@@ -77,12 +73,6 @@ describe("routine domain", () => {
     expect(updateBlock([{ minutes: 10, x: 1 }], 0, { minutes: 20 })).toEqual([
       { minutes: 20, x: 1 },
     ]);
-  });
-
-  it("finds the next day it runs", () => {
-    // Desde el lunes 19, la siguiente es el miércoles 21.
-    expect(nextRoutineDay(routine, "2026-10-19")).toBe("2026-10-21");
-    expect(nextRoutineDay({ ...routine, active: false }, "2026-10-19")).toBeUndefined();
   });
 
   it("detects routines that overlap on a shared day", () => {
@@ -128,18 +118,6 @@ describe("routine domain", () => {
       6, 3, 1,
     ]);
     expect(taskClashes({ ...routine, active: false }, tasks, "2026-10-19")).toEqual([]);
-  });
-
-  it("measures how often its habits were done on its days", () => {
-    const habit = makeHabit({ key: "ingles", name: "Inglés" });
-    // Semana del lunes 12: tocaba lunes 12 y miércoles 14, se hizo uno.
-    const history = new Map([
-      ["2026-10-12", true],
-      ["2026-10-19", true],
-    ]);
-    const weeks = weeklyCompliance(routine, [{ habit, history }], "2026-10-19", 2);
-    expect(weeks).toEqual([0.5, 1]);
-    expect(weeklyCompliance(routine, [], "2026-10-19")).toEqual([]);
   });
 
   it("turns a topic block into today's tasks with their estimate and steps", () => {
@@ -237,8 +215,9 @@ describe("RoutineService", () => {
     expect(imported!.blocks.map(({ kind }) => kind)).toEqual(["activity", "activity", "task"]);
   });
 
-  it("turns it on and off", async () => {
-    await rumbo.routines.setActive(routineId(), false);
+  it("stops running when it is turned off", async () => {
+    const id = routineId();
+    await rumbo.routines.save(id, { title: "Evening study", start: "18:00", active: false });
     expect(rumbo.routines.today()).toEqual([]);
   });
 
@@ -299,10 +278,8 @@ describe("RoutineService", () => {
     const input = { title: "Evening study", start: "18:00", days: "daily" as const, blocks: [] };
     await rumbo.routines.save(id, { ...input, until: "2026-10-15" });
     expect(rumbo.routines.today()).toEqual([]);
-    expect(rumbo.routines.get(id)!.next).toBeUndefined();
     await rumbo.routines.save(id, { ...input, from: "2026-10-17" });
     expect(rumbo.routines.today()).toEqual([]);
-    expect(rumbo.routines.get(id)!.next).toBe("2026-10-17");
     await rumbo.routines.save(id, { ...input, from: "2026-10-16", until: "2026-10-16" });
     expect(rumbo.routines.today()).toHaveLength(1);
   });
@@ -321,11 +298,9 @@ describe("RoutineService", () => {
     expect(again.routines.list()[0]!.routine.blocks).toEqual([{ kind: "break", minutes: 5 }]);
   });
 
-  it("knows its habits, its weeks and the routines it clashes with", () => {
+  it("knows its habits", () => {
     const [summary] = rumbo.routines.list();
     expect(summary!.habits.map(({ habit }) => habit.key)).toEqual(["reading"]);
-    expect(summary!.weeks).toHaveLength(4);
-    expect(summary!.next).toBeUndefined();
   });
 
   it("reports the routines and the timed tasks a draft clashes with", async () => {

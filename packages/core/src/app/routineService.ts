@@ -6,10 +6,8 @@ import {
   blockTitle,
   isRoutineOn,
   moduleBlockTasks,
-  nextRoutineDay,
   routineClashes,
   taskClashes,
-  weeklyCompliance,
   routineEnd,
   routineMinutes,
   routineSchema,
@@ -37,10 +35,6 @@ export interface RoutineSummary {
   end: string;
   /** Hábitos que cumple: los de sus bloques y los de las rutas que avanza. */
   habits: HabitSummary[];
-  /** Cumplimiento de las últimas 4 semanas, de la más antigua a la actual. */
-  weeks: number[];
-  /** El próximo día que toca, si no es hoy. */
-  next?: IsoDate;
 }
 
 export interface RoutineStep {
@@ -91,7 +85,6 @@ export class RoutineService {
 
   private summarize(item: StoredRoutine, habits: HabitSummary[]): RoutineSummary {
     const { routine } = item;
-    const today = this.daily.today();
     const own = this.routineHabits(routine, habits);
     return {
       ...item,
@@ -99,8 +92,6 @@ export class RoutineService {
       minutes: routineMinutes(routine),
       end: routineEnd(routine),
       habits: own,
-      weeks: weeklyCompliance(routine, own, today),
-      next: isRoutineOn(routine, today) ? undefined : nextRoutineDay(routine, today),
     };
   }
 
@@ -191,10 +182,6 @@ export class RoutineService {
   today(): RoutineSummary[] {
     const today = this.daily.today();
     return this.list().filter((summary) => isRoutineOn(summary.routine, today));
-  }
-
-  setActive(id: number, active: boolean): Promise<void> {
-    return this.change(id, (routine) => ({ ...routine, active }));
   }
 
   /** Crea una rutina. Devuelve su id. */
