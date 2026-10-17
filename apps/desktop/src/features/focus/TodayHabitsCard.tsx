@@ -1,8 +1,9 @@
-import type { HabitSummary, HabitValue } from "@rumbo/core";
+import type { HabitSummary } from "@rumbo/core";
 import { FlameIcon } from "lucide-react";
 import { AreaIcon } from "@/components/AreaIcon";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { describeValue, HabitValueControl } from "@/features/habits/HabitValueControl";
+import { describeValue } from "@/features/habits/describeValue";
+import { HabitCheck, tasksProgress } from "@/features/habits/HabitCheck";
 import { useHabitLook } from "@/hooks/useHabitLook";
 import { cn } from "@/lib/utils";
 
@@ -10,10 +11,9 @@ interface TodayHabitsCardProps {
   habits: HabitSummary[];
   /** La rutina de cada hábito que está en una, por su clave. */
   routines: Map<string, string>;
-  onChange: (key: string, value: HabitValue) => void;
 }
 
-export function TodayHabitsCard({ habits, routines, onChange }: TodayHabitsCardProps) {
+export function TodayHabitsCard({ habits, routines }: TodayHabitsCardProps) {
   const done = habits.filter((summary) => summary.doneToday).length;
 
   return (
@@ -33,7 +33,6 @@ export function TodayHabitsCard({ habits, routines, onChange }: TodayHabitsCardP
             key={summary.habit.key}
             summary={summary}
             routine={routines.get(summary.habit.key)}
-            onChange={onChange}
           />
         ))}
       </CardContent>
@@ -41,15 +40,7 @@ export function TodayHabitsCard({ habits, routines, onChange }: TodayHabitsCardP
   );
 }
 
-function HabitLine({
-  summary,
-  routine,
-  onChange,
-}: {
-  summary: HabitSummary;
-  routine?: string;
-  onChange: TodayHabitsCardProps["onChange"];
-}) {
+function HabitLine({ summary, routine }: { summary: HabitSummary; routine?: string }) {
   const { habit, today } = summary;
   const area = useHabitLook(habit);
   const amount =
@@ -65,12 +56,11 @@ function HabitLine({
         {routine && <p className="text-xs text-muted-foreground">en {routine}</p>}
       </div>
       {amount && <span className="font-mono text-sm text-muted-foreground">{amount}</span>}
-      <HabitValueControl
-        habit={habit}
-        value={today}
-        todayTasks={habit.kind === "tasks" ? summary.todayTasks : undefined}
-        color={area.color}
-        onChange={(value) => onChange(habit.key, value)}
+      <HabitCheck
+        summary={summary}
+        done={summary.doneToday}
+        progress={tasksProgress(summary.todayTasks)}
+        className="size-5"
       />
     </div>
   );

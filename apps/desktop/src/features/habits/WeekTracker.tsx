@@ -3,6 +3,7 @@ import {
   habitProgress,
   isScheduledOn,
   type Habit,
+  isDone,
   type HabitSummary,
   type HabitValue,
   type IsoDate,
@@ -16,24 +17,17 @@ import { useHabitLook } from "@/hooks/useHabitLook";
 import { capitalize, formatDayMonth, formatShortDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { HabitMenu } from "./HabitDialogs";
-import { HabitValueControl } from "./HabitValueControl";
+import { HabitCheck, tasksProgress } from "./HabitCheck";
 
 interface WeekTrackerProps {
   habits: HabitSummary[];
   weekStart: IsoDate;
   today: IsoDate;
   onWeekChange: (weekStart: IsoDate) => void;
-  onChange: (key: string, value: HabitValue, date: IsoDate) => void;
 }
 
 /** Tabla de la semana: una fila por hábito, una casilla por día, racha y cumplimiento. */
-export function WeekTracker({
-  habits,
-  weekStart,
-  today,
-  onWeekChange,
-  onChange,
-}: WeekTrackerProps) {
+export function WeekTracker({ habits, weekStart, today, onWeekChange }: WeekTrackerProps) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   return (
@@ -41,7 +35,7 @@ export function WeekTracker({
       <CardHeader className="border-b pb-4">
         <CardTitle>Esta semana</CardTitle>
         <CardDescription>
-          Haz clic en una casilla para marcarla · en los de cantidad, escribe cuánto
+          Haz clic en una casilla para marcarla; los de tareas se cumplen con las suyas
         </CardDescription>
         <CardAction className="flex items-center gap-2">
           <span className="text-sm font-medium">{formatWeekRange(days[0]!, days[6]!)}</span>
@@ -89,13 +83,7 @@ export function WeekTracker({
         </thead>
         <tbody>
           {habits.map((summary) => (
-            <TrackerRow
-              key={summary.habit.key}
-              summary={summary}
-              days={days}
-              today={today}
-              onChange={onChange}
-            />
+            <TrackerRow key={summary.habit.key} summary={summary} days={days} today={today} />
           ))}
         </tbody>
       </table>
@@ -107,10 +95,9 @@ interface TrackerRowProps {
   summary: HabitSummary;
   days: IsoDate[];
   today: IsoDate;
-  onChange: WeekTrackerProps["onChange"];
 }
 
-function TrackerRow({ summary, days, today, onChange }: TrackerRowProps) {
+function TrackerRow({ summary, days, today }: TrackerRowProps) {
   const { habit, history, streak, best, last30Days } = summary;
   const area = useHabitLook(habit);
   const unit = streak.unit === "weeks" ? "sem" : "días";
@@ -134,15 +121,12 @@ function TrackerRow({ summary, days, today, onChange }: TrackerRowProps) {
             {day > today ? (
               <FutureDay />
             ) : isScheduledOn(habit.schedule, day) ? (
-              <HabitValueControl
-                habit={habit}
-                value={history.get(day)}
-                todayTasks={
-                  habit.kind === "tasks" && day === today ? summary.todayTasks : undefined
-                }
-                color={area.color}
-                highlight={day === today}
-                onChange={(value) => onChange(habit.key, value, day)}
+              <HabitCheck
+                summary={summary}
+                done={isDone(habit, history.get(day))}
+                date={day}
+                progress={day === today ? tasksProgress(summary.todayTasks) : 0}
+                className="size-7 rounded-md"
               />
             ) : (
               <span className="text-faint">—</span>

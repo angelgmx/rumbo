@@ -36,7 +36,7 @@ export function ScreenHeader({
       <div className="min-w-0 flex-1 truncate text-sm">{title}</div>
       {actions}
       {newTask && (
-        <Button onClick={create}>
+        <Button onClick={() => create()}>
           <PlusIcon data-icon="inline-start" />
           Nueva tarea
           <Kbd className="bg-primary-foreground/20 text-primary-foreground">Ctrl N</Kbd>

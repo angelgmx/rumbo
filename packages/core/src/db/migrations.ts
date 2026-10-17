@@ -201,6 +201,10 @@ export const MIGRATIONS: string[][] = [
     "ALTER TABLE objetivos ADD COLUMN prioridad TEXT CHECK (prioridad IN ('alta', 'media', 'baja'))",
   ],
   [
+    // El ejercicio de un módulo del que viene una tarea, por su número: junto a `modulo` lo señala.
+    "ALTER TABLE tareas ADD COLUMN ejercicio TEXT",
+  ],
+  [
     // Los hitos de un proyecto reciben un id propio, por el que los señalan las tareas
     // (`tareas.hito_id`): una posición cambiaría al reordenarlos o quitar uno.
     //   hitos: [{"id": 1, "titulo": "Landing", "fecha": "2026-11-30", "hecho": false}]

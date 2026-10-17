@@ -59,7 +59,9 @@ Cada capa solo usa las de debajo. Nunca al revés.
 
 | Fichero          | Responsabilidad                                                                                                                                        |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `dates.ts`       | Fechas como texto `AAAA-MM-DD` (sin zonas horarias), días de la semana, sumar días.                                                                    |
+| `dates.ts`       | Fechas como texto `AAAA-MM-DD` (sin zonas horarias), días de la semana, número de semana, sumar días.                                                  |
+| `calendar.ts`    | Calendario: colocar, mover y estirar tareas, repartir lo que se solapa, huecos libres del día, fechas límite y tareas de cada fuente.                  |
+| `freeTime.ts`    | Los tramos libres entre lo ocupado, para el calendario y para la IA.                                                                                   |
 | `habits.ts`      | Esquema Zod del hábito, si un valor cuenta como hecho, racha actual, mejor racha y cumplimiento.                                                       |
 | `daily.ts`       | Ruta de la daily de un día, contenido de una daily nueva e historial de hábitos a partir de las dailies.                                               |
 | `tasks.ts`       | El modelo de tarea y en qué vista sale cada una.                                                                                                       |
@@ -102,7 +104,8 @@ Cada capa solo usa las de debajo. Nunca al revés.
 | `dayPlanService.ts`     | Tu día ordenado por hora: bloques de la agenda + hábitos con hora que tocan ese día.                                                                                                                |
 | `learningService.ts`    | Temas y rutas de aprendizaje tal como están en el vault (apuntes por carpeta, módulos, ejercicios, retos y recursos); estado, conceptos, ejercicios hechos, registro de práctica y la tarea de hoy. |
 | `reviewService.ts`      | Repaso espaciado de los conceptos que ya sabes (FSRS).                                                                                                                                              |
-| `routineService.ts`     | Rutinas: listar, las de hoy, activar, crear, guardar entera, avisar de choques, crear las tareas de un bloque y terminar un bloque.                                                                 |
+| `routineService.ts`     | Rutinas: listar, las de hoy, crear, guardar entera, avisar de choques, los pasos de un día, crear las tareas de un bloque y terminar un bloque.                                                     |
+| `calendarService.ts`    | Calendario: cada día con sus eventos (tareas, hábitos con hora, rutinas y agenda), fechas límite y huecos libres.                                                                                   |
 | `closeDayService.ts`    | Cerrar el día: lo que salió bien según los datos, la energía y el primer bloque de mañana.                                                                                                          |
 | `inboxTriageService.ts` | Propuestas de la IA para el Inbox (tarea, idea, proyecto u objetivo) y aplicar solo las aceptadas.                                                                                                  |
 | `rumbo.ts`              | `createRumbo(fs, clock)`: abre el vault y monta todos los servicios.                                                                                                                                |

@@ -1,4 +1,5 @@
 import { addDays, startOfWeek, type IsoDate } from "@rumbo/core";
+import { capitalize } from "./format";
 
 /** Las 6 semanas que se ven de un mes, de lunes a domingo: "2026-10" → 42 días. */
 export function monthGrid(month: string): IsoDate[] {
@@ -27,4 +28,9 @@ const monthFormat = new Intl.DateTimeFormat("es", { month: "long", year: "numeri
 export function formatMonth(month: string): string {
   const [year, number] = month.split("-").map(Number);
   return monthFormat.format(new Date(year!, number! - 1, 1));
+}
+
+/** "Octubre 2026" */
+export function formatMonthTitle(month: string): string {
+  return capitalize(formatMonth(month).replace(" de ", " "));
 }

@@ -4,15 +4,12 @@
 import { z } from "zod";
 import { addMinutesToTime, minutesBetween } from "./agenda";
 import { jsonIn, knownArea } from "./aiAnswer";
+import { DEFAULT_TASK_MINUTES } from "./calendar";
 import { spanishWeekday, type IsoDate } from "./dates";
+import { freeIntervals, minutesOf, timeOf, type Interval } from "./freeTime";
 import type { AiMessage } from "../ports";
 import { openGaps } from "./taskGaps";
 import type { Priority, Task, TaskChanges } from "./tasks";
-
-export interface Interval {
-  start: string;
-  end: string;
-}
 
 export interface FreeSlot extends Interval {
   date: IsoDate;
@@ -66,7 +63,6 @@ export const ORGANIZE_HORIZON_DAYS = 7;
 const DAY_START = "08:00";
 const DAY_END = "21:00";
 const MIN_SLOT_MINUTES = 30;
-const DEFAULT_MINUTES = 30;
 const MAX_NOTES_LENGTH = 400;
 const MIN_STEPS = 2;
 const MAX_STEPS = 5;
@@ -76,13 +72,16 @@ const PRIORITIES = ["high", "medium", "low"] as const;
 
 /** Cuándo acaba algo de la agenda; si no lo dice, se da por un rato corto. */
 export function blockEnd(start: string, end: string | undefined): string {
-  return end ?? addMinutesToTime(start, DEFAULT_MINUTES);
+  return end ?? addMinutesToTime(start, DEFAULT_TASK_MINUTES);
 }
 
 /** Lo que ocupa una tarea con hora: lo que dura o, si no lo dice, un rato corto. */
 export function taskInterval(task: Task): Interval | undefined {
   if (!task.time) return undefined;
-  return { start: task.time, end: addMinutesToTime(task.time, task.duration ?? DEFAULT_MINUTES) };
+  return {
+    start: task.time,
+    end: addMinutesToTime(task.time, task.duration ?? DEFAULT_TASK_MINUTES),
+  };
 }
 
 /**
@@ -96,25 +95,13 @@ export function freeSlots(
   now: string,
 ): FreeSlot[] {
   return days.flatMap((date) => {
-    const dayStart = minutesOf(DAY_START);
-    const from = date === today ? Math.max(dayStart, nextHalfHour(now)) : dayStart;
-    return gaps(from, minutesOf(DAY_END), busy.get(date) ?? [])
-      .filter(([start, end]) => end - start >= MIN_SLOT_MINUTES)
-      .map(([start, end]) => ({ date, start: timeOf(start), end: timeOf(end) }));
+    const from =
+      date === today ? timeOf(Math.max(minutesOf(DAY_START), nextHalfHour(now))) : DAY_START;
+    return freeIntervals(busy.get(date) ?? [], from, DAY_END, MIN_SLOT_MINUTES).map((gap) => ({
+      date,
+      ...gap,
+    }));
   });
-}
-
-function gaps(from: number, to: number, busy: Interval[]): [number, number][] {
-  const result: [number, number][] = [];
-  let cursor = from;
-  const ordered = [...busy].sort((a, b) => a.start.localeCompare(b.start));
-  for (const { start, end } of ordered) {
-    if (cursor >= to) break;
-    if (minutesOf(start) > cursor) result.push([cursor, Math.min(minutesOf(start), to)]);
-    cursor = Math.max(cursor, minutesOf(end));
-  }
-  if (cursor < to) result.push([cursor, to]);
-  return result;
 }
 
 const RULES = {
@@ -321,7 +308,7 @@ function occupy(slots: FreeSlot[], date: IsoDate, time: string, minutes: number)
 
 /** Los minutos que ocupará: lo que dice la propuesta, lo que ya tenía la tarea o un rato corto. */
 function minutesFor(proposal: Pick<OrganizeProposal, "duration">, task: Task): number {
-  return proposal.duration ?? task.duration ?? DEFAULT_MINUTES;
+  return proposal.duration ?? task.duration ?? DEFAULT_TASK_MINUTES;
 }
 
 /**
@@ -366,14 +353,6 @@ export function organizeChanges(proposal: OrganizeProposal): TaskChanges {
     ...(date && { scheduled: date }),
     ...(time && { time }),
   };
-}
-
-function minutesOf(time: string): number {
-  return minutesBetween("00:00", time);
-}
-
-function timeOf(minutes: number): string {
-  return addMinutesToTime("00:00", minutes);
 }
 
 function nextHalfHour(time: string): number {

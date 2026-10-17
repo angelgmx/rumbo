@@ -1,3 +1,4 @@
+import type { TaskDraft } from "@rumbo/core";
 import { useState, type KeyboardEvent } from "react";
 import { useHashLocation } from "wouter/use-hash-location";
 import { useRumbo } from "@/app/RumboContext";
@@ -9,13 +10,20 @@ import { useNewTask } from "./useNewTask";
 import { useTaskContext } from "./useTaskContext";
 
 /** El panel en modo crear. Con «Crear otra» se queda abierto con una tarea en blanco. */
-export function CreateTaskPanel({ onClose }: { onClose: () => void }) {
+export function CreateTaskPanel({
+  draft,
+  onClose,
+}: {
+  draft: TaskDraft | undefined;
+  onClose: () => void;
+}) {
   const [round, setRound] = useState(0);
   const [another, setAnother] = useState(false);
 
   return (
     <NewTaskForm
       key={round}
+      draft={draft}
       another={another}
       onAnotherChange={setAnother}
       onClose={onClose}
@@ -25,17 +33,19 @@ export function CreateTaskPanel({ onClose }: { onClose: () => void }) {
 }
 
 function NewTaskForm({
+  draft,
   another,
   onAnotherChange,
   onClose,
   onCreated,
 }: {
+  draft: TaskDraft | undefined;
   another: boolean;
   onAnotherChange: (another: boolean) => void;
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const task = useNewTask(onCreated, useStartingDraft());
+  const task = useNewTask(onCreated, useStartingDraft(draft));
   const context = useTaskContext(task.draft);
 
   // Ctrl Enter crea desde cualquier campo, también desde los pasos y las propiedades.
@@ -75,9 +85,10 @@ const TODAY_SCREENS = ["/", "/tareas/hoy"];
 // El panel vive fuera del router de la app, que va por «#»: la pantalla se lee de ahí.
 const PROJECT_PAGE = /^\/proyectos\/(\d+)$/;
 
-function useStartingDraft() {
+function useStartingDraft(draft: TaskDraft | undefined) {
   const rumbo = useRumbo();
   const [location] = useHashLocation();
+  if (draft) return draft;
   const project = PROJECT_PAGE.exec(location)?.[1];
   if (project) return { ...EMPTY_DRAFT, projectId: Number(project) };
   return TODAY_SCREENS.includes(location)

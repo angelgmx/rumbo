@@ -75,12 +75,6 @@ export function EditTaskPanel({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <TaskPanelHeader context={context} last={context.module} onClose={onClose}>
-        {!task.done && (
-          <CompleteButton
-            thinking={completion.thinking}
-            onClick={() => void completion.request()}
-          />
-        )}
         <TaskMenu
           inFocus={inFocus}
           onToggleFocus={() => void toggleFocus()}
@@ -88,7 +82,13 @@ export function EditTaskPanel({
           onDelete={() => void remove()}
         />
       </TaskPanelHeader>
-      <div className="flex justify-end px-6 pb-3 empty:hidden">
+      <div className="flex items-center justify-end gap-2 px-6 pb-3 empty:hidden">
+        {!task.done && (
+          <CompleteButton
+            thinking={completion.thinking}
+            onClick={() => void completion.request()}
+          />
+        )}
         <OrganizeAside task={task} />
       </div>
       <TaskPanelBody

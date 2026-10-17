@@ -4,6 +4,11 @@ import { AppDatabase } from "../src/db/appDatabase";
 import { MIGRATIONS } from "../src/db/migrations";
 import { memoryDatabase } from "./memoryDatabase";
 
+/** La versión justo antes de la migración que contiene `fragment`: así el test no depende de su posición. */
+function versionBefore(fragment: string): number {
+  return MIGRATIONS.findIndex((statements) => statements.some((sql) => sql.includes(fragment)));
+}
+
 async function databaseAt(version: number) {
   const database = memoryDatabase();
   for (const statements of MIGRATIONS.slice(0, version)) {
@@ -15,7 +20,7 @@ async function databaseAt(version: number) {
 
 describe("migrations", () => {
   it("turns saved free and task blocks into activities", async () => {
-    const database = await databaseAt(MIGRATIONS.length - 3);
+    const database = await databaseAt(versionBefore("UPDATE rutinas SET bloques"));
     const blocks = [
       { tipo: "habito", habito: "ingles", minutos: 15 },
       { tipo: "libre", titulo: "Café", minutos: 10 },
@@ -43,7 +48,7 @@ describe("migrations", () => {
   });
 
   it("gives saved goals an empty priority", async () => {
-    const database = await databaseAt(MIGRATIONS.length - 2);
+    const database = await databaseAt(versionBefore("ALTER TABLE objetivos ADD COLUMN prioridad"));
     await database.execute("INSERT INTO objetivos (titulo, creado) VALUES (?, ?)", [
       "Inglés",
       "2026-10-01",
@@ -58,7 +63,7 @@ describe("migrations", () => {
   });
 
   it("gives saved milestones an id and saved links a type", async () => {
-    const database = await databaseAt(MIGRATIONS.length - 1);
+    const database = await databaseAt(versionBefore("UPDATE proyectos SET hitos"));
     const milestones = [
       { titulo: "Landing", fecha: "2026-10-10", hecho: true },
       { titulo: "Demo", hecho: false },

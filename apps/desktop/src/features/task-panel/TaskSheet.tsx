@@ -28,7 +28,13 @@ export function TaskSheet({
       onClose={onClose}
     >
       {shown && (
-        <TaskPanel key={panelKey(shown)} task={shown.task} onClose={onClose} onOpen={onOpen} />
+        <TaskPanel
+          key={panelKey(shown)}
+          task={shown.task}
+          draft={shown.draft}
+          onClose={onClose}
+          onOpen={onOpen}
+        />
       )}
     </SidePanel>
   );

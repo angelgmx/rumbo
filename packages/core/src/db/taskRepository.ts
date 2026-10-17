@@ -24,6 +24,7 @@ interface TaskRow {
   hito_id: number | null;
   objetivo_id: number | null;
   modulo: string | null;
+  ejercicio: string | null;
   habito: string | null;
   en_foco_el: string | null;
   creada: string;
@@ -54,6 +55,7 @@ const COLUMNS = {
   milestoneId: "hito_id",
   goalId: "objetivo_id",
   module: "modulo",
+  exercise: "ejercicio",
   habit: "habito",
   focusOn: "en_foco_el",
 } as const satisfies Record<keyof TaskDraft, string>;
@@ -189,6 +191,7 @@ function fromRow(row: TaskRow): Task {
     milestoneId: row.hito_id ?? undefined,
     goalId: row.objetivo_id ?? undefined,
     module: row.modulo ?? undefined,
+    exercise: row.ejercicio ?? undefined,
     habit: row.habito ?? undefined,
     duration: row.duracion_min ?? undefined,
     spent: row.minutos_trabajados,

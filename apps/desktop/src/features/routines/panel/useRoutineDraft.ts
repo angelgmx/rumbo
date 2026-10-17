@@ -48,8 +48,13 @@ const DEFAULT_MINUTES: Record<BlockKind, number> = {
 };
 
 /** Lo que se edita en el panel: una rutina en blanco o la copia de una que existe. */
-export function useRoutineDraft(summary: RoutineSummary | undefined) {
-  const [draft, setDraft] = useState<RoutineDraft>(() => (summary ? draftOf(summary) : BLANK));
+export function useRoutineDraft(
+  summary: RoutineSummary | undefined,
+  initial?: Partial<RoutineDraft>,
+) {
+  const [draft, setDraft] = useState<RoutineDraft>(() =>
+    summary ? draftOf(summary) : { ...BLANK, ...initial },
+  );
   const patch = (changes: Partial<RoutineDraft>) =>
     setDraft((current) => ({ ...current, ...changes }));
   const editBlocks = (edit: (blocks: DraftBlock[]) => DraftBlock[]) =>
